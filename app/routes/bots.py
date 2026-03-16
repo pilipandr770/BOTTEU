@@ -275,6 +275,17 @@ def detail(bot_id: int):
     )
 
 
+@bots_bp.route("/<int:bot_id>/clear-logs", methods=["POST"])
+@login_required
+def clear_logs(bot_id: int):
+    """Delete all log entries for a bot (e.g. to remove old Russian-language rows)."""
+    bot = Bot.query.filter_by(id=bot_id, user_id=current_user.id).first_or_404()
+    BotLog.query.filter_by(bot_id=bot.id).delete(synchronize_session=False)
+    db.session.commit()
+    flash(_("Log history cleared."), "success")
+    return redirect(url_for("bots.detail", bot_id=bot_id))
+
+
 @bots_bp.route("/<int:bot_id>/logs")
 @login_required
 def bot_logs_api(bot_id: int):

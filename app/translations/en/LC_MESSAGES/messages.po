@@ -1090,6 +1090,15 @@ msgid "No trades yet. They will appear here as the bot works."
 msgstr "No trades yet. They will appear here as the bot works."
 
 #: app/templates/bots/detail.html:359 app/templates/bots/index.html:109
+msgid "Clear Logs"
+msgstr "Clear Logs"
+
+msgid "Clear all log entries? This cannot be undone."
+msgstr "Clear all log entries? This cannot be undone."
+
+msgid "Log history cleared."
+msgstr "Log history cleared."
+
 msgid "Delete Bot"
 msgstr "Delete Bot"
 

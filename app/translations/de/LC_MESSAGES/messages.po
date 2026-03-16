@@ -1092,6 +1092,15 @@ msgid "No trades yet. They will appear here as the bot works."
 msgstr "Noch keine Trades. Sie erscheinen hier, wenn der Bot arbeitet."
 
 #: app/templates/bots/detail.html:359 app/templates/bots/index.html:109
+msgid "Clear Logs"
+msgstr "Logs löschen"
+
+msgid "Clear all log entries? This cannot be undone."
+msgstr "Alle Log-Einträge löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "Log history cleared."
+msgstr "Log-Verlauf wurde gelöscht."
+
 msgid "Delete Bot"
 msgstr "Bot löschen"
 
