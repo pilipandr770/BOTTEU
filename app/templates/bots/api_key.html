@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}{{ _('API Key') }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <h3 class="fw-bold mb-4"><i class="bi bi-key text-success me-2"></i>{{ _('Binance API Key') }}</h3>
+
+    <!-- Status banner -->
+    {% if existing %}
+      {% if existing.is_valid %}
+      <div class="alert alert-success d-flex align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-check-circle-fill fs-5"></i>
+          <div>
+            {{ _('API key is active and verified.') }}
+            {% if existing.cached_symbols %}
+            <span class="badge bg-success ms-2">{{ existing.cached_symbols|length }} {{ _('pairs synced') }}</span>
+            {% else %}
+            <span class="badge bg-warning text-dark ms-2">{{ _('Pairs not synced') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <button type="button" id="syncBtn" class="btn btn-sm btn-outline-light">
+          <i class="bi bi-arrow-repeat me-1"></i>{{ _('Sync Pairs') }}
+        </button>
+      </div>
+      {% else %}
+      <div class="alert alert-warning d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <div>{{ _('API key saved but not yet verified. Click "Test Connection".') }}</div>
+      </div>
+      {% endif %}
+    {% else %}
+    <div class="alert alert-info d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle-fill fs-5"></i>
+      <div>{{ _('No API key configured. Add your Binance API credentials below.') }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Security notice -->
+    <div class="card bg-dark border-warning mb-4">
+      <div class="card-body small text-warning-emphasis">
+        <i class="bi bi-shield-lock me-2 text-warning"></i>
+        <strong>{{ _('Security tips:') }}</strong>
+        <ul class="mb-0 mt-2">
+          <li>{{ _('Enable "Spot Trading" permission only. Do NOT enable withdrawals.') }}</li>
+          <li>{{ _('Restrict API access to your server IP address in Binance settings.') }}</li>
+          <li>{{ _('Your credentials are encrypted with AES-128 (Fernet) and never stored in plain text.') }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Add / Update form -->
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-header"><i class="bi bi-pencil me-2"></i>{{ _('API Credentials') }}</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('bots.api_key') }}" id="apiKeyForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="save">
+
+          <div class="mb-3">
+            <label class="form-label">{{ _('API Key') }}</label>
+            <input type="text" name="api_key" class="form-control font-monospace"
+                   placeholder="{{ '••••••••••••' if existing else _('Paste your Binance API key') }}"
+                   autocomplete="off" spellcheck="false">
+            {% if existing %}
+            <div class="form-text text-muted">{{ _('Leave blank to keep the current key.') }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">{{ _('API Secret') }}</label>
+            <input type="password" name="api_secret" class="form-control font-monospace"
+                   placeholder="{{ '••••••••••••' if existing else _('Paste your Binance API secret') }}"
+                   autocomplete="new-password" spellcheck="false">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-save me-1"></i>{{ _('Save') }}
+            </button>
+            {% if existing %}
+            <button type="button" id="testBtn" class="btn btn-outline-info">
+              <i class="bi bi-wifi me-1"></i>{{ _('Test Connection') }}
+            </button>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Test result area -->
+    <div id="testResult" class="mb-4" style="display:none;"></div>
+
+    <!-- Delete -->
+    {% if existing %}
+    <div class="card bg-dark border-danger">
+      <div class="card-header text-danger"><i class="bi bi-trash me-2"></i>{{ _('Remove API Key') }}</div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          {{ _('Removing the API key will stop all running bots that depend on it.') }}
+        </p>
+        <form method="POST" action="{{ url_for('bots.api_key') }}"
+              onsubmit="return confirm('{{ _('Remove API key? All bots will stop.') }}')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="delete">
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-trash me-1"></i>{{ _('Remove Key') }}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Guide link -->
+    <div class="mt-4 text-center text-muted small">
+      <i class="bi bi-question-circle me-1"></i>
+      {{ _('Not sure how to create an API key?') }}
+      <a href="{{ url_for('guides.index') }}" class="text-info">{{ _('Read the guide') }}</a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .font-monospace { font-family: 'Courier New', monospace; font-size: 0.875rem; }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const testBtn = document.getElementById('testBtn');
+  const syncBtn = document.getElementById('syncBtn');
+  const result  = document.getElementById('testResult');
+
+  async function callTestEndpoint(btn) {
+    btn.disabled = true;
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ _("Testing...") }}';
+    if (result) result.style.display = 'none';
+
+    try {
+      const res = await fetch('{{ url_for("bots.test_api_key") }}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrf_token]').value }
+      });
+      const data = await res.json();
+
+      // Update sync badge if symbol_count available
+      if (data.symbol_count !== undefined) {
+        const badge = document.querySelector('.badge.bg-success, .badge.bg-warning');
+        if (badge) {
+          badge.className = 'badge bg-success ms-2';
+          badge.textContent = data.symbol_count + ' {{ _("pairs synced") }}';
+        }
+      }
+
+      if (result) {
+        result.style.display = 'block';
+        result.innerHTML = `<div class="alert alert-${data.success ? 'success' : 'danger'} d-flex align-items-center gap-2">
+          <i class="bi bi-${data.success ? 'check-circle-fill' : 'x-circle-fill'} fs-5"></i>
+          <div>${data.message}</div>
+        </div>`;
+      }
+    } catch (e) {
+      if (result) {
+        result.style.display = 'block';
+        result.innerHTML = '<div class="alert alert-danger">{{ _("Request failed. Please try again.") }}</div>';
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+
+  if (testBtn) testBtn.addEventListener('click', () => callTestEndpoint(testBtn));
+  if (syncBtn) syncBtn.addEventListener('click', () => callTestEndpoint(syncBtn));
+});
+</script>
+{% endblock extra_scripts %}

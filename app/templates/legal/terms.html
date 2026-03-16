@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Terms of Service') }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h2 class="fw-bold mb-1">{{ _('Terms of Service') }}</h2>
+    <p class="text-muted small mb-4">{{ _('Last updated: March 2026') }}</p>
+
+    <div class="card bg-dark border-secondary mb-3">
+      <div class="card-body">
+
+        <h5>1. {{ _('Acceptance of Terms') }}</h5>
+        <p class="text-muted small">
+          {{ _('By registering and using BOTTEU ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.') }}
+        </p>
+
+        <h5>2. {{ _('Description of Service') }}</h5>
+        <p class="text-muted small">
+          {{ _('BOTTEU provides an automated trading interface that connects to the Binance cryptocurrency exchange via user-supplied API keys. The Service executes spot trades on your behalf based on the algorithms and parameters you configure.') }}
+        </p>
+
+        <h5>3. {{ _('Risk Warning') }}</h5>
+        <div class="alert alert-warning small mb-3">
+          <strong>{{ _('IMPORTANT:') }}</strong>
+          {{ _('Cryptocurrency trading involves substantial risk of loss. Past performance of any algorithm does not guarantee future results. You may lose all of your invested capital. BOTTEU is a tool, not financial advice. You are solely responsible for all trading decisions and their consequences.') }}
+        </div>
+
+        <h5>4. {{ _('User Responsibilities') }}</h5>
+        <ul class="text-muted small">
+          <li>{{ _('You must be at least 18 years old to use the Service.') }}</li>
+          <li>{{ _('You are responsible for keeping your API keys and account credentials secure.') }}</li>
+          <li>{{ _('You must comply with all applicable laws and Binance Terms of Service in your jurisdiction.') }}</li>
+          <li>{{ _('You may not use the Service for any illegal purpose or to manipulate markets.') }}</li>
+        </ul>
+
+        <h5>5. {{ _('API Key Security') }}</h5>
+        <p class="text-muted small">
+          {{ _('Your Binance API keys are encrypted at rest using AES-128-CBC (Fernet encryption). However, you are advised to create API keys with Spot Trading permission only and to restrict access by IP address. Never enable withdrawal permissions on API keys used with BOTTEU.') }}
+        </p>
+
+        <h5>6. {{ _('Subscriptions and Payments') }}</h5>
+        <p class="text-muted small">
+          {{ _('The Free plan allows 1 active bot. The Pro plan allows unlimited bots and is billed monthly via Stripe. Subscriptions auto-renew unless cancelled before the renewal date. Refunds are issued at our discretion within 14 days of purchase if no trades were executed.') }}
+        </p>
+
+        <h5>7. {{ _('Limitation of Liability') }}</h5>
+        <p class="text-muted small">
+          {{ _('BOTTEU and its operators shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use of the Service, including but not limited to trading losses, server downtime, or exchange API failures. The Service is provided "as is" without warranties of any kind.') }}
+        </p>
+
+        <h5>8. {{ _('Service Availability') }}</h5>
+        <p class="text-muted small">
+          {{ _('We strive for high availability but do not guarantee uninterrupted service. Scheduled and emergency maintenance may occur. We are not responsible for losses caused by service interruptions.') }}</p>
+
+        <h5>9. {{ _('Account Termination') }}</h5>
+        <p class="text-muted small">
+          {{ _('We reserve the right to suspend or delete accounts that violate these Terms. You may delete your account at any time; see our Privacy Policy for data retention details.') }}
+        </p>
+
+        <h5>10. {{ _('Changes to Terms') }}</h5>
+        <p class="text-muted small">
+          {{ _('We may update these Terms at any time. Continued use of the Service after changes constitutes acceptance of the new Terms.') }}
+        </p>
+
+        <h5>11. {{ _('Governing Law') }}</h5>
+        <p class="text-muted small">
+          {{ _('These Terms are governed by the laws of the Federal Republic of Germany. Any disputes shall be resolved in the courts of Germany.') }}
+        </p>
+
+      </div>
+    </div>
+
+    <div class="d-flex gap-3 text-muted small justify-content-center">
+      <a href="{{ url_for('legal.privacy') }}" class="text-muted">{{ _('Privacy Policy') }}</a>
+      <span>·</span>
+      <a href="{{ url_for('legal.impressum') }}" class="text-muted">{{ _('Impressum') }}</a>
+      <span>·</span>
+      <a href="{{ url_for('legal.disclaimer') }}" class="text-muted">{{ _('Risk Disclaimer') }}</a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

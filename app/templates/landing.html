@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Automated Binance Spot Trading Bot') }}{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="py-5 text-center">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="display-4 fw-bold text-success">
+        <i class="bi bi-robot"></i> BOTTEU
+      </h1>
+      <p class="lead text-light mt-3">
+        {{ _('Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade.') }}
+      </p>
+      <div class="d-flex gap-3 justify-content-center mt-4">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg px-5">
+          <i class="bi bi-rocket-takeoff me-2"></i>{{ _('Get Started Free') }}
+        </a>
+        <a href="{{ url_for('backtest.index') }}" class="btn btn-outline-light btn-lg px-4">
+          <i class="bi bi-graph-up-arrow me-2"></i>{{ _('Try Backtest') }}
+        </a>
+      </div>
+      <p class="text-muted small mt-3">
+        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+        {{ _('Not financial advice. All trading involves risk.') }}
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="py-5">
+  <div class="row g-4 text-center">
+    <div class="col-md-4">
+      <div class="card bg-dark border-success h-100">
+        <div class="card-body">
+          <i class="bi bi-shield-lock display-4 text-success"></i>
+          <h5 class="mt-3">{{ _('Secure API Storage') }}</h5>
+          <p class="text-muted small">{{ _('Your Binance API keys are encrypted with AES-256 (Fernet). The secret is never shown again after saving.') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-success h-100">
+        <div class="card-body">
+          <i class="bi bi-cpu display-4 text-success"></i>
+          <h5 class="mt-3">{{ _('Trading Algorithms') }}</h5>
+          <p class="text-muted small">{{ _('MA7/MA25 Crossover and RSI with fully configurable parameters, Stop-Loss, Take-Profit and Trailing TP.') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-success h-100">
+        <div class="card-body">
+          <i class="bi bi-graph-up-arrow display-4 text-success"></i>
+          <h5 class="mt-3">{{ _('Backtest & Visualize') }}</h5>
+          <p class="text-muted small">{{ _('Test your strategy on real historical data via Yahoo Finance. See BUY/SELL markers on an interactive chart.') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-primary h-100">
+        <div class="card-body">
+          <i class="bi bi-telegram display-4 text-primary"></i>
+          <h5 class="mt-3">{{ _('Telegram Alerts') }}</h5>
+          <p class="text-muted small">{{ _('Get instant notifications for every BUY/SELL, Stop-Loss trigger and bot errors directly in Telegram.') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100">
+        <div class="card-body">
+          <i class="bi bi-coin display-4 text-warning"></i>
+          <h5 class="mt-3">{{ _('Spot Only — No Futures') }}</h5>
+          <p class="text-muted small">{{ _('We strictly trade on the Binance Spot market. No leverage, no liquidations.') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-dark border-info h-100">
+        <div class="card-body">
+          <i class="bi bi-book display-4 text-info"></i>
+          <h5 class="mt-3">{{ _('Full Guides & Transparency') }}</h5>
+          <p class="text-muted small">{{ _('Step-by-step guides on setting up your Binance API. All legal documents available. GDPR compliant.') }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="py-5">
+  <h2 class="text-center fw-bold mb-4">{{ _('Pricing') }}</h2>
+  <div class="row justify-content-center g-4">
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-body text-center">
+          <h5 class="text-muted text-uppercase">{{ _('Free') }}</h5>
+          <div class="display-5 fw-bold text-white my-3">€0</div>
+          <ul class="list-unstyled text-muted">
+            <li><i class="bi bi-check-circle text-success me-1"></i> 1 {{ _('Trading Bot') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> 1 {{ _('Trading Pair') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('All Algorithms') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Backtest') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Telegram Alerts') }}</li>
+          </ul>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success w-100 mt-3">{{ _('Get Started') }}</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-success h-100" style="background:#0d1f0d;">
+        <div class="card-body text-center">
+          <span class="badge bg-success mb-2">{{ _('Popular') }}</span>
+          <h5 class="text-success text-uppercase">Pro</h5>
+          <div class="display-5 fw-bold text-white my-3">€19<small class="fs-6 text-muted">/{{ _('month') }}</small></div>
+          <ul class="list-unstyled text-muted">
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Unlimited Bots') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Unlimited Pairs') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Priority Support') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('All future algorithms') }}</li>
+            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('No commission on profits') }}</li>
+          </ul>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-success w-100 mt-3">{{ _('Start Pro Trial') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Risk Disclaimer Banner -->
+<section class="py-4">
+  <div class="alert alert-warning border-warning">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>{{ _('Risk Disclaimer:') }}</strong>
+    {{ _('Cryptocurrency trading involves substantial risk of loss. BOTTEU is a tool to help automate strategies — it does NOT guarantee profits. Never invest more than you can afford to lose. Past backtest results do not guarantee future performance.') }}
+    <a href="{{ url_for('legal.disclaimer') }}" class="alert-link ms-1">{{ _('Read full disclaimer') }}</a>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Delete Account') }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card bg-dark border-danger">
+      <div class="card-header text-danger fw-bold">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ _('Delete Account') }}
+      </div>
+      <div class="card-body">
+
+        <p class="text-muted">{{ _('You are about to permanently delete your BOTTEU account. This action is irreversible.') }}</p>
+
+        <ul class="text-muted small mb-4">
+          <li>{{ _('All your bots will be permanently stopped and deleted.') }}</li>
+          <li>{{ _('Your API keys will be removed from our servers.') }}</li>
+          <li>{{ _('Your trade history will be anonymized (GDPR Art. 17).') }}</li>
+          <li>{{ _('Your subscription will be cancelled immediately.') }}</li>
+          <li>{{ _('Your Telegram connection will be unlinked.') }}</li>
+        </ul>
+
+        <div class="alert alert-warning small">
+          <i class="bi bi-info-circle me-1"></i>
+          {{ _('Per GDPR Art. 17, your personal data will be anonymized (not fully erased) to maintain aggregate trade statistics.') }}
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.delete_account') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label">{{ _('Enter your password to confirm') }}</label>
+            <input type="password" name="password" class="form-control" required
+                   placeholder="{{ _('Your current password') }}" autocomplete="current-password">
+          </div>
+
+          <div class="mb-4 form-check">
+            <input type="checkbox" class="form-check-input" id="confirmDelete" name="confirm_delete" required>
+            <label class="form-check-label text-muted small" for="confirmDelete">
+              {{ _('I understand this action is permanent and cannot be undone.') }}
+            </label>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary flex-fill">
+              <i class="bi bi-arrow-left me-1"></i>{{ _('Cancel') }}
+            </a>
+            <button type="submit" class="btn btn-danger flex-fill">
+              <i class="bi bi-trash me-1"></i>{{ _('Delete My Account') }}
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

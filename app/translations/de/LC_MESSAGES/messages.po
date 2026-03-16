@@ -1,0 +1,171 @@
+# German translations — BOTTEU
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: de\n"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Bots"
+msgstr "Bots"
+
+msgid "Backtest"
+msgstr "Backtest"
+
+msgid "Guides"
+msgstr "Anleitungen"
+
+msgid "Login"
+msgstr "Anmelden"
+
+msgid "Sign Up Free"
+msgstr "Kostenlos registrieren"
+
+msgid "Logout"
+msgstr "Abmelden"
+
+msgid "API Key"
+msgstr "API-Schlüssel"
+
+msgid "Telegram"
+msgstr "Telegram"
+
+msgid "Subscription"
+msgstr "Abonnement"
+
+msgid "Delete Account"
+msgstr "Konto löschen"
+
+msgid "Legal"
+msgstr "Rechtliches"
+
+msgid "Terms of Service"
+msgstr "Nutzungsbedingungen"
+
+msgid "Privacy Policy"
+msgstr "Datenschutzrichtlinie"
+
+msgid "Risk Disclaimer"
+msgstr "Risikohinweis"
+
+msgid "Support"
+msgstr "Support"
+
+msgid "Guides & Tutorials"
+msgstr "Anleitungen & Tutorials"
+
+msgid "All rights reserved."
+msgstr "Alle Rechte vorbehalten."
+
+msgid "Trading involves risk. Past performance is not indicative of future results."
+msgstr "Handel birgt Risiken. Vergangene Performance ist kein Indikator für zukünftige Ergebnisse."
+
+msgid "Create Account"
+msgstr "Konto erstellen"
+
+msgid "Email Address"
+msgstr "E-Mail-Adresse"
+
+msgid "Password"
+msgstr "Passwort"
+
+msgid "Confirm Password"
+msgstr "Passwort bestätigen"
+
+msgid "min 8 characters"
+msgstr "mind. 8 Zeichen"
+
+msgid "Remember me"
+msgstr "Angemeldet bleiben"
+
+msgid "Algorithm"
+msgstr "Algorithmus"
+
+msgid "Trading Pair"
+msgstr "Handelspaar"
+
+msgid "Bot Name"
+msgstr "Bot-Name"
+
+msgid "Position Size (USDT)"
+msgstr "Positionsgröße (USDT)"
+
+msgid "Create Bot"
+msgstr "Bot erstellen"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "New Bot"
+msgstr "Neuer Bot"
+
+msgid "Total Bots"
+msgstr "Bots gesamt"
+
+msgid "Running"
+msgstr "Aktiv"
+
+msgid "Total P&L"
+msgstr "Gesamtgewinn/-verlust"
+
+msgid "Recent Trades"
+msgstr "Letzte Trades"
+
+msgid "Configuration"
+msgstr "Konfiguration"
+
+msgid "Run Backtest"
+msgstr "Backtest starten"
+
+msgid "Trades"
+msgstr "Trades"
+
+msgid "Win Rate"
+msgstr "Trefferquote"
+
+msgid "Total Return"
+msgstr "Gesamtrendite"
+
+msgid "Max Drawdown"
+msgstr "Max. Drawdown"
+
+msgid "Not financial advice. All trading involves risk."
+msgstr "Keine Finanzberatung. Jeder Handel birgt Risiken."
+
+msgid "Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade."
+msgstr "Automatisieren Sie Ihren Binance-Spot-Handel mit MA-Crossover- und RSI-Strategien. Backtest mit echten historischen Daten. Telegram-Benachrichtigungen für jeden Trade."
+
+msgid "Get Started Free"
+msgstr "Kostenlos starten"
+
+msgid "Try Backtest"
+msgstr "Backtest ausprobieren"
+
+msgid "month"
+msgstr "Monat"
+
+msgid "Unlimited Bots"
+msgstr "Unbegrenzte Bots"
+
+msgid "Unlimited Pairs"
+msgstr "Unbegrenzte Paare"
+
+msgid "Priority Support"
+msgstr "Prioritäts-Support"
+
+msgid "All future algorithms"
+msgstr "Alle zukünftigen Algorithmen"
+
+msgid "No commission on profits"
+msgstr "Keine Gewinnbeteiligung"
+
+msgid "Popular"
+msgstr "Beliebt"
+
+msgid "Start Pro Trial"
+msgstr "Pro-Testversion starten"
+
+msgid "Get Started"
+msgstr "Jetzt starten"

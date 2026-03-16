@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Login') }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="card bg-dark border-secondary shadow-lg">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center"><i class="bi bi-person-circle text-success me-2"></i>{{ _('Login') }}</h4>
+        <form method="POST" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">{{ _('Email') }}</label>
+            <input type="email" name="email" class="form-control" required autocomplete="email">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ _('Password') }}</label>
+            <input type="password" name="password" class="form-control" required autocomplete="current-password">
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="remember" id="remember">
+            <label class="form-check-label text-muted" for="remember">{{ _('Remember me') }}</label>
+          </div>
+          <button type="submit" class="btn btn-success w-100">{{ _('Login') }}</button>
+        </form>
+        <hr class="border-secondary">
+        <p class="text-center text-muted small mb-0">
+          {{ _("Don't have an account?") }} <a href="{{ url_for('auth.register') }}" class="text-success">{{ _('Sign up free') }}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

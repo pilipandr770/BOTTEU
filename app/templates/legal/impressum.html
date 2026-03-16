@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Impressum{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-7">
+<div class="card bg-dark border-secondary">
+  <div class="card-header fw-bold">Impressum <small class="text-muted">({{ _('Legal Notice') }})</small></div>
+  <div class="card-body text-muted">
+    <p class="text-light small">{{ _('Information according to § 5 TMG (German Telemedia Act)') }}</p>
+
+    <h6 class="text-white">{{ _('Company') }}</h6>
+    <p>BOTTEU<br>
+    [{{ _('Street, House Number') }}]<br>
+    [PLZ] [{{ _('City') }}], {{ _('Germany') }}<br>
+    Email: contact@botteu.io</p>
+
+    <h6 class="text-white mt-3">{{ _('Represented by') }}</h6>
+    <p>[{{ _('Full Name of Director/Owner') }}]</p>
+
+    <h6 class="text-white mt-3">{{ _('Register Entry') }}</h6>
+    <p>{{ _('Registration court:') }} [Amtsgericht]<br>
+    {{ _('Registration number:') }} [HRB XXXXX]</p>
+
+    <h6 class="text-white mt-3">{{ _('VAT ID') }}</h6>
+    <p>{{ _('VAT identification number according to § 27a UStG:') }} DE[XXXXXXXXX]</p>
+
+    <h6 class="text-white mt-3">{{ _('Responsible for Content') }}</h6>
+    <p>{{ _('According to § 55 Abs. 2 RStV:') }}<br>
+    [{{ _('Full Name') }}]<br>
+    [{{ _('Address') }}]</p>
+
+    <h6 class="text-white mt-3">{{ _('Dispute Resolution') }}</h6>
+    <p>{{ _('The European Commission provides an online dispute resolution (ODR) platform:') }}
+    <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener" class="text-success">https://ec.europa.eu/consumers/odr</a></p>
+    <p>{{ _('We are not willing or obligated to participate in dispute resolution proceedings before a consumer arbitration board.') }}</p>
+
+    <hr class="border-secondary">
+    <p class="small text-muted">{{ _('Liability for content') }}: {{ _('The content of our pages was created with the utmost care. However, we cannot guarantee the accuracy, completeness or timeliness of the content.') }}</p>
+  </div>
+</div>
+</div>
+</div>
+{% endblock %}

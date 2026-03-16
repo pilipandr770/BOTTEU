@@ -1,0 +1,70 @@
+/* BOTTEU — Custom Styles (Dark Trading Theme) */
+
+:root {
+  --bs-body-bg: #0a0e14;
+  --bs-body-color: #e0e0e0;
+  --color-green: #00c96f;
+  --color-red: #ff4757;
+  --color-card-bg: #111827;
+}
+
+body {
+  background-color: var(--bs-body-bg);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Cards */
+.card {
+  background-color: var(--color-card-bg) !important;
+  border-radius: 10px;
+}
+
+/* Navbar brand */
+.navbar-brand {
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+}
+
+/* Tables */
+.table-dark th {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #aaa;
+}
+
+/* Sidebar sticky */
+@media (min-width: 992px) {
+  .sticky-sidebar { position: sticky; top: 80px; }
+}
+
+/* Plotly chart transparent bg */
+.js-plotly-plot .plotly .main-svg {
+  background: transparent !important;
+}
+
+/* Code blocks */
+code {
+  color: var(--color-green);
+  background: rgba(0, 201, 111, .08);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Status badges */
+.badge-running  { background-color: #00c96f; }
+.badge-stopped  { background-color: #4a4a4a; }
+.badge-error    { background-color: var(--color-red); }
+
+/* Alert warning override */
+.alert-warning { border-color: #ffc107; background-color: rgba(255,193,7,.08); color: #ffd966; }
+
+/* Smooth link underline */
+a { transition: opacity .15s; }
+a:hover { opacity: .85; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Privacy Policy') }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h2 class="fw-bold mb-1">{{ _('Privacy Policy') }}</h2>
+    <p class="text-muted small mb-4">{{ _('Last updated: March 2026 — compliant with GDPR (EU) 2016/679') }}</p>
+
+    <div class="card bg-dark border-secondary mb-3">
+      <div class="card-body">
+
+        <h5>1. {{ _('Controller') }}</h5>
+        <p class="text-muted small">
+          {{ _('The data controller responsible for this website is listed in our') }}
+          <a href="{{ url_for('legal.impressum') }}">Impressum</a>.
+        </p>
+
+        <h5>2. {{ _('Data We Collect') }}</h5>
+        <ul class="text-muted small">
+          <li><strong>{{ _('Account data:') }}</strong> {{ _('Email address, bcrypt-hashed password, registration timestamp.') }}</li>
+          <li><strong>{{ _('API credentials:') }}</strong> {{ _('Binance API key and secret, stored AES-128 encrypted. Never transmitted in plain text.') }}</li>
+          <li><strong>{{ _('Trading data:') }}</strong> {{ _('Bot configuration, trade history (symbol, price, quantity, P&L), algorithm parameters.') }}</li>
+          <li><strong>{{ _('Telegram:') }}</strong> {{ _('Telegram chat ID (if you choose to link your account).') }}</li>
+          <li><strong>{{ _('Payment data:') }}</strong> {{ _('Payment processing is handled by Stripe. We do not store card numbers. We receive subscription status and Stripe customer ID.') }}</li>
+          <li><strong>{{ _('Technical data:') }}</strong> {{ _('IP address in server logs (max. 7 days retention), session cookies.') }}</li>
+        </ul>
+
+        <h5>3. {{ _('Legal Basis (GDPR Art. 6)') }}</h5>
+        <ul class="text-muted small">
+          <li><strong>Art. 6(1)(b):</strong> {{ _('Contract performance — to provide the trading bot service you signed up for.') }}</li>
+          <li><strong>Art. 6(1)(a):</strong> {{ _('Consent — for marketing emails and optional Telegram notifications (withdraw anytime).') }}</li>
+          <li><strong>Art. 6(1)(f):</strong> {{ _('Legitimate interest — fraud prevention, service security, aggregate analytics.') }}</li>
+          <li><strong>Art. 6(1)(c):</strong> {{ _('Legal obligation — tax/invoicing records for paid subscriptions.') }}</li>
+        </ul>
+
+        <h5>4. {{ _('Cookies') }}</h5>
+        <p class="text-muted small">{{ _('We use the following cookies:') }}</p>
+        <div class="table-responsive">
+          <table class="table table-dark table-sm table-bordered small">
+            <thead class="table-secondary"><tr><th>{{ _('Cookie') }}</th><th>{{ _('Purpose') }}</th><th>{{ _('Duration') }}</th></tr></thead>
+            <tbody>
+              <tr><td><code>session</code></td><td>{{ _('Authentication session (required)') }}</td><td>{{ _('Browser session') }}</td></tr>
+              <tr><td><code>lang</code></td><td>{{ _('Language preference (required)') }}</td><td>{{ _('1 year') }}</td></tr>
+              <tr><td><code>cookie_consent</code></td><td>{{ _('Records your cookie consent') }}</td><td>{{ _('1 year') }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted small">{{ _('We do not use third-party tracking or advertising cookies.') }}</p>
+
+        <h5>5. {{ _('Data Sharing') }}</h5>
+        <p class="text-muted small">
+          {{ _('We do not sell your data. We share data only with:') }}
+        </p>
+        <ul class="text-muted small">
+          <li><strong>Stripe Inc.</strong> — {{ _('payment processing (USA, adequacy decision / SCCs apply).') }}</li>
+          <li><strong>Binance</strong> — {{ _('your API key is sent only when placing actual trades on your behalf.') }}</li>
+          <li><strong>Telegram</strong> — {{ _('only if you link your account; limited to notification messages.') }}</li>
+          <li><strong>{{ _('Hosting provider') }}</strong> — {{ _('server infrastructure in the EU.') }}</li>
+        </ul>
+
+        <h5>6. {{ _('Your Rights (GDPR Art. 15–22)') }}</h5>
+        <ul class="text-muted small">
+          <li><strong>{{ _('Access (Art. 15):') }}</strong> {{ _('Request a copy of all data we hold about you.') }}</li>
+          <li><strong>{{ _('Rectification (Art. 16):') }}</strong> {{ _('Correct inaccurate data.') }}</li>
+          <li><strong>{{ _('Erasure (Art. 17):') }}</strong> {{ _('Delete your account — your personal data will be anonymized.') }}</li>
+          <li><strong>{{ _('Portability (Art. 20):') }}</strong> {{ _('Export your data in machine-readable format.') }}</li>
+          <li><strong>{{ _('Objection (Art. 21):') }}</strong> {{ _('Object to processing based on legitimate interest.') }}</li>
+          <li><strong>{{ _('Right to complain:') }}</strong> {{ _('File a complaint with the supervisory authority in your EU member state.') }}</li>
+        </ul>
+        <p class="text-muted small">
+          {{ _('To exercise your rights, use the "Delete Account" feature in your profile or contact us via the Impressum.') }}
+        </p>
+
+        <h5>7. {{ _('Data Retention') }}</h5>
+        <ul class="text-muted small">
+          <li>{{ _('Account data: retained until account deletion, then anonymized immediately.') }}</li>
+          <li>{{ _('Trade records: anonymized aggregate records retained for up to 3 years for financial integrity.') }}</li>
+          <li>{{ _('Server logs: max. 7 days.') }}</li>
+          <li>{{ _('Invoices: 10 years per German tax law (§147 AO).') }}</li>
+        </ul>
+
+        <h5>8. {{ _('Security') }}</h5>
+        <p class="text-muted small">
+          {{ _('We implement TLS encryption in transit, AES-128 encryption at rest for API keys, bcrypt password hashing, rate limiting, CSRF protection, and Content Security Policy headers. No security measure is 100%% guaranteed.') }}
+        </p>
+
+        <h5>9. {{ _('Changes') }}</h5>
+        <p class="text-muted small">
+          {{ _('We will notify registered users by email of material changes to this policy at least 14 days in advance.') }}
+        </p>
+
+      </div>
+    </div>
+
+    <div class="d-flex gap-3 text-muted small justify-content-center">
+      <a href="{{ url_for('legal.terms') }}" class="text-muted">{{ _('Terms of Service') }}</a>
+      <span>·</span>
+      <a href="{{ url_for('legal.impressum') }}" class="text-muted">{{ _('Impressum') }}</a>
+      <span>·</span>
+      <a href="{{ url_for('legal.disclaimer') }}" class="text-muted">{{ _('Risk Disclaimer') }}</a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

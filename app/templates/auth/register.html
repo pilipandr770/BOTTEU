@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Create Account') }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card bg-dark border-secondary shadow-lg">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center"><i class="bi bi-person-plus text-success me-2"></i>{{ _('Create Account') }}</h4>
+        <form method="POST" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">{{ _('Email Address') }}</label>
+            <input type="email" name="email" class="form-control" required autocomplete="email">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ _('Password') }} <small class="text-muted">({{ _('min 8 characters') }})</small></label>
+            <input type="password" name="password" class="form-control" minlength="8" required autocomplete="new-password">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ _('Confirm Password') }}</label>
+            <input type="password" name="confirm_password" class="form-control" required autocomplete="new-password">
+          </div>
+
+          <!-- Risk Disclaimer -->
+          <div class="alert alert-warning small p-2">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            {{ _('Cryptocurrency trading is highly speculative and involves substantial risk. You may lose all your invested capital. BOTTEU does not provide financial advice.') }}
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="risk_disclaimer" id="risk_disclaimer" required>
+            <label class="form-check-label small" for="risk_disclaimer">
+              {{ _('I have read and accept the') }}
+              <a href="{{ url_for('legal.disclaimer') }}" target="_blank" class="text-warning">{{ _('Risk Disclaimer') }}</a>,
+              <a href="{{ url_for('legal.terms') }}" target="_blank" class="text-info">{{ _('Terms of Service') }}</a>
+              {{ _('and') }}
+              <a href="{{ url_for('legal.privacy') }}" target="_blank" class="text-info">{{ _('Privacy Policy') }}</a>.
+              {{ _('I understand trading involves risk.') }}
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100">{{ _('Create Account') }}</button>
+        </form>
+        <hr class="border-secondary">
+        <p class="text-center text-muted small mb-0">
+          {{ _('Already have an account?') }} <a href="{{ url_for('auth.login') }}" class="text-success">{{ _('Login') }}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

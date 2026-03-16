@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Risk Disclaimer') }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-8">
+<div class="card bg-dark border-warning">
+  <div class="card-header text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ _('Risk Disclaimer') }}</div>
+  <div class="card-body text-muted">
+    <p class="text-light">{{ _('Last updated: March 2026') }}</p>
+
+    <p><strong class="text-warning">{{ _('IMPORTANT — READ CAREFULLY') }}</strong></p>
+
+    <p>{{ _('Trading in cryptocurrencies involves substantial risk. The value of cryptocurrencies can go up or down, and there is a significant risk that you may lose all of your invested capital. You should only trade with money you can afford to lose entirely.') }}</p>
+
+    <h6 class="text-white mt-4">{{ _('No Financial Advice') }}</h6>
+    <p>{{ _('BOTTEU is a software tool that automates trading strategies. Nothing on this platform constitutes financial, investment, legal, or tax advice. We are not a licensed financial advisor, broker, or investment firm. All trading decisions are made at your own discretion and risk.') }}</p>
+
+    <h6 class="text-white mt-4">{{ _('Algorithm Risk') }}</h6>
+    <p>{{ _('The trading algorithms provided (MA Crossover, RSI) are based on technical indicators. Technical analysis cannot predict future market movements. Past backtest performance does not guarantee future results. Strategies may perform differently in live market conditions due to slippage, fees, liquidity, and market volatility.') }}</p>
+
+    <h6 class="text-white mt-4">{{ _('API Key Risk') }}</h6>
+    <p>{{ _('You are responsible for securing your Binance API keys. BOTTEU encrypts your keys — however, you must also restrict API permissions on Binance: enable only Spot Trading, add IP restrictions, and never enable withdrawal permissions.') }}</p>
+
+    <h6 class="text-white mt-4">{{ _('Platform Risk') }}</h6>
+    <p>{{ _('BOTTEU may experience technical issues, downtime, or bugs. In the event of a technical failure, trades may not be executed as expected. Always monitor your open positions.') }}</p>
+
+    <h6 class="text-white mt-4">{{ _('By Using This Service') }}</h6>
+    <p>{{ _('By registering and using BOTTEU, you confirm that:') }}</p>
+    <ul>
+      <li>{{ _('You are at least 18 years old') }}</li>
+      <li>{{ _('Cryptocurrency trading is legal in your jurisdiction') }}</li>
+      <li>{{ _('You understand and accept all risks described above') }}</li>
+      <li>{{ _('You will not hold BOTTEU liable for any trading losses') }}</li>
+    </ul>
+
+    <div class="alert alert-danger mt-4">
+      <strong>{{ _('BOTTEU is not responsible for any financial losses resulting from the use of this platform.') }}</strong>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Admin — Users{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3 class="fw-bold"><i class="bi bi-people text-warning me-2"></i>All Users</h3>
+  <a href="{{ url_for('admin.index') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Dashboard
+  </a>
+</div>
+
+<div class="card bg-dark border-secondary">
+  <div class="table-responsive">
+    <table class="table table-dark table-hover align-middle mb-0 small">
+      <thead class="table-secondary">
+        <tr>
+          <th>ID</th><th>Email</th><th>Verified</th><th>Admin</th><th>Plan</th>
+          <th>Bots</th><th>Registered</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="text-muted">{{ u.id }}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            {% if u.is_verified %}<span class="badge bg-success">✓ Verified</span>
+            {% else %}<span class="badge bg-secondary">Unverified</span>{% endif %}
+          </td>
+          <td>
+            {% if u.is_admin %}<span class="badge bg-warning text-dark"><i class="bi bi-shield-fill"></i> Admin</span>
+            {% else %}<span class="badge bg-secondary">User</span>{% endif %}
+          </td>
+          <td>
+            {% if u.subscription and u.subscription.plan.value == 'pro' %}
+              <span class="badge bg-success">Pro</span>
+            {% else %}
+              <span class="badge bg-secondary">Free</span>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ u.bots|length }}</td>
+          <td class="text-muted">{{ u.created_at.strftime('%d.%m.%Y') }}</td>
+          <td>
+            {% if u.id != current_user.id %}
+            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=u.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm {{ 'btn-outline-secondary' if u.is_admin else 'btn-outline-warning' }}"
+                      title="{{ 'Revoke Admin' if u.is_admin else 'Grant Admin' }}">
+                <i class="bi bi-shield{{ '-slash' if u.is_admin else '' }}"></i>
+              </button>
+            </form>
+            {% else %}
+            <span class="text-muted small">You</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-3">No users.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

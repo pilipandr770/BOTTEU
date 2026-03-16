@@ -1,0 +1,222 @@
+"""
+Backtesting blueprint.
+Uses yfinance (works from Germany — bypasses Binance geo-restriction).
+Runs selected algorithm on historical OHLCV, returns Plotly chart + stats.
+"""
+import json
+import logging
+from datetime import datetime
+
+import pandas as pd
+import plotly.graph_objects as go
+import yfinance as yf
+from flask import Blueprint, render_template, request, jsonify
+from flask_login import login_required, current_user
+
+from app.algorithms.base import list_algorithms, get_algorithm
+
+logger = logging.getLogger(__name__)
+
+backtest_bp = Blueprint("backtest", __name__, url_prefix="/backtest")
+
+# Binance symbol → Yahoo Finance ticker
+def _to_yahoo_ticker(symbol: str) -> str:
+    """Convert BTCUSDT → BTC-USDT for Yahoo Finance."""
+    symbol = symbol.upper()
+    for quote in ("USDT", "BTC", "ETH", "BNB", "BUSD"):
+        if symbol.endswith(quote):
+            base = symbol[: -len(quote)]
+            return f"{base}-{quote}"
+    return symbol  # fallback
+
+
+@backtest_bp.route("/")
+@login_required
+def index():
+    algorithms = list_algorithms()
+    return render_template("backtest/index.html", algorithms=algorithms)
+
+
+@backtest_bp.route("/run", methods=["POST"])
+@login_required
+def run():
+    data = request.get_json(silent=True) or {}
+    symbol = data.get("symbol", "BTC-USDT").strip().upper()
+    start_date = data.get("start_date", "")
+    end_date = data.get("end_date", "")
+    algorithm_key = data.get("algorithm", "ma_crossover")
+    params = data.get("params", {})
+    interval = data.get("interval", "1d")
+
+    # ── Fetch historical data ─────────────────────────────────────────────
+    yahoo_ticker = _to_yahoo_ticker(symbol)
+    try:
+        df = yf.download(
+            yahoo_ticker,
+            start=start_date or None,
+            end=end_date or None,
+            interval=interval,
+            progress=False,
+            auto_adjust=True,
+        )
+    except Exception as exc:
+        return jsonify({"error": f"Failed to download data: {exc}"}), 500
+
+    if df is None or df.empty:
+        return jsonify({"error": f"No data found for {yahoo_ticker}. Check the symbol or date range."}), 404
+
+    # ── Normalize columns (yfinance 0.2.x returns MultiIndex) ────────────
+    if isinstance(df.columns, pd.MultiIndex):
+        # ('Close', 'BTC-USD') → 'close'
+        df.columns = [col[0].lower() for col in df.columns]
+    else:
+        df.columns = [c.lower() for c in df.columns]
+
+    # auto_adjust=True: column is 'close', not 'adj close'
+    if "adj close" in df.columns:
+        df = df.rename(columns={"adj close": "close"})
+
+    required = [c for c in ["open", "high", "low", "close", "volume"] if c in df.columns]
+    df = df[required].dropna().reset_index()
+    # Rename date index regardless of DatetimeIndex name
+    date_col = df.columns[0]
+    df = df.rename(columns={date_col: "date"})
+
+    # ── Run algorithm ─────────────────────────────────────────────────────
+    try:
+        strategy = get_algorithm(algorithm_key)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    state: dict = {}
+    trades = []
+    equity = 1000.0  # virtual starting capital in USDT
+    equity_curve = []
+    has_position = False
+    entry_price = 0.0
+    entry_idx = 0
+
+    for i in range(len(df)):
+        window = df.iloc[: i + 1]
+        signal, state = strategy.generate_signal(window.copy(), state, params)
+
+        current_close = float(df["close"].iloc[i])
+        date_val = str(df.iloc[i].get("date", i))[:10]
+
+        if signal == "BUY" and not has_position:
+            has_position = True
+            entry_price = current_close
+            entry_idx = i
+            trades.append({
+                "type": "BUY",
+                "date": date_val,
+                "price": round(entry_price, 6),
+                "idx": i,
+            })
+
+        elif signal == "SELL" and has_position:
+            has_position = False
+            exit_price = current_close
+            pnl_pct = (exit_price - entry_price) / entry_price * 100
+            equity *= 1 + pnl_pct / 100
+            reason = state.get("exit_reason", "SIGNAL")
+            trades.append({
+                "type": "SELL",
+                "date": date_val,
+                "price": round(exit_price, 6),
+                "idx": i,
+                "pnl_pct": round(pnl_pct, 2),
+                "reason": reason,
+            })
+
+        equity_curve.append({"date": date_val, "equity": round(equity, 2)})
+
+    # ── Build Plotly chart ────────────────────────────────────────────────
+    buy_dates = [t["date"] for t in trades if t["type"] == "BUY"]
+    buy_prices = [t["price"] for t in trades if t["type"] == "BUY"]
+    sell_dates = [t["date"] for t in trades if t["type"] == "SELL"]
+    sell_prices = [t["price"] for t in trades if t["type"] == "SELL"]
+
+    dates = df.get("date", df.get("index", pd.RangeIndex(len(df)))).astype(str).tolist()
+
+    fig = go.Figure()
+
+    # Candlestick
+    fig.add_trace(go.Candlestick(
+        x=dates,
+        open=df["open"].tolist(),
+        high=df["high"].tolist(),
+        low=df["low"].tolist(),
+        close=df["close"].tolist(),
+        name="Price",
+        increasing_line_color="#26a69a",
+        decreasing_line_color="#ef5350",
+    ))
+
+    # BUY markers
+    if buy_dates:
+        fig.add_trace(go.Scatter(
+            x=buy_dates, y=buy_prices,
+            mode="markers",
+            marker=dict(symbol="triangle-up", size=14, color="#00e676"),
+            name="BUY",
+        ))
+
+    # SELL markers
+    if sell_dates:
+        fig.add_trace(go.Scatter(
+            x=sell_dates, y=sell_prices,
+            mode="markers",
+            marker=dict(symbol="triangle-down", size=14, color="#ff1744"),
+            name="SELL",
+        ))
+
+    fig.update_layout(
+        template="plotly_dark",
+        xaxis_rangeslider_visible=False,
+        height=520,
+        margin=dict(l=0, r=0, t=30, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+
+    # ── Stats ─────────────────────────────────────────────────────────────
+    sell_trades = [t for t in trades if t["type"] == "SELL"]
+    wins = [t for t in sell_trades if t.get("pnl_pct", 0) > 0]
+    win_rate = (len(wins) / len(sell_trades) * 100) if sell_trades else 0
+
+    # Compound total return from equity curve (correct method)
+    total_return = (equity - 1000.0) / 1000.0 * 100
+
+    # Exit reason breakdown
+    exit_reasons: dict = {}
+    for t in sell_trades:
+        r = t.get("reason", "SIGNAL")
+        exit_reasons[r] = exit_reasons.get(r, 0) + 1
+
+    # Max drawdown
+    eq_vals = [e["equity"] for e in equity_curve]
+    max_dd = 0.0
+    if eq_vals:
+        peak = eq_vals[0]
+        for v in eq_vals:
+            peak = max(peak, v)
+            dd = (peak - v) / peak * 100
+            max_dd = max(max_dd, dd)
+
+    stats = {
+        "total_trades": len(sell_trades),
+        "win_rate": round(win_rate, 1),
+        "total_return_pct": round(total_return, 2),
+        "max_drawdown_pct": round(max_dd, 2),
+        "final_equity": round(equity, 2),
+        "exit_reasons": exit_reasons,
+    }
+
+    return jsonify({
+        "chart": fig.to_json(),
+        "trades": trades[-50:],  # last 50 for table
+        "stats": stats,
+        "equity_curve": equity_curve[-200:],
+    })

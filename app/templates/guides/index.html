@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Guides & Tutorials') }}{% endblock %}
+{% block content %}
+<h3 class="fw-bold mb-4"><i class="bi bi-book text-info me-2"></i>{{ _('Guides & Tutorials') }}</h3>
+
+<div class="row g-4">
+
+  <!-- Getting Started -->
+  <div class="col-lg-6">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-header text-success fw-semibold"><i class="bi bi-1-circle me-2"></i>{{ _('Getting Started') }}</div>
+      <div class="card-body">
+        <ol class="list-group list-group-numbered list-group-flush">
+          <li class="list-group-item bg-transparent text-light border-secondary">
+            <strong>{{ _('Create a Binance Account') }}</strong><br>
+            <small class="text-muted">{{ _('Register at') }} <a href="https://www.binance.com/en/register" target="_blank" rel="noopener" class="text-success">binance.com</a>. {{ _('Complete KYC (ID verification) to enable Spot trading.') }}</small>
+          </li>
+          <li class="list-group-item bg-transparent text-light border-secondary">
+            <strong>{{ _('Generate API Key') }}</strong><br>
+            <small class="text-muted">{{ _('Account → API Management → Create API.') }}
+              <a href="https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072" target="_blank" rel="noopener" class="text-success">{{ _('Official Guide') }} ↗</a>
+            </small>
+          </li>
+          <li class="list-group-item bg-transparent text-light border-secondary">
+            <strong>{{ _('Configure API Permissions') }}</strong><br>
+            <small class="text-muted">
+              ✅ {{ _('Enable Spot & Margin Trading') }}<br>
+              ✅ {{ _('Enable Reading') }}<br>
+              ❌ {{ _('Do NOT enable Futures, Margin Loan, or Withdrawals') }}<br>
+              ✅ {{ _('Add your bot server IP to whitelist (security!)') }}
+            </small>
+          </li>
+          <li class="list-group-item bg-transparent text-light border-secondary">
+            <strong>{{ _('Add API Key to BOTTEU') }}</strong><br>
+            <small class="text-muted">{{ _('Go to Bots → API Key, paste your Key and Secret, then click Test Connection.') }}</small>
+          </li>
+          <li class="list-group-item bg-transparent text-light border-secondary">
+            <strong>{{ _('Create Your First Bot') }}</strong><br>
+            <small class="text-muted">{{ _('Go to Bots → Create Bot. Choose a pair, select an algorithm, configure parameters and press Create.') }}</small>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Algorithms -->
+  <div class="col-lg-6">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-header text-warning fw-semibold"><i class="bi bi-activity me-2"></i>{{ _('Algorithms Explained') }}</div>
+      <div class="card-body">
+
+        <h6 class="text-success">MA Crossover (MA7 × MA25)</h6>
+        <p class="text-muted small">
+          {{ _('Moving Average Crossover compares a fast (MA7) and slow (MA25) simple moving average.') }}
+          <br>🟢 <strong>BUY</strong>: {{ _('Fast MA crosses ABOVE Slow MA (golden cross)') }}
+          <br>🔴 <strong>SELL</strong>: {{ _('Fast MA crosses BELOW Slow MA (death cross)') }}
+          <br>{{ _('Suitable for trending markets. Can add optional Stop-Loss and Trailing TP for extra protection.') }}
+        </p>
+        <a href="https://www.investopedia.com/terms/g/goldencross.asp" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success mb-3">
+          <i class="bi bi-link-45deg me-1"></i>{{ _('Learn more on Investopedia') }} ↗
+        </a>
+
+        <h6 class="text-warning">RSI (Relative Strength Index)</h6>
+        <p class="text-muted small">
+          {{ _('RSI measures momentum on a 0–100 scale.') }}
+          <br>🟢 <strong>BUY</strong>: {{ _('RSI falls below Oversold level (30 or 20) — asset is oversold') }}
+          <br>🔴 <strong>SELL</strong>: {{ _('RSI rises above Overbought level (70 or 80) — asset is overbought') }}
+          <br>⚠️ {{ _('Stop-Loss is REQUIRED for RSI since the signal has no inherent price-based exit.') }}
+        </p>
+        <a href="https://www.investopedia.com/terms/r/rsi.asp" target="_blank" rel="noopener" class="btn btn-sm btn-outline-warning mb-3">
+          <i class="bi bi-link-45deg me-1"></i>{{ _('Learn RSI on Investopedia') }} ↗
+        </a>
+
+        <h6 class="text-info">{{ _('Trailing Take-Profit') }}</h6>
+        <p class="text-muted small">
+          {{ _('Trailing TP locks in profits automatically. After entry, it tracks the highest price reached. When price drops by the configured %% from that peak, the bot sells.') }}
+          <br>{{ _('Example: Entry at 40,000 USDT, price rises to 42,000, Trailing TP = 1%%. Bot sells if price drops to 41,580.') }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backtest Guide -->
+  <div class="col-lg-6">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header text-info fw-semibold"><i class="bi bi-graph-up-arrow me-2"></i>{{ _('How to Use Backtesting') }}</div>
+      <div class="card-body text-muted small">
+        <ol>
+          <li>{{ _('Go to the Backtest page.') }}</li>
+          <li>{{ _('Enter a Yahoo Finance symbol (e.g. BTC-USDT, ETH-USDT, AAPL).') }}</li>
+          <li>{{ _('Select a date range and interval (1d recommended for daily).') }}</li>
+          <li>{{ _('Choose your algorithm and configure parameters.') }}</li>
+          <li>{{ _('Press Run Backtest — data loads from Yahoo Finance (works in Germany!).') }}</li>
+          <li>{{ _('Review the chart: green ▲ = BUY, red ▼ = SELL. Check Win Rate and Max Drawdown.') }}</li>
+        </ol>
+        <div class="alert alert-warning small p-2 mt-2">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>
+          {{ _('Backtest results do NOT guarantee future performance. Markets change. Always test with small amounts first.') }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Telegram Guide -->
+  <div class="col-lg-6">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header text-primary fw-semibold"><i class="bi bi-telegram me-2"></i>{{ _('Telegram Notifications Setup') }}</div>
+      <div class="card-body text-muted small">
+        <ol>
+          <li>{{ _('Go to Bots → Telegram in your cabinet.') }}</li>
+          <li>{{ _('Click "Generate Code" to get your 6-digit link code.') }}</li>
+          <li>{{ _('Open Telegram and search for') }} <code>@BOTTEU_bot</code>.</li>
+          <li>{{ _('Send') }} <code>/start 123456</code> {{ _('(replace with your code).') }}</li>
+          <li>{{ _('Done! You will receive a confirmation message.') }}</li>
+        </ol>
+        <p>{{ _('Available commands in Telegram:') }}</p>
+        <ul>
+          <li><code>/status</code> — {{ _('List your bots') }}</li>
+          <li><code>/balance</code> — {{ _('Check Spot balance') }}</li>
+          <li><code>/start_bot 1</code> — {{ _('Start bot #1') }}</li>
+          <li><code>/stop_bot 1</code> — {{ _('Stop bot #1') }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

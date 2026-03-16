@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ _('My Bots') }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3 class="fw-bold"><i class="bi bi-cpu text-success me-2"></i>{{ _('My Bots') }}</h3>
+  <a href="{{ url_for('bots.create') }}" class="btn btn-success">
+    <i class="bi bi-plus-lg me-1"></i>{{ _('New Bot') }}
+  </a>
+</div>
+
+{% if not bots %}
+<div class="card bg-dark border-secondary text-center py-5">
+  <div class="card-body">
+    <i class="bi bi-cpu display-4 text-secondary mb-3 d-block"></i>
+    <h5 class="text-muted">{{ _('No bots yet') }}</h5>
+    <p class="text-muted mb-4">{{ _('Create your first automated trading bot to get started.') }}</p>
+    <a href="{{ url_for('bots.create') }}" class="btn btn-success">
+      <i class="bi bi-plus-lg me-1"></i>{{ _('Create Bot') }}
+    </a>
+  </div>
+</div>
+{% else %}
+<div class="row g-3">
+  {% for bot in bots %}
+  <div class="col-12">
+    <div class="card bg-dark border-secondary">
+      <div class="card-body">
+        <div class="row align-items-center">
+
+          <!-- Name & Symbol -->
+          <div class="col-md-3">
+            <div class="fw-semibold">{{ bot.name }}</div>
+            <code class="text-info small">{{ bot.symbol }}</code>
+          </div>
+
+          <!-- Algorithm & Params -->
+          <div class="col-md-2">
+            <span class="badge bg-secondary">{{ bot.algorithm }}</span>
+            <div class="text-muted small mt-1">{{ bot.timeframe }}</div>
+          </div>
+
+          <!-- Position size -->
+          <div class="col-md-2 text-muted small">
+            <i class="bi bi-wallet2 me-1"></i>{{ bot.position_size_usdt }} USDT
+          </div>
+
+          <!-- Status -->
+          <div class="col-md-2">
+            {% if bot.status.value == 'running' %}
+              <span class="badge bg-success fs-6">🟢 {{ _('Running') }}</span>
+            {% elif bot.status.value == 'error' %}
+              <span class="badge bg-danger fs-6" title="{{ bot.error_message }}">🔴 {{ _('Error') }}</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6">⚫ {{ _('Stopped') }}</span>
+            {% endif %}
+            {% if bot.last_run_at %}
+            <div class="text-muted" style="font-size:0.7rem;">
+              {{ bot.last_run_at.strftime('%d.%m %H:%M') }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="col-md-3 d-flex gap-2 justify-content-end">
+            <!-- Start / Stop -->
+            <form method="POST" action="{{ url_for('bots.toggle', bot_id=bot.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              {% if bot.status.value == 'running' %}
+                <button type="submit" class="btn btn-sm btn-warning" title="{{ _('Stop') }}">
+                  <i class="bi bi-stop-fill"></i>
+                </button>
+              {% else %}
+                <button type="submit" class="btn btn-sm btn-success" title="{{ _('Start') }}">
+                  <i class="bi bi-play-fill"></i>
+                </button>
+              {% endif %}
+            </form>
+
+            <!-- Details / Logs -->
+            <a href="{{ url_for('bots.detail', bot_id=bot.id) }}"
+               class="btn btn-sm btn-outline-info" title="{{ _('Stats & Logs') }}">
+              <i class="bi bi-bar-chart-line"></i>
+            </a>
+
+            <!-- Delete -->
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ bot.id }}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error message if any -->
+        {% if bot.status.value == 'error' and bot.error_message %}
+        <div class="alert alert-danger py-1 px-2 mt-2 mb-0 small">
+          <i class="bi bi-exclamation-triangle me-1"></i>{{ bot.error_message[:200] }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirm modal -->
+  <div class="modal fade" id="deleteModal{{ bot.id }}" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content bg-dark border-danger">
+        <div class="modal-header border-danger">
+          <h6 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>{{ _('Delete Bot') }}</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body small text-muted">
+          {{ _('Delete') }} <strong>{{ bot.name }}</strong>? {{ _('This cannot be undone.') }}
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+          <form method="POST" action="{{ url_for('bots.delete', bot_id=bot.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-danger">{{ _('Delete') }}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Orders history -->
+{% if orders %}
+<h5 class="fw-bold mt-5 mb-3"><i class="bi bi-receipt text-success me-2"></i>{{ _('Recent Trades') }}</h5>
+<div class="card bg-dark border-secondary">
+  <div class="table-responsive">
+    <table class="table table-dark table-hover align-middle mb-0 small">
+      <thead class="table-secondary">
+        <tr>
+          <th>{{ _('Time') }}</th>
+          <th>{{ _('Bot') }}</th>
+          <th>{{ _('Symbol') }}</th>
+          <th>{{ _('Side') }}</th>
+          <th>{{ _('Price') }}</th>
+          <th>{{ _('Qty') }}</th>
+          <th>{{ _('P&L') }}</th>
+          <th>{{ _('Exit') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td class="text-muted">{{ o.created_at.strftime('%d.%m %H:%M') }}</td>
+          <td>{{ o.bot.name if o.bot else '—' }}</td>
+          <td><code>{{ o.symbol }}</code></td>
+          <td>
+            <span class="badge {{ 'bg-success' if o.side == 'BUY' else 'bg-danger' }}">{{ o.side }}</span>
+          </td>
+          <td>{{ '%.4f'|format(o.price) }}</td>
+          <td>{{ '%.6f'|format(o.quantity) }}</td>
+          <td class="{{ 'text-success' if o.pnl_usdt and o.pnl_usdt >= 0 else 'text-danger' if o.pnl_usdt else 'text-muted' }}">
+            {% if o.pnl_usdt is not none %}{{ '{:+.4f}'.format(o.pnl_usdt) }}{% else %}—{% endif %}
+          </td>
+          <td>
+            {% if o.exit_reason %}
+              <span class="badge bg-secondary text-uppercase">{{ o.exit_reason.value }}</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-3">{{ _('No trades yet.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Create Bot') }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.module-card {
+  border: 2px solid var(--bs-border-color);
+  border-radius: .5rem;
+  transition: border-color .2s, background .2s;
+}
+.module-card.enabled {
+  border-color: #198754;
+  background: rgba(25, 135, 84, .07);
+}
+.module-card .module-body { display: none; }
+.module-card.enabled .module-body { display: block; }
+.module-card .module-header { user-select: none; cursor: pointer; }
+.logic-btn { min-width: 160px; text-align: left; }
+.logic-btn.active { font-weight: 600; }
+.section-label {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--bs-secondary);
+  text-transform: uppercase;
+  margin-bottom: .75rem;
+}
+.font-monospace { font-family: 'Courier New', monospace; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-8">
+
+  <h3 class="fw-bold mb-1"><i class="bi bi-cpu text-success me-2"></i>{{ _('Bot Constructor') }}</h3>
+  <p class="text-muted mb-4 small">{{ _('Assemble your bot from independent signal modules. Combine MA and RSI to build a more robust strategy.') }}</p>
+
+  <form method="POST" novalidate id="botForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- ── GENERAL ────────────────────────────────────────────────────── -->
+    <div class="card bg-dark border-secondary mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-info-circle me-2 text-info"></i>{{ _('General') }}
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label">{{ _('Bot Name') }}</label>
+            <input type="text" name="name" class="form-control"
+                   placeholder="{{ _('e.g. BTC Long Bot') }}" required maxlength="100">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ _('Trading Pair') }}</label>
+            {% if cached_symbols %}
+            <div class="d-flex gap-1 mb-1">
+              <button type="button" class="btn btn-outline-secondary btn-sm active" onclick="filterQuote(this,'')">All</button>
+              <button type="button" class="btn btn-outline-warning btn-sm" onclick="filterQuote(this,'USDT')">USDT</button>
+              <button type="button" class="btn btn-outline-info btn-sm" onclick="filterQuote(this,'USDC')">USDC</button>
+            </div>
+            <input type="text" id="symbolSearch" class="form-control font-monospace mb-1"
+                   placeholder="{{ _('Type to search…') }}" autocomplete="off">
+            <input type="hidden" name="symbol" id="symbolValue" required>
+            <select id="symbolList" class="form-select font-monospace" size="5"
+                    style="font-size:.82rem;" onchange="selectSymbol(this.value)">
+            </select>
+            <div id="symbolNone" class="text-muted small mt-1" style="display:none;">{{ _('No matches.') }}</div>
+            <div class="form-text">{{ _('Showing Binance spot pairs synced from your API key.') }}</div>
+            {% else %}
+            <input type="text" name="symbol" class="form-control font-monospace"
+                   placeholder="BTCUSDT" required maxlength="20"
+                   pattern="[A-Za-z0-9]+" title="{{ _('Spot pair, e.g. BTCUSDT') }}">
+            <div class="form-text text-warning">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              {{ _('No pairs synced yet.') }}
+              <a href="{{ url_for('bots.api_key') }}" class="text-info">{{ _('Test your API key') }}</a>
+              {{ _('to load available pairs.') }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">{{ _('Position Size (USDT)') }}</label>
+            <input type="number" name="position_size_usdt" class="form-control"
+                   value="50" min="10" step="1" required>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TIMEFRAME ──────────────────────────────────────────────────── -->
+    <div class="card bg-dark border-secondary mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-clock me-2 text-warning"></i>{{ _('Timeframe') }}
+      </div>
+      <div class="card-body">
+        <div class="row g-2 align-items-center">
+          <div class="col-auto">
+            <label class="form-label mb-0">{{ _('Candle interval') }}</label>
+          </div>
+          <div class="col-auto">
+            <select name="param_timeframe" class="form-select form-select-sm" style="width:auto;">
+              <option value="1m">1m</option>
+              <option value="5m">5m</option>
+              <option value="15m">15m</option>
+              <option value="30m">30m</option>
+              <option value="1h" selected>1h</option>
+              <option value="2h">2h</option>
+              <option value="4h">4h</option>
+              <option value="6h">6h</option>
+              <option value="1d">1d</option>
+            </select>
+          </div>
+          <div class="col">
+            <span class="text-muted small">{{ _('How often the bot reads the candle and evaluates signals.') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SIGNAL MODULES ─────────────────────────────────────────────── -->
+    <div class="card bg-dark border-secondary mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-layers me-2 text-success"></i>{{ _('Signal Modules') }}
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          {{ _('Enable one or both modules. Each module independently generates BUY / SELL signals.') }}
+        </p>
+        <div class="row g-3">
+
+          <!-- MA Crossover Card -->
+          <div class="col-md-6">
+            <div class="module-card enabled p-3" id="card-ma">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('ma')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-ma" name="modules" value="ma_crossover" checked>
+                <label class="form-check-label fw-semibold mb-0" for="mod-ma">
+                  <i class="bi bi-graph-up-arrow text-success me-1"></i>{{ _('MA Crossover') }}
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Buys on golden cross (fast MA crosses above slow). Sells on death cross.') }}
+                </p>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('Fast MA') }}</label>
+                    <input type="number" name="param_fast_ma"
+                           class="form-control form-control-sm" value="7" min="2" max="50">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('Slow MA') }}</label>
+                    <input type="number" name="param_slow_ma"
+                           class="form-control form-control-sm" value="25" min="5" max="200">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RSI Card -->
+          <div class="col-md-6">
+            <div class="module-card p-3" id="card-rsi">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('rsi')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-rsi" name="modules" value="rsi">
+                <label class="form-check-label fw-semibold mb-0" for="mod-rsi">
+                  <i class="bi bi-activity text-warning me-1"></i>{{ _('RSI') }}
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Buys when RSI bounces up through oversold. Sells when RSI enters overbought zone.') }}
+                </p>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('Period') }}</label>
+                    <input type="number" name="param_rsi_period"
+                           class="form-control form-control-sm" value="14" min="2" max="100">
+                  </div>
+                  <div class="col-3">
+                    <label class="form-label small">{{ _('Oversold') }}</label>
+                    <input type="number" name="param_oversold"
+                           class="form-control form-control-sm" value="30" min="5" max="49">
+                  </div>
+                  <div class="col-3">
+                    <label class="form-label small">{{ _('Overbought') }}</label>
+                    <input type="number" name="param_overbought"
+                           class="form-control form-control-sm" value="70" min="51" max="95">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /row -->
+
+        <!-- Entry logic — visible only when BOTH modules enabled -->
+        <div id="logicRow" class="mt-3 p-3 rounded border border-secondary" style="display:none;">
+          <div class="section-label">{{ _('Entry Logic — how to combine the two signals') }}</div>
+          <input type="hidden" name="param_entry_logic" id="entryLogicInput" value="OR">
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-outline-info logic-btn active" id="btn-or"
+                    onclick="setLogic('OR')">
+              <i class="bi bi-lightning me-1"></i>OR — {{ _('any signal fires') }}
+              <div class="small text-muted fw-normal">{{ _('More trades · aggressive') }}</div>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning logic-btn" id="btn-and"
+                    onclick="setLogic('AND')">
+              <i class="bi bi-check2-all me-1"></i>AND — {{ _('both signals agree') }}
+              <div class="small text-muted fw-normal">{{ _('Fewer trades · conservative') }}</div>
+            </button>
+          </div>
+        </div>
+
+        <div id="noModuleWarning" class="alert alert-danger mt-3 mb-0 py-2 small" style="display:none;">
+          <i class="bi bi-exclamation-triangle me-1"></i>{{ _('Enable at least one signal module.') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RISK MANAGEMENT ────────────────────────────────────────────── -->
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-shield-half me-2 text-danger"></i>{{ _('Risk Management') }}
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          {{ _('Applied to all active modules. The bot exits a position if any of these levels is hit.') }}
+        </p>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">
+              {{ _('Stop-Loss') }} %
+              <span id="slBadge" class="badge bg-danger ms-1 small" style="display:none;">{{ _('Required') }}</span>
+              <small class="text-muted" id="slOptional">({{ _('optional') }})</small>
+            </label>
+            <div class="input-group">
+              <input type="number" name="param_stop_loss_pct" id="slInput"
+                     class="form-control" placeholder="e.g. 2.5" step="0.1" min="0.1">
+              <span class="input-group-text">%</span>
+            </div>
+            <div class="form-text">{{ _('Exit if price drops this much from entry.') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ _('Take-Profit') }} % <small class="text-muted">({{ _('optional') }})</small></label>
+            <div class="input-group">
+              <input type="number" name="param_take_profit_pct"
+                     class="form-control" placeholder="e.g. 5.0" step="0.1" min="0.1">
+              <span class="input-group-text">%</span>
+            </div>
+            <div class="form-text">{{ _('Exit at fixed profit target.') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ _('Trailing TP') }} % <small class="text-muted">({{ _('optional') }})</small></label>
+            <div class="input-group">
+              <input type="number" name="param_trailing_tp_pct"
+                     class="form-control" placeholder="e.g. 1.5" step="0.1" min="0.1">
+              <span class="input-group-text">%</span>
+            </div>
+            <div class="form-text">{{ _('Exit if price drops this much from its peak.') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUBMIT ──────────────────────────────────────────────────────── -->
+    <div class="d-flex gap-2 mb-5">
+      <button type="submit" class="btn btn-success px-4" id="submitBtn">
+        <i class="bi bi-check-lg me-1"></i>{{ _('Create Bot') }}
+      </button>
+      <a href="{{ url_for('bots.index') }}" class="btn btn-outline-secondary">{{ _('Cancel') }}</a>
+    </div>
+
+  </form>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const modMA   = document.getElementById('mod-ma');
+const modRSI  = document.getElementById('mod-rsi');
+const cardMA  = document.getElementById('card-ma');
+const cardRSI = document.getElementById('card-rsi');
+const logicRow    = document.getElementById('logicRow');
+const noModWarn   = document.getElementById('noModuleWarning');
+const slBadge     = document.getElementById('slBadge');
+const slOptional  = document.getElementById('slOptional');
+const slInput     = document.getElementById('slInput');
+
+// Toggle a module card when clicking the card header
+function toggleModule(which) {
+  if (which === 'ma') {
+    modMA.checked = !modMA.checked;
+    cardMA.classList.toggle('enabled', modMA.checked);
+  } else {
+    modRSI.checked = !modRSI.checked;
+    cardRSI.classList.toggle('enabled', modRSI.checked);
+  }
+  updateUI();
+}
+
+// Let checkboxes also toggle (stop propagation so no double-fire)
+modMA.addEventListener('change', (e) => {
+  e.stopPropagation();
+  cardMA.classList.toggle('enabled', modMA.checked);
+  updateUI();
+});
+modRSI.addEventListener('change', (e) => {
+  e.stopPropagation();
+  cardRSI.classList.toggle('enabled', modRSI.checked);
+  updateUI();
+});
+
+function setLogic(val) {
+  document.getElementById('entryLogicInput').value = val;
+  document.getElementById('btn-or').classList.toggle('active', val === 'OR');
+  document.getElementById('btn-and').classList.toggle('active', val === 'AND');
+}
+
+function updateUI() {
+  const maOn  = modMA.checked;
+  const rsiOn = modRSI.checked;
+  const both  = maOn && rsiOn;
+  const none  = !maOn && !rsiOn;
+
+  logicRow.style.display   = both ? '' : 'none';
+  noModWarn.style.display  = none ? '' : 'none';
+  document.getElementById('submitBtn').disabled = none;
+
+  // RSI active → SL is required
+  slBadge.style.display    = rsiOn ? ''     : 'none';
+  slOptional.style.display = rsiOn ? 'none' : '';
+  slInput.required = rsiOn;
+}
+
+document.getElementById('botForm').addEventListener('submit', (e) => {
+  if (!modMA.checked && !modRSI.checked) {
+    e.preventDefault();
+    noModWarn.style.display = '';
+  }
+});
+
+updateUI();
+
+{% if cached_symbols %}
+// ── Symbol Picker ────────────────────────────────────────────────────────────
+const ALL_SYMBOLS = {{ cached_symbols | tojson }};
+let activeQuote = '';
+
+function filterQuote(btn, quote) {
+  activeQuote = quote;
+  document.querySelectorAll('.btn[onclick^="filterQuote"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList(document.getElementById('symbolSearch').value.trim().toUpperCase());
+}
+
+function renderList(query) {
+  const list = document.getElementById('symbolList');
+  const none = document.getElementById('symbolNone');
+  list.innerHTML = '';
+  let filtered = ALL_SYMBOLS;
+  if (activeQuote) filtered = filtered.filter(s => s.quote === activeQuote);
+  if (query)       filtered = filtered.filter(s => s.symbol.includes(query) || s.base.includes(query));
+  filtered.slice(0, 80).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.symbol;
+    opt.textContent = s.symbol + '  ·  ' + s.base + ' / ' + s.quote;
+    list.appendChild(opt);
+  });
+  none.style.display = filtered.length === 0 ? '' : 'none';
+}
+
+function selectSymbol(val) {
+  document.getElementById('symbolValue').value = val;
+  document.getElementById('symbolSearch').value = val;
+}
+
+document.getElementById('symbolSearch').addEventListener('input', function() {
+  renderList(this.value.trim().toUpperCase());
+  document.getElementById('symbolValue').value = this.value.trim().toUpperCase();
+});
+
+document.getElementById('botForm').addEventListener('submit', function(e) {
+  const v = document.getElementById('symbolValue').value.trim();
+  if (!v) { e.preventDefault(); document.getElementById('symbolSearch').focus(); }
+});
+
+// Default: show USDT, pre-select BTCUSDT
+filterQuote(document.querySelector('.btn[onclick*="USDT"]'), 'USDT');
+selectSymbol('BTCUSDT');
+{% endif %}
+</script>
+{% endblock %}

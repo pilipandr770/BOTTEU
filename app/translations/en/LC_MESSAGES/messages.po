@@ -1,0 +1,132 @@
+# English translations — BOTTEU
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Bots"
+msgstr "Bots"
+
+msgid "Backtest"
+msgstr "Backtest"
+
+msgid "Guides"
+msgstr "Guides"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Sign Up Free"
+msgstr "Sign Up Free"
+
+msgid "Logout"
+msgstr "Logout"
+
+msgid "API Key"
+msgstr "API Key"
+
+msgid "Telegram"
+msgstr "Telegram"
+
+msgid "Subscription"
+msgstr "Subscription"
+
+msgid "Delete Account"
+msgstr "Delete Account"
+
+msgid "Legal"
+msgstr "Legal"
+
+msgid "Terms of Service"
+msgstr "Terms of Service"
+
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
+msgid "Risk Disclaimer"
+msgstr "Risk Disclaimer"
+
+msgid "Support"
+msgstr "Support"
+
+msgid "Guides &amp; Tutorials"
+msgstr "Guides & Tutorials"
+
+msgid "All rights reserved."
+msgstr "All rights reserved."
+
+msgid "Trading involves risk. Past performance is not indicative of future results."
+msgstr "Trading involves risk. Past performance is not indicative of future results."
+
+msgid "Create Account"
+msgstr "Create Account"
+
+msgid "Email Address"
+msgstr "Email Address"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Confirm Password"
+msgstr "Confirm Password"
+
+msgid "min 8 characters"
+msgstr "min 8 characters"
+
+msgid "Remember me"
+msgstr "Remember me"
+
+msgid "Algorithm"
+msgstr "Algorithm"
+
+msgid "Trading Pair"
+msgstr "Trading Pair"
+
+msgid "Bot Name"
+msgstr "Bot Name"
+
+msgid "Position Size (USDT)"
+msgstr "Position Size (USDT)"
+
+msgid "Create Bot"
+msgstr "Create Bot"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "New Bot"
+msgstr "New Bot"
+
+msgid "Total Bots"
+msgstr "Total Bots"
+
+msgid "Running"
+msgstr "Running"
+
+msgid "Total P&L"
+msgstr "Total P&L"
+
+msgid "Recent Trades"
+msgstr "Recent Trades"
+
+msgid "Configuration"
+msgstr "Configuration"
+
+msgid "Run Backtest"
+msgstr "Run Backtest"
+
+msgid "Trades"
+msgstr "Trades"
+
+msgid "Win Rate"
+msgstr "Win Rate"
+
+msgid "Total Return"
+msgstr "Total Return"
+
+msgid "Max Drawdown"
+msgstr "Max Drawdown"
