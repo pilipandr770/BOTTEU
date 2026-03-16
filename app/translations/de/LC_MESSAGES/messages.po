@@ -1,570 +1,2381 @@
 # German translations — BOTTEU
 msgid ""
 msgstr ""
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-03-16 13:46+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app/routes/auth.py:58
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: app/routes/auth.py:61
+msgid "Password must be at least 8 characters."
+msgstr ""
+
+#: app/routes/auth.py:64
+msgid "Passwords do not match."
+msgstr ""
+
+#: app/routes/auth.py:67
+msgid "You must accept the risk disclaimer to continue."
+msgstr ""
+
+#: app/routes/auth.py:70
+msgid "An account with this email already exists."
+msgstr ""
+
+#: app/routes/auth.py:95
+msgid "Registration successful! You can now log in."
+msgstr ""
+
+#: app/routes/auth.py:98
+msgid "Registration successful! Check your email to verify your account."
+msgstr ""
+
+#: app/routes/auth.py:116
+msgid "Invalid email or password."
+msgstr ""
+
+#: app/routes/auth.py:120
+msgid "Please verify your email before logging in."
+msgstr ""
+
+#: app/routes/auth.py:142
+msgid "Invalid or expired verification link."
+msgstr ""
+
+#: app/routes/auth.py:147
+msgid "Email verified! You can now log in."
+msgstr ""
+
+#: app/routes/auth.py:157
+#, fuzzy
+msgid "Incorrect password."
+msgstr "Passwort bestätigen"
+
+#: app/routes/auth.py:163
+msgid "Your account has been permanently deleted."
+msgstr ""
+
+#: app/routes/bots.py:54
+msgid "Both API Key and Secret are required."
+msgstr ""
+
+#: app/routes/bots.py:64
+msgid "API Key saved. Test the connection to verify."
+msgstr ""
+
+#: app/routes/bots.py:71
+#, fuzzy
+msgid "API Key deleted."
+msgstr "API-Schlüssel"
+
+#: app/routes/bots.py:140
+msgid "Free plan allows 1 bot. Upgrade to Pro for unlimited bots."
+msgstr ""
+
+#: app/routes/bots.py:144
+msgid "Please add and verify your Binance API key first."
+msgstr ""
+
+#: app/routes/bots.py:152
+msgid "Bot name and trading pair are required."
+msgstr ""
+
+#: app/routes/bots.py:158 app/templates/bots/create.html:220
+msgid "Enable at least one signal module."
+msgstr ""
+
+#: app/routes/bots.py:183
+msgid "Stop-Loss is required when using the RSI module."
+msgstr ""
+
+#: app/routes/bots.py:204
+msgid "Bot created successfully!"
+msgstr ""
+
+#: app/routes/bots.py:232
+#, fuzzy
+msgid "Bot deleted."
+msgstr "Löschen"
+
+#: app/routes/subscriptions.py:25
+msgid "Payment is not configured yet. Please contact support."
+msgstr ""
+
+#: app/routes/subscriptions.py:47
+msgid "🎉 Subscription activated! Welcome to Pro."
+msgstr ""
+
+#: app/routes/subscriptions.py:58
+msgid "No active subscription found."
+msgstr ""
 
 # ── Navigation ──────────────────────────────────────────────────────────
+#: app/templates/base.html:32 app/templates/dashboard/index.html:2
+#: app/templates/dashboard/index.html:6
 msgid "Dashboard"
 msgstr "Dashboard"
 
+#: app/templates/base.html:33
 msgid "Bots"
 msgstr "Bots"
 
+#: app/templates/backtest/index.html:2 app/templates/base.html:34
+#: app/templates/landing.html:105
 msgid "Backtest"
 msgstr "Backtest"
 
+#: app/templates/base.html:35
 msgid "Guides"
 msgstr "Anleitungen"
 
-msgid "Login"
-msgstr "Anmelden"
-
-msgid "Sign Up Free"
-msgstr "Kostenlos registrieren"
-
-msgid "Logout"
-msgstr "Abmelden"
-
+#: app/templates/base.html:43 app/templates/bots/api_key.html:2
+#: app/templates/bots/api_key.html:64
 msgid "API Key"
 msgstr "API-Schlüssel"
 
+#: app/templates/base.html:44 app/templates/bots/telegram.html:2
 msgid "Telegram"
 msgstr "Telegram"
 
+#: app/templates/base.html:45
 msgid "Subscription"
 msgstr "Abonnement"
 
+#: app/templates/base.html:48
+#, fuzzy
+msgid "Admin Panel"
+msgstr "Handelspaar"
+
+#: app/templates/auth/delete_account.html:2
+#: app/templates/auth/delete_account.html:9 app/templates/base.html:51
 msgid "Delete Account"
 msgstr "Konto löschen"
 
+#: app/templates/base.html:52
+msgid "Logout"
+msgstr "Abmelden"
+
+#: app/templates/auth/login.html:2 app/templates/auth/login.html:8
+#: app/templates/auth/login.html:23 app/templates/auth/register.html:45
+#: app/templates/base.html:58
+msgid "Login"
+msgstr "Anmelden"
+
+#: app/templates/base.html:59
+msgid "Sign Up Free"
+msgstr "Kostenlos registrieren"
+
+#: app/templates/base.html:96
 msgid "Legal"
 msgstr "Rechtliches"
 
+#: app/templates/auth/register.html:34 app/templates/base.html:98
+#: app/templates/legal/privacy.html:98 app/templates/legal/terms.html:2
+#: app/templates/legal/terms.html:8
 msgid "Terms of Service"
 msgstr "Nutzungsbedingungen"
 
+#: app/templates/auth/register.html:36 app/templates/base.html:99
+#: app/templates/base.html:124 app/templates/legal/privacy.html:2
+#: app/templates/legal/privacy.html:8 app/templates/legal/terms.html:76
 msgid "Privacy Policy"
 msgstr "Datenschutzerklärung"
 
+#: app/templates/auth/register.html:33 app/templates/base.html:100
+#: app/templates/legal/disclaimer.html:2 app/templates/legal/disclaimer.html:7
+#: app/templates/legal/privacy.html:102 app/templates/legal/terms.html:80
 msgid "Risk Disclaimer"
 msgstr "Risikohinweis"
 
+#: app/templates/base.html:105
 msgid "Support"
 msgstr "Support"
 
-msgid "Guides &amp; Tutorials"
-msgstr "Anleitungen &amp; Tutorials"
+#: app/templates/base.html:107 app/templates/guides/index.html:2
+#: app/templates/guides/index.html:4
+msgid "Guides & Tutorials"
+msgstr "Anleitungen & Tutorials"
 
+#: app/templates/base.html:113
 msgid "All rights reserved."
 msgstr "Alle Rechte vorbehalten."
 
 # ── Auth ─────────────────────────────────────────────────────────────────
-msgid "Trading involves risk. Past performance is not indicative of future results."
-msgstr "Handel birgt Risiken. Frühere Ergebnisse sind kein Indikator für zukünftige Resultate."
+#: app/templates/base.html:114
+msgid ""
+"Trading involves risk. Past performance is not indicative of future "
+"results."
+msgstr ""
+"Handel birgt Risiken. Frühere Ergebnisse sind kein Indikator für "
+"zukünftige Resultate."
 
-msgid "Create Account"
-msgstr "Konto erstellen"
+#: app/templates/base.html:123
+msgid "We use cookies to improve your experience. See our"
+msgstr ""
 
-msgid "Email Address"
-msgstr "E-Mail-Adresse"
+#: app/templates/base.html:127
+msgid "Accept"
+msgstr ""
 
-msgid "Password"
-msgstr "Passwort"
-
-msgid "Confirm Password"
-msgstr "Passwort bestätigen"
-
-msgid "min 8 characters"
-msgstr "min. 8 Zeichen"
-
-msgid "Remember me"
-msgstr "Angemeldet bleiben"
-
-# ── Bot form ──────────────────────────────────────────────────────────────
-msgid "Algorithm"
-msgstr "Algorithmus"
-
-msgid "Algorithm:"
-msgstr "Algorithmus:"
-
-msgid "Trading Pair"
-msgstr "Handelspaar"
-
-msgid "Bot Name"
-msgstr "Bot-Name"
-
-msgid "Position Size (USDT)"
-msgstr "Positionsgröße (USDT)"
-
-msgid "Create Bot"
-msgstr "Bot erstellen"
-
-msgid "Cancel"
-msgstr "Abbrechen"
-
-msgid "Delete"
+#: app/templates/base.html:128
+#, fuzzy
+msgid "Decline"
 msgstr "Löschen"
 
-msgid "New Bot"
-msgstr "Neuer Bot"
-
-# ── Dashboard ─────────────────────────────────────────────────────────────
-msgid "Total Bots"
-msgstr "Bots gesamt"
-
-msgid "Running"
-msgstr "Aktiv"
-
-msgid "Total P&L"
-msgstr "Gesamt G/V"
-
-msgid "Recent Trades"
-msgstr "Letzte Trades"
-
-msgid "Your Bots"
-msgstr "Ihre Bots"
-
-msgid "Manage"
-msgstr "Verwalten"
-
-msgid "No bots yet."
-msgstr "Noch keine Bots."
-
-msgid "Create one!"
-msgstr "Jetzt erstellen!"
-
-msgid "No trades yet."
-msgstr "Noch keine Trades."
-
-msgid "Name"
-msgstr "Name"
-
-msgid "Status"
-msgstr "Status"
-
-msgid "Actions"
-msgstr "Aktionen"
-
-msgid "Date"
-msgstr "Datum"
-
-msgid "Side"
-msgstr "Seite"
-
-msgid "Symbol"
-msgstr "Symbol"
-
-# ── Balance widget ────────────────────────────────────────────────────────
-msgid "Spot Balance Binance"
-msgstr "Spot-Guthaben Binance"
-
-msgid "Add API key"
-msgstr "API-Schlüssel hinzufügen"
-
-msgid "to see the balance."
-msgstr "um das Guthaben zu sehen."
-
-msgid "Loading balance…"
-msgstr "Guthaben wird geladen…"
-
-msgid "Real trading enabled"
-msgstr "Echter Handel aktiv"
-
-msgid "available"
-msgstr "verfügbar"
-
-msgid "threshold"
-msgstr "Schwellenwert"
-
-msgid "Bots place real orders."
-msgstr "Bots platzieren echte Orders."
-
-msgid "Simulation mode (DEMO)"
-msgstr "Simulationsmodus (DEMO)"
-
-msgid "Free USDT/USDC:"
-msgstr "Freies USDT/USDC:"
-
-msgid "missing ~"
-msgstr "fehlt ~"
-
-msgid "to threshold of"
-msgstr "bis zum Schwellenwert von"
-
-msgid "The bot analyzes the market normally, but real orders are not placed. All trades are recorded as demo orders"
-msgstr "Der Bot analysiert den Markt normal, aber echte Orders werden nicht platziert. Alle Trades werden als Demo-Orders aufgezeichnet"
-
-msgid "Top up the spot wallet by at least"
-msgstr "Laden Sie das Spot-Wallet um mindestens"
-
-msgid "USDT to enable real trading."
-msgstr "USDT auf, um echten Handel zu aktivieren."
-
-msgid "Balance empty — all assets are zero."
-msgstr "Guthaben leer — alle Assets sind null."
-
-msgid "Server request error"
-msgstr "Serverfehler"
-
-msgid "updated"
-msgstr "aktualisiert"
-
-# ── Bot detail ────────────────────────────────────────────────────────────
-msgid "My Bots"
-msgstr "Meine Bots"
-
-msgid "Stop"
-msgstr "Stoppen"
-
-msgid "Start"
-msgstr "Starten"
-
-msgid "Bot is active and trading. Log updates automatically every 30 seconds."
-msgstr "Bot ist aktiv und handelt. Protokoll wird automatisch alle 30 Sekunden aktualisiert."
-
-msgid "Error:"
-msgstr "Fehler:"
-
-msgid "Unknown error"
-msgstr "Unbekannter Fehler"
-
-msgid "Bot is stopped. Press Start to begin trading."
-msgstr "Bot ist gestoppt. Drücken Sie Starten, um den Handel zu beginnen."
-
-msgid "Closed Trades"
-msgstr "Geschlossene Trades"
-
-msgid "Profitable"
-msgstr "Gewinnbringend"
-
-msgid "Real P&L (USDT)"
-msgstr "Echter G/V (USDT)"
-
-msgid "Demo Trades"
-msgstr "Demo-Trades"
-
-msgid "Real orders only"
-msgstr "Nur echte Orders"
-
-msgid "Open Position"
-msgstr "Offene Position"
-
-msgid "Entry Price"
-msgstr "Einstiegspreis"
-
-msgid "Last Price"
-msgstr "Letzter Preis"
-
-msgid "Unrealised P&L"
-msgstr "Nicht realisierter G/V"
-
-msgid "Peak since entry"
-msgstr "Höchststand seit Einstieg"
-
-msgid "trailing stop at"
-msgstr "Trailing-Stop bei"
-
-msgid "Bot Settings"
-msgstr "Bot-Einstellungen"
-
-msgid "Modules:"
-msgstr "Module:"
-
-msgid "Timeframe:"
-msgstr "Zeitrahmen:"
-
-msgid "Fast MA:"
-msgstr "Schnelle MA:"
-
-msgid "Slow MA:"
-msgstr "Langsame MA:"
-
-msgid "RSI period:"
-msgstr "RSI-Periode:"
-
-msgid "RSI oversold:"
-msgstr "RSI überverkauft:"
-
-msgid "RSI overbought:"
-msgstr "RSI überkauft:"
-
-msgid "Trailing"
-msgstr "Trailing"
-
-msgid "No protection levels set"
-msgstr "Keine Schutzlevel gesetzt"
-
-msgid "Trading Log"
-msgstr "Handelsprotokoll"
-
-msgid "auto"
-msgstr "auto"
-
-msgid "Auto-refresh every 30 seconds"
-msgstr "Automatische Aktualisierung alle 30 Sekunden"
-
-msgid "auto-update disabled"
-msgstr "Auto-Aktualisierung deaktiviert"
-
-msgid "Logs will appear after the first bot tick"
-msgstr "Protokolle erscheinen nach dem ersten Bot-Tick"
-
-msgid "Trade History"
-msgstr "Handelshistorie"
-
-msgid "Time"
-msgstr "Zeit"
-
-msgid "Type"
-msgstr "Typ"
-
-msgid "Price"
-msgstr "Preis"
-
-msgid "Qty"
-msgstr "Menge"
-
-msgid "Reason"
-msgstr "Grund"
-
-msgid "Demo trade — no real execution"
-msgstr "Demo-Trade — keine echte Ausführung"
-
-msgid "Manual"
-msgstr "Manuell"
-
-msgid "No trades yet. They will appear here as the bot works."
-msgstr "Noch keine Trades. Sie erscheinen hier, wenn der Bot arbeitet."
-
-msgid "Delete Bot"
-msgstr "Bot löschen"
-
-msgid "All trades and logs will be deleted. This action cannot be undone."
-msgstr "Alle Trades und Protokolle werden gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
-
-# ── Backtest ──────────────────────────────────────────────────────────────
-msgid "Configuration"
-msgstr "Konfiguration"
-
-msgid "Run Backtest"
-msgstr "Backtest starten"
-
-msgid "Trades"
-msgstr "Trades"
-
-msgid "Win Rate"
-msgstr "Trefferquote"
-
-msgid "Total Return"
-msgstr "Gesamtrendite"
-
-msgid "Max Drawdown"
-msgstr "Max. Verlust"
+#: app/templates/landing.html:2
+msgid "Automated Binance Spot Trading Bot"
+msgstr ""
+
+#: app/templates/landing.html:14
+msgid ""
+"Automate your Binance Spot trading with MA Crossover and RSI strategies. "
+"Backtest on real history. Get Telegram notifications for every trade."
+msgstr ""
+"Automatisieren Sie Ihren Binance-Spot-Handel mit MA-Crossover- und RSI-"
+"Strategien. Backtest auf echter Historik. Telegram-Benachrichtigungen für"
+" jeden Trade."
+
+#: app/templates/landing.html:18
+msgid "Get Started Free"
+msgstr "Kostenlos starten"
+
+#: app/templates/landing.html:21
+msgid "Try Backtest"
+msgstr "Backtest ausprobieren"
 
 # ── Landing / Subscriptions ────────────────────────────────────────────────
+#: app/templates/landing.html:26
 msgid "Not financial advice. All trading involves risk."
 msgstr "Keine Finanzberatung. Jeder Handel ist mit Risiken verbunden."
 
-msgid "Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade."
-msgstr "Automatisieren Sie Ihren Binance-Spot-Handel mit MA-Crossover- und RSI-Strategien. Backtest auf echter Historik. Telegram-Benachrichtigungen für jeden Trade."
+#: app/templates/landing.html:39
+msgid "Secure API Storage"
+msgstr ""
 
-msgid "Get Started Free"
-msgstr "Kostenlos starten"
+#: app/templates/landing.html:40
+msgid ""
+"Your Binance API keys are encrypted with AES-256 (Fernet). The secret is "
+"never shown again after saving."
+msgstr ""
 
-msgid "Try Backtest"
-msgstr "Backtest ausprobieren"
+#: app/templates/landing.html:48
+#, fuzzy
+msgid "Trading Algorithms"
+msgstr "Handelsprotokoll"
 
-msgid "month"
-msgstr "Monat"
+#: app/templates/landing.html:49
+msgid ""
+"MA7/MA25 Crossover and RSI with fully configurable parameters, Stop-Loss,"
+" Take-Profit and Trailing TP."
+msgstr ""
 
-msgid "Unlimited Bots"
-msgstr "Unbegrenzte Bots"
+#: app/templates/landing.html:57
+msgid "Backtest & Visualize"
+msgstr ""
 
-msgid "Unlimited Pairs"
-msgstr "Unbegrenzte Paare"
+#: app/templates/landing.html:58
+msgid ""
+"Test your strategy on real historical data via Yahoo Finance. See "
+"BUY/SELL markers on an interactive chart."
+msgstr ""
 
-msgid "Priority Support"
-msgstr "Vorrangiger Support"
-
-msgid "All future algorithms"
-msgstr "Alle zukünftigen Algorithmen"
-
-msgid "No commission on profits"
-msgstr "Keine Provision auf Gewinne"
-
-msgid "Popular"
-msgstr "Beliebt"
-
-msgid "Start Pro Trial"
-msgstr "Pro-Testphase starten"
-
-msgid "Get Started"
-msgstr "Loslegen"
-
-
-msgid "Dashboard"
-msgstr "Dashboard"
-
-msgid "Bots"
-msgstr "Bots"
-
-msgid "Backtest"
-msgstr "Backtest"
-
-msgid "Guides"
-msgstr "Anleitungen"
-
-msgid "Login"
-msgstr "Anmelden"
-
-msgid "Sign Up Free"
-msgstr "Kostenlos registrieren"
-
-msgid "Logout"
-msgstr "Abmelden"
-
-msgid "API Key"
-msgstr "API-Schlüssel"
-
-msgid "Telegram"
+#: app/templates/landing.html:66 app/templates/landing.html:106
+#, fuzzy
+msgid "Telegram Alerts"
 msgstr "Telegram"
 
-msgid "Subscription"
-msgstr "Abonnement"
+#: app/templates/landing.html:67
+msgid ""
+"Get instant notifications for every BUY/SELL, Stop-Loss trigger and bot "
+"errors directly in Telegram."
+msgstr ""
 
-msgid "Delete Account"
-msgstr "Konto löschen"
+#: app/templates/landing.html:75
+msgid "Spot Only — No Futures"
+msgstr ""
 
-msgid "Legal"
-msgstr "Rechtliches"
+#: app/templates/landing.html:76
+msgid ""
+"We strictly trade on the Binance Spot market. No leverage, no "
+"liquidations."
+msgstr ""
 
-msgid "Terms of Service"
-msgstr "Nutzungsbedingungen"
+#: app/templates/landing.html:84
+msgid "Full Guides & Transparency"
+msgstr ""
 
-msgid "Privacy Policy"
-msgstr "Datenschutzrichtlinie"
+#: app/templates/landing.html:85
+msgid ""
+"Step-by-step guides on setting up your Binance API. All legal documents "
+"available. GDPR compliant."
+msgstr ""
 
-msgid "Risk Disclaimer"
-msgstr "Risikohinweis"
+#: app/templates/landing.html:94
+#, fuzzy
+msgid "Pricing"
+msgstr "Trailing"
 
-msgid "Support"
-msgstr "Support"
+#: app/templates/landing.html:99 app/templates/subscriptions/plans.html:17
+#: app/templates/subscriptions/plans.html:93
+msgid "Free"
+msgstr ""
 
-msgid "Guides & Tutorials"
-msgstr "Anleitungen & Tutorials"
+#: app/templates/landing.html:102
+#, fuzzy
+msgid "Trading Bot"
+msgstr "Handelsprotokoll"
 
-msgid "All rights reserved."
-msgstr "Alle Rechte vorbehalten."
-
-msgid "Trading involves risk. Past performance is not indicative of future results."
-msgstr "Handel birgt Risiken. Vergangene Performance ist kein Indikator für zukünftige Ergebnisse."
-
-msgid "Create Account"
-msgstr "Konto erstellen"
-
-msgid "Email Address"
-msgstr "E-Mail-Adresse"
-
-msgid "Password"
-msgstr "Passwort"
-
-msgid "Confirm Password"
-msgstr "Passwort bestätigen"
-
-msgid "min 8 characters"
-msgstr "mind. 8 Zeichen"
-
-msgid "Remember me"
-msgstr "Angemeldet bleiben"
-
-msgid "Algorithm"
-msgstr "Algorithmus"
-
+#: app/templates/bots/create.html:55 app/templates/landing.html:103
 msgid "Trading Pair"
 msgstr "Handelspaar"
 
-msgid "Bot Name"
-msgstr "Bot-Name"
-
-msgid "Position Size (USDT)"
-msgstr "Positionsgröße (USDT)"
-
-msgid "Create Bot"
-msgstr "Bot erstellen"
-
-msgid "Cancel"
-msgstr "Abbrechen"
-
-msgid "New Bot"
-msgstr "Neuer Bot"
-
-msgid "Total Bots"
-msgstr "Bots gesamt"
-
-msgid "Running"
-msgstr "Aktiv"
-
-msgid "Total P&L"
-msgstr "Gesamtgewinn/-verlust"
-
-msgid "Recent Trades"
-msgstr "Letzte Trades"
-
-msgid "Configuration"
-msgstr "Konfiguration"
-
-msgid "Run Backtest"
-msgstr "Backtest starten"
-
-msgid "Trades"
-msgstr "Trades"
-
-msgid "Win Rate"
-msgstr "Trefferquote"
-
-msgid "Total Return"
-msgstr "Gesamtrendite"
-
-msgid "Max Drawdown"
-msgstr "Max. Drawdown"
-
-msgid "Not financial advice. All trading involves risk."
-msgstr "Keine Finanzberatung. Jeder Handel birgt Risiken."
-
-msgid "Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade."
-msgstr "Automatisieren Sie Ihren Binance-Spot-Handel mit MA-Crossover- und RSI-Strategien. Backtest mit echten historischen Daten. Telegram-Benachrichtigungen für jeden Trade."
-
-msgid "Get Started Free"
-msgstr "Kostenlos starten"
-
-msgid "Try Backtest"
-msgstr "Backtest ausprobieren"
-
-msgid "month"
-msgstr "Monat"
-
-msgid "Unlimited Bots"
-msgstr "Unbegrenzte Bots"
-
-msgid "Unlimited Pairs"
-msgstr "Unbegrenzte Paare"
-
-msgid "Priority Support"
-msgstr "Prioritäts-Support"
-
-msgid "All future algorithms"
+#: app/templates/landing.html:104
+#, fuzzy
+msgid "All Algorithms"
 msgstr "Alle zukünftigen Algorithmen"
 
-msgid "No commission on profits"
-msgstr "Keine Gewinnbeteiligung"
+#: app/templates/landing.html:108
+msgid "Get Started"
+msgstr "Loslegen"
 
+#: app/templates/landing.html:115
 msgid "Popular"
 msgstr "Beliebt"
 
-msgid "Start Pro Trial"
-msgstr "Pro-Testversion starten"
+#: app/templates/landing.html:117 app/templates/subscriptions/plans.html:48
+msgid "month"
+msgstr "Monat"
 
-msgid "Get Started"
-msgstr "Jetzt starten"
+#: app/templates/landing.html:119
+msgid "Unlimited Bots"
+msgstr "Unbegrenzte Bots"
+
+#: app/templates/landing.html:120
+msgid "Unlimited Pairs"
+msgstr "Unbegrenzte Paare"
+
+#: app/templates/landing.html:121
+msgid "Priority Support"
+msgstr "Vorrangiger Support"
+
+#: app/templates/landing.html:122
+msgid "All future algorithms"
+msgstr "Alle zukünftigen Algorithmen"
+
+#: app/templates/landing.html:123
+msgid "No commission on profits"
+msgstr "Keine Provision auf Gewinne"
+
+#: app/templates/landing.html:125
+msgid "Start Pro Trial"
+msgstr "Pro-Testphase starten"
+
+#: app/templates/landing.html:136
+#, fuzzy
+msgid "Risk Disclaimer:"
+msgstr "Risikohinweis"
+
+#: app/templates/landing.html:137
+msgid ""
+"Cryptocurrency trading involves substantial risk of loss. BOTTEU is a "
+"tool to help automate strategies — it does NOT guarantee profits. Never "
+"invest more than you can afford to lose. Past backtest results do not "
+"guarantee future performance."
+msgstr ""
+
+#: app/templates/landing.html:138
+#, fuzzy
+msgid "Read full disclaimer"
+msgstr "Risikohinweis"
+
+#: app/templates/auth/delete_account.html:13
+msgid ""
+"You are about to permanently delete your BOTTEU account. This action is "
+"irreversible."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:16
+msgid "All your bots will be permanently stopped and deleted."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:17
+msgid "Your API keys will be removed from our servers."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:18
+msgid "Your trade history will be anonymized (GDPR Art. 17)."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:19
+msgid "Your subscription will be cancelled immediately."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:20
+msgid "Your Telegram connection will be unlinked."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:25
+msgid ""
+"Per GDPR Art. 17, your personal data will be anonymized (not fully "
+"erased) to maintain aggregate trade statistics."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:32
+msgid "Enter your password to confirm"
+msgstr ""
+
+#: app/templates/auth/delete_account.html:34
+msgid "Your current password"
+msgstr ""
+
+#: app/templates/auth/delete_account.html:40
+msgid "I understand this action is permanent and cannot be undone."
+msgstr ""
+
+#: app/templates/auth/delete_account.html:46 app/templates/bots/create.html:275
+#: app/templates/bots/detail.html:367 app/templates/bots/index.html:116
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: app/templates/auth/delete_account.html:49
+#, fuzzy
+msgid "Delete My Account"
+msgstr "Konto löschen"
+
+#: app/templates/auth/login.html:12
+msgid "Email"
+msgstr ""
+
+#: app/templates/auth/login.html:16 app/templates/auth/register.html:16
+msgid "Password"
+msgstr "Passwort"
+
+#: app/templates/auth/login.html:21
+msgid "Remember me"
+msgstr "Angemeldet bleiben"
+
+#: app/templates/auth/login.html:27
+msgid "Don't have an account?"
+msgstr ""
+
+#: app/templates/auth/login.html:27
+#, fuzzy
+msgid "Sign up free"
+msgstr "Kostenlos registrieren"
+
+#: app/templates/auth/register.html:2 app/templates/auth/register.html:8
+#: app/templates/auth/register.html:41
+msgid "Create Account"
+msgstr "Konto erstellen"
+
+#: app/templates/auth/register.html:12
+msgid "Email Address"
+msgstr "E-Mail-Adresse"
+
+#: app/templates/auth/register.html:16
+msgid "min 8 characters"
+msgstr "min. 8 Zeichen"
+
+#: app/templates/auth/register.html:20
+msgid "Confirm Password"
+msgstr "Passwort bestätigen"
+
+#: app/templates/auth/register.html:27
+msgid ""
+"Cryptocurrency trading is highly speculative and involves substantial "
+"risk. You may lose all your invested capital. BOTTEU does not provide "
+"financial advice."
+msgstr ""
+
+#: app/templates/auth/register.html:32
+msgid "I have read and accept the"
+msgstr ""
+
+#: app/templates/auth/register.html:35
+msgid "and"
+msgstr ""
+
+# ── Landing / Subscriptions ────────────────────────────────────────────────
+#: app/templates/auth/register.html:37
+#, fuzzy
+msgid "I understand trading involves risk."
+msgstr "Keine Finanzberatung. Jeder Handel ist mit Risiken verbunden."
+
+#: app/templates/auth/register.html:45
+#, fuzzy
+msgid "Already have an account?"
+msgstr "Konto erstellen"
+
+#: app/templates/backtest/index.html:9
+#, fuzzy
+msgid "Strategy Backtester"
+msgstr "Backtest ausprobieren"
+
+# ── Backtest ──────────────────────────────────────────────────────────────
+#: app/templates/backtest/index.html:15
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#: app/templates/backtest/index.html:18 app/templates/bots/index.html:139
+#: app/templates/dashboard/index.html:83 app/templates/dashboard/index.html:126
+msgid "Symbol"
+msgstr "Symbol"
+
+#: app/templates/backtest/index.html:20
+msgid "Yahoo Finance format: BTC-USD, ETH-USD"
+msgstr ""
+
+#: app/templates/backtest/index.html:23
+msgid "Interval"
+msgstr ""
+
+#: app/templates/backtest/index.html:34
+msgid "Note: intraday data limited to 60 days"
+msgstr ""
+
+#: app/templates/backtest/index.html:37
+#, fuzzy
+msgid "Start Date"
+msgstr "Starten"
+
+#: app/templates/backtest/index.html:41
+#, fuzzy
+msgid "End Date"
+msgstr "Datum"
+
+# ── Bot form ──────────────────────────────────────────────────────────────
+#: app/templates/backtest/index.html:45 app/templates/dashboard/index.html:84
+msgid "Algorithm"
+msgstr "Algorithmus"
+
+#: app/templates/backtest/index.html:77
+msgid "Run Backtest"
+msgstr "Backtest starten"
+
+#: app/templates/backtest/index.html:87
+msgid "Fetching data & running strategy..."
+msgstr ""
+
+#: app/templates/backtest/index.html:96
+msgid "Trades"
+msgstr "Trades"
+
+#: app/templates/backtest/index.html:102
+msgid "Win Rate"
+msgstr "Trefferquote"
+
+#: app/templates/backtest/index.html:108
+msgid "Total Return"
+msgstr "Gesamtrendite"
+
+#: app/templates/backtest/index.html:114
+msgid "Max Drawdown"
+msgstr "Max. Verlust"
+
+#: app/templates/backtest/index.html:121
+#, fuzzy
+msgid "Exit reasons:"
+msgstr "Grund"
+
+#: app/templates/backtest/index.html:123
+msgid "Final equity:"
+msgstr ""
+
+#: app/templates/backtest/index.html:128
+msgid "Price Chart + Signals"
+msgstr ""
+
+#: app/templates/backtest/index.html:136
+#, fuzzy
+msgid "Trade List"
+msgstr "Handelshistorie"
+
+#: app/templates/backtest/index.html:140 app/templates/bots/detail.html:290
+msgid "Type"
+msgstr "Typ"
+
+#: app/templates/backtest/index.html:140 app/templates/dashboard/index.html:126
+msgid "Date"
+msgstr "Datum"
+
+#: app/templates/backtest/index.html:140 app/templates/bots/detail.html:291
+#: app/templates/bots/index.html:141 app/templates/dashboard/index.html:126
+msgid "Price"
+msgstr "Preis"
+
+#: app/templates/backtest/index.html:140 app/templates/bots/detail.html:295
+#: app/templates/dashboard/index.html:126
+msgid "Reason"
+msgstr "Grund"
+
+#: app/templates/backtest/index.html:149
+msgid "Configure your backtest on the left and press Run."
+msgstr ""
+
+#: app/templates/bots/api_key.html:8
+#, fuzzy
+msgid "Binance API Key"
+msgstr "API-Schlüssel hinzufügen"
+
+#: app/templates/bots/api_key.html:17
+msgid "API key is active and verified."
+msgstr ""
+
+#: app/templates/bots/api_key.html:19 app/templates/bots/api_key.html:160
+msgid "pairs synced"
+msgstr ""
+
+#: app/templates/bots/api_key.html:21
+msgid "Pairs not synced"
+msgstr ""
+
+#: app/templates/bots/api_key.html:26
+msgid "Sync Pairs"
+msgstr ""
+
+#: app/templates/bots/api_key.html:32
+msgid "API key saved but not yet verified. Click \"Test Connection\"."
+msgstr ""
+
+#: app/templates/bots/api_key.html:38
+msgid "No API key configured. Add your Binance API credentials below."
+msgstr ""
+
+#: app/templates/bots/api_key.html:46
+msgid "Security tips:"
+msgstr ""
+
+#: app/templates/bots/api_key.html:48
+msgid "Enable \"Spot Trading\" permission only. Do NOT enable withdrawals."
+msgstr ""
+
+#: app/templates/bots/api_key.html:49
+msgid "Restrict API access to your server IP address in Binance settings."
+msgstr ""
+
+#: app/templates/bots/api_key.html:50
+msgid ""
+"Your credentials are encrypted with AES-128 (Fernet) and never stored in "
+"plain text."
+msgstr ""
+
+#: app/templates/bots/api_key.html:57
+msgid "API Credentials"
+msgstr ""
+
+#: app/templates/bots/api_key.html:66
+msgid "Paste your Binance API key"
+msgstr ""
+
+#: app/templates/bots/api_key.html:69
+msgid "Leave blank to keep the current key."
+msgstr ""
+
+#: app/templates/bots/api_key.html:74
+msgid "API Secret"
+msgstr ""
+
+#: app/templates/bots/api_key.html:76
+msgid "Paste your Binance API secret"
+msgstr ""
+
+#: app/templates/bots/api_key.html:82
+msgid "Save"
+msgstr ""
+
+#: app/templates/bots/api_key.html:86
+msgid "Test Connection"
+msgstr ""
+
+#: app/templates/bots/api_key.html:100
+#, fuzzy
+msgid "Remove API Key"
+msgstr "API-Schlüssel"
+
+#: app/templates/bots/api_key.html:103
+msgid "Removing the API key will stop all running bots that depend on it."
+msgstr ""
+
+#: app/templates/bots/api_key.html:106
+msgid "Remove API key? All bots will stop."
+msgstr ""
+
+#: app/templates/bots/api_key.html:110
+msgid "Remove Key"
+msgstr ""
+
+#: app/templates/bots/api_key.html:120
+msgid "Not sure how to create an API key?"
+msgstr ""
+
+#: app/templates/bots/api_key.html:121
+msgid "Read the guide"
+msgstr ""
+
+#: app/templates/bots/api_key.html:145
+msgid "Testing..."
+msgstr ""
+
+#: app/templates/bots/api_key.html:174
+msgid "Request failed. Please try again."
+msgstr ""
+
+#: app/templates/bots/create.html:2 app/templates/bots/create.html:273
+#: app/templates/bots/index.html:19
+msgid "Create Bot"
+msgstr "Bot erstellen"
+
+#: app/templates/bots/create.html:36
+msgid "Bot Constructor"
+msgstr ""
+
+#: app/templates/bots/create.html:37
+msgid ""
+"Assemble your bot from independent signal modules. Combine MA and RSI to "
+"build a more robust strategy."
+msgstr ""
+
+#: app/templates/bots/create.html:45
+msgid "General"
+msgstr ""
+
+#: app/templates/bots/create.html:50
+msgid "Bot Name"
+msgstr "Bot-Name"
+
+#: app/templates/bots/create.html:52
+msgid "e.g. BTC Long Bot"
+msgstr ""
+
+#: app/templates/bots/create.html:63
+msgid "Type to search…"
+msgstr ""
+
+#: app/templates/bots/create.html:68
+msgid "No matches."
+msgstr ""
+
+#: app/templates/bots/create.html:69
+msgid "Showing Binance spot pairs synced from your API key."
+msgstr ""
+
+#: app/templates/bots/create.html:73
+msgid "Spot pair, e.g. BTCUSDT"
+msgstr ""
+
+#: app/templates/bots/create.html:76
+msgid "No pairs synced yet."
+msgstr ""
+
+#: app/templates/bots/create.html:77
+msgid "Test your API key"
+msgstr ""
+
+#: app/templates/bots/create.html:78
+msgid "to load available pairs."
+msgstr ""
+
+#: app/templates/bots/create.html:83
+msgid "Position Size (USDT)"
+msgstr "Positionsgröße (USDT)"
+
+#: app/templates/bots/create.html:94
+#, fuzzy
+msgid "Timeframe"
+msgstr "Zeitrahmen:"
+
+#: app/templates/bots/create.html:99
+msgid "Candle interval"
+msgstr ""
+
+#: app/templates/bots/create.html:115
+msgid "How often the bot reads the candle and evaluates signals."
+msgstr ""
+
+#: app/templates/bots/create.html:124
+#, fuzzy
+msgid "Signal Modules"
+msgstr "Module:"
+
+#: app/templates/bots/create.html:128
+msgid ""
+"Enable one or both modules. Each module independently generates BUY / "
+"SELL signals."
+msgstr ""
+
+#: app/templates/bots/create.html:140 app/templates/subscriptions/plans.html:99
+msgid "MA Crossover"
+msgstr ""
+
+#: app/templates/bots/create.html:145
+msgid "Buys on golden cross (fast MA crosses above slow). Sells on death cross."
+msgstr ""
+
+#: app/templates/bots/create.html:149
+#, fuzzy
+msgid "Fast MA"
+msgstr "Schnelle MA:"
+
+#: app/templates/bots/create.html:154
+#, fuzzy
+msgid "Slow MA"
+msgstr "Langsame MA:"
+
+#: app/templates/bots/create.html:171
+msgid "RSI"
+msgstr ""
+
+#: app/templates/bots/create.html:176
+msgid ""
+"Buys when RSI bounces up through oversold. Sells when RSI enters "
+"overbought zone."
+msgstr ""
+
+#: app/templates/bots/create.html:180
+#, fuzzy
+msgid "Period"
+msgstr "RSI-Periode:"
+
+#: app/templates/bots/create.html:185
+#, fuzzy
+msgid "Oversold"
+msgstr "RSI überverkauft:"
+
+#: app/templates/bots/create.html:190
+#, fuzzy
+msgid "Overbought"
+msgstr "RSI überkauft:"
+
+#: app/templates/bots/create.html:203
+msgid "Entry Logic — how to combine the two signals"
+msgstr ""
+
+#: app/templates/bots/create.html:208
+msgid "any signal fires"
+msgstr ""
+
+#: app/templates/bots/create.html:209
+msgid "More trades · aggressive"
+msgstr ""
+
+#: app/templates/bots/create.html:213
+msgid "both signals agree"
+msgstr ""
+
+#: app/templates/bots/create.html:214
+msgid "Fewer trades · conservative"
+msgstr ""
+
+#: app/templates/bots/create.html:228
+msgid "Risk Management"
+msgstr ""
+
+#: app/templates/bots/create.html:232
+msgid ""
+"Applied to all active modules. The bot exits a position if any of these "
+"levels is hit."
+msgstr ""
+
+#: app/templates/bots/create.html:237
+#: app/templates/subscriptions/plans.html:101
+#, fuzzy
+msgid "Stop-Loss"
+msgstr "Stoppen"
+
+#: app/templates/bots/create.html:238
+msgid "Required"
+msgstr ""
+
+#: app/templates/bots/create.html:239 app/templates/bots/create.html:249
+#: app/templates/bots/create.html:258
+msgid "optional"
+msgstr ""
+
+#: app/templates/bots/create.html:246
+msgid "Exit if price drops this much from entry."
+msgstr ""
+
+#: app/templates/bots/create.html:249
+#: app/templates/subscriptions/plans.html:102
+msgid "Take-Profit"
+msgstr ""
+
+#: app/templates/bots/create.html:255
+msgid "Exit at fixed profit target."
+msgstr ""
+
+#: app/templates/bots/create.html:258
+#, fuzzy
+msgid "Trailing TP"
+msgstr "Trailing"
+
+#: app/templates/bots/create.html:264
+msgid "Exit if price drops this much from its peak."
+msgstr ""
+
+# ── Bot detail ────────────────────────────────────────────────────────────
+#: app/templates/bots/detail.html:11 app/templates/bots/index.html:2
+#: app/templates/bots/index.html:6
+msgid "My Bots"
+msgstr "Meine Bots"
+
+#: app/templates/bots/detail.html:33 app/templates/bots/index.html:70
+msgid "Stop"
+msgstr "Stoppen"
+
+#: app/templates/bots/detail.html:37 app/templates/bots/index.html:74
+msgid "Start"
+msgstr "Starten"
+
+#: app/templates/bots/detail.html:43 app/templates/bots/detail.html:363
+#: app/templates/bots/detail.html:370 app/templates/bots/index.html:113
+#: app/templates/bots/index.html:119
+msgid "Delete"
+msgstr "Löschen"
+
+#: app/templates/bots/detail.html:52
+msgid "Bot is active and trading. Log updates automatically every 30 seconds."
+msgstr ""
+"Bot ist aktiv und handelt. Protokoll wird automatisch alle 30 Sekunden "
+"aktualisiert."
+
+#: app/templates/bots/detail.html:57
+msgid "Error:"
+msgstr "Fehler:"
+
+#: app/templates/bots/detail.html:57
+msgid "Unknown error"
+msgstr "Unbekannter Fehler"
+
+#: app/templates/bots/detail.html:62
+msgid "Bot is stopped. Press Start to begin trading."
+msgstr "Bot ist gestoppt. Drücken Sie Starten, um den Handel zu beginnen."
+
+#: app/templates/bots/detail.html:73
+msgid "Closed Trades"
+msgstr "Geschlossene Trades"
+
+#: app/templates/bots/detail.html:82
+msgid "Profitable"
+msgstr "Gewinnbringend"
+
+#: app/templates/bots/detail.html:92
+msgid "Real P&L (USDT)"
+msgstr "Echter G/V (USDT)"
+
+#: app/templates/bots/detail.html:99
+msgid "Demo Trades"
+msgstr "Demo-Trades"
+
+#: app/templates/bots/detail.html:102
+msgid "Real orders only"
+msgstr "Nur echte Orders"
+
+#: app/templates/bots/detail.html:116
+msgid "Open Position"
+msgstr "Offene Position"
+
+#: app/templates/bots/detail.html:121
+msgid "Entry Price"
+msgstr "Einstiegspreis"
+
+#: app/templates/bots/detail.html:125
+msgid "Last Price"
+msgstr "Letzter Preis"
+
+#: app/templates/bots/detail.html:140
+msgid "Unrealised P&L"
+msgstr "Nicht realisierter G/V"
+
+#: app/templates/bots/detail.html:149
+msgid "Peak since entry"
+msgstr "Höchststand seit Einstieg"
+
+#: app/templates/bots/detail.html:154
+msgid "trailing stop at"
+msgstr "Trailing-Stop bei"
+
+#: app/templates/bots/detail.html:169
+msgid "Bot Settings"
+msgstr "Bot-Einstellungen"
+
+#: app/templates/bots/detail.html:177
+msgid "Modules:"
+msgstr "Module:"
+
+#: app/templates/bots/detail.html:185
+msgid "Timeframe:"
+msgstr "Zeitrahmen:"
+
+#: app/templates/bots/detail.html:186
+msgid "Algorithm:"
+msgstr "Algorithmus:"
+
+#: app/templates/bots/detail.html:189
+msgid "Fast MA:"
+msgstr "Schnelle MA:"
+
+#: app/templates/bots/detail.html:192
+msgid "Slow MA:"
+msgstr "Langsame MA:"
+
+#: app/templates/bots/detail.html:195
+msgid "RSI period:"
+msgstr "RSI-Periode:"
+
+#: app/templates/bots/detail.html:198
+msgid "RSI oversold:"
+msgstr "RSI überverkauft:"
+
+#: app/templates/bots/detail.html:201
+msgid "RSI overbought:"
+msgstr "RSI überkauft:"
+
+#: app/templates/bots/detail.html:218
+msgid "Trailing"
+msgstr "Trailing"
+
+#: app/templates/bots/detail.html:222
+msgid "No protection levels set"
+msgstr "Keine Schutzlevel gesetzt"
+
+#: app/templates/bots/detail.html:236
+msgid "Trading Log"
+msgstr "Handelsprotokoll"
+
+#: app/templates/bots/detail.html:240
+msgid "Auto-refresh every 30 seconds"
+msgstr "Automatische Aktualisierung alle 30 Sekunden"
+
+#: app/templates/bots/detail.html:242
+msgid "auto"
+msgstr "auto"
+
+#: app/templates/bots/detail.html:252
+msgid "Logs will appear after the first bot tick"
+msgstr "Protokolle erscheinen nach dem ersten Bot-Tick"
+
+#: app/templates/bots/detail.html:281
+msgid "Trade History"
+msgstr "Handelshistorie"
+
+#: app/templates/bots/detail.html:289 app/templates/bots/index.html:137
+msgid "Time"
+msgstr "Zeit"
+
+#: app/templates/bots/detail.html:292 app/templates/bots/index.html:142
+msgid "Qty"
+msgstr "Menge"
+
+#: app/templates/bots/detail.html:307
+msgid "Demo trade — no real execution"
+msgstr "Demo-Trade — keine echte Ausführung"
+
+#: app/templates/bots/detail.html:333
+msgid "Manual"
+msgstr "Manuell"
+
+#: app/templates/bots/detail.html:349
+msgid "No trades yet. They will appear here as the bot works."
+msgstr "Noch keine Trades. Sie erscheinen hier, wenn der Bot arbeitet."
+
+#: app/templates/bots/detail.html:359 app/templates/bots/index.html:109
+msgid "Delete Bot"
+msgstr "Bot löschen"
+
+#: app/templates/bots/detail.html:364
+msgid "All trades and logs will be deleted. This action cannot be undone."
+msgstr ""
+"Alle Trades und Protokolle werden gelöscht. Diese Aktion kann nicht "
+"rückgängig gemacht werden."
+
+#: app/templates/bots/detail.html:383 app/templates/dashboard/index.html:155
+msgid "updated"
+msgstr "aktualisiert"
+
+#: app/templates/bots/detail.html:384
+msgid "auto-update disabled"
+msgstr "Auto-Aktualisierung deaktiviert"
+
+#: app/templates/bots/index.html:8 app/templates/dashboard/index.html:7
+msgid "New Bot"
+msgstr "Neuer Bot"
+
+#: app/templates/bots/index.html:16
+#, fuzzy
+msgid "No bots yet"
+msgstr "Noch keine Bots."
+
+#: app/templates/bots/index.html:17
+msgid "Create your first automated trading bot to get started."
+msgstr ""
+
+#: app/templates/bots/index.html:51 app/templates/dashboard/index.html:21
+#: app/templates/dashboard/index.html:96
+msgid "Running"
+msgstr "Aktiv"
+
+#: app/templates/bots/index.html:53 app/templates/dashboard/index.html:98
+#, fuzzy
+msgid "Error"
+msgstr "Fehler:"
+
+#: app/templates/bots/index.html:55 app/templates/dashboard/index.html:100
+#, fuzzy
+msgid "Stopped"
+msgstr "Stoppen"
+
+#: app/templates/bots/index.html:82
+msgid "Stats & Logs"
+msgstr ""
+
+#: app/templates/bots/index.html:113
+msgid "This cannot be undone."
+msgstr ""
+
+#: app/templates/bots/index.html:131 app/templates/dashboard/index.html:35
+#: app/templates/dashboard/index.html:122
+msgid "Recent Trades"
+msgstr "Letzte Trades"
+
+#: app/templates/bots/index.html:138
+#, fuzzy
+msgid "Bot"
+msgstr "Bots"
+
+#: app/templates/bots/index.html:140 app/templates/dashboard/index.html:126
+msgid "Side"
+msgstr "Seite"
+
+#: app/templates/bots/index.html:143 app/templates/dashboard/index.html:126
+msgid "P&L"
+msgstr ""
+
+#: app/templates/bots/index.html:144
+msgid "Exit"
+msgstr ""
+
+#: app/templates/bots/index.html:168 app/templates/dashboard/index.html:141
+msgid "No trades yet."
+msgstr "Noch keine Trades."
+
+#: app/templates/bots/telegram.html:8
+msgid "Telegram Notifications"
+msgstr ""
+
+#: app/templates/bots/telegram.html:14
+msgid "Telegram is connected! You will receive trade notifications."
+msgstr ""
+
+#: app/templates/bots/telegram.html:20 app/templates/dashboard/index.html:84
+msgid "Status"
+msgstr "Status"
+
+#: app/templates/bots/telegram.html:21
+msgid "Connected"
+msgstr ""
+
+#: app/templates/bots/telegram.html:22
+msgid "Chat ID"
+msgstr ""
+
+#: app/templates/bots/telegram.html:29
+#, fuzzy
+msgid "Available Commands"
+msgstr "verfügbar"
+
+#: app/templates/bots/telegram.html:34
+msgid "List all your bots and their status"
+msgstr ""
+
+#: app/templates/bots/telegram.html:35
+msgid "Show Binance account USDT balance"
+msgstr ""
+
+#: app/templates/bots/telegram.html:36
+msgid "Start a bot by ID"
+msgstr ""
+
+#: app/templates/bots/telegram.html:37
+msgid "Stop a bot by ID"
+msgstr ""
+
+#: app/templates/bots/telegram.html:48
+msgid "Telegram is not connected yet. Follow the steps below."
+msgstr ""
+
+#: app/templates/bots/telegram.html:52
+msgid "How to connect"
+msgstr ""
+
+#: app/templates/bots/telegram.html:56
+msgid "Open Telegram and search for our bot:"
+msgstr ""
+
+#: app/templates/bots/telegram.html:59
+msgid "Generate a linking code using the button below."
+msgstr ""
+
+#: app/templates/bots/telegram.html:61
+msgid "Send the following message to the bot:"
+msgstr ""
+
+#: app/templates/bots/telegram.html:64
+msgid "Refresh this page to confirm the connection."
+msgstr ""
+
+#: app/templates/bots/telegram.html:72
+msgid "Your linking code (expires in 10 minutes):"
+msgstr ""
+
+#: app/templates/bots/telegram.html:75 app/templates/guides/index.html:113
+msgid "Send"
+msgstr ""
+
+#: app/templates/bots/telegram.html:75
+#, fuzzy
+msgid "to"
+msgstr "Stoppen"
+
+#: app/templates/bots/telegram.html:86
+msgid "Generate New Code"
+msgstr ""
+
+#: app/templates/bots/telegram.html:86
+msgid "Generate Linking Code"
+msgstr ""
+
+# ── Dashboard ─────────────────────────────────────────────────────────────
+#: app/templates/dashboard/index.html:15
+msgid "Total Bots"
+msgstr "Bots gesamt"
+
+#: app/templates/dashboard/index.html:29
+msgid "Total P&L"
+msgstr "Gesamt G/V"
+
+# ── Balance widget ────────────────────────────────────────────────────────
+#: app/templates/dashboard/index.html:44
+msgid "Spot Balance Binance"
+msgstr "Spot-Guthaben Binance"
+
+#: app/templates/dashboard/index.html:56
+msgid "Add API key"
+msgstr "API-Schlüssel hinzufügen"
+
+#: app/templates/dashboard/index.html:56
+msgid "to see the balance."
+msgstr "um das Guthaben zu sehen."
+
+#: app/templates/dashboard/index.html:60
+msgid "Loading balance…"
+msgstr "Guthaben wird geladen…"
+
+#: app/templates/dashboard/index.html:76
+msgid "Your Bots"
+msgstr "Ihre Bots"
+
+#: app/templates/dashboard/index.html:77
+msgid "Manage"
+msgstr "Verwalten"
+
+#: app/templates/dashboard/index.html:83
+msgid "Name"
+msgstr "Name"
+
+#: app/templates/dashboard/index.html:84
+msgid "Actions"
+msgstr "Aktionen"
+
+#: app/templates/dashboard/index.html:113
+msgid "No bots yet."
+msgstr "Noch keine Bots."
+
+#: app/templates/dashboard/index.html:113
+msgid "Create one!"
+msgstr "Jetzt erstellen!"
+
+#: app/templates/dashboard/index.html:156
+msgid "Real trading enabled"
+msgstr "Echter Handel aktiv"
+
+#: app/templates/dashboard/index.html:157
+msgid "available"
+msgstr "verfügbar"
+
+#: app/templates/dashboard/index.html:158
+msgid "threshold"
+msgstr "Schwellenwert"
+
+#: app/templates/dashboard/index.html:159
+msgid "Bots place real orders."
+msgstr "Bots platzieren echte Orders."
+
+#: app/templates/dashboard/index.html:160
+msgid "Simulation mode (DEMO)"
+msgstr "Simulationsmodus (DEMO)"
+
+#: app/templates/dashboard/index.html:161
+msgid "Free USDT/USDC:"
+msgstr "Freies USDT/USDC:"
+
+#: app/templates/dashboard/index.html:162
+msgid "missing ~"
+msgstr "fehlt ~"
+
+#: app/templates/dashboard/index.html:163
+msgid "to threshold of"
+msgstr "bis zum Schwellenwert von"
+
+#: app/templates/dashboard/index.html:164
+msgid ""
+"The bot analyzes the market normally, but real orders are not placed. All"
+" trades are recorded as demo orders"
+msgstr ""
+"Der Bot analysiert den Markt normal, aber echte Orders werden nicht "
+"platziert. Alle Trades werden als Demo-Orders aufgezeichnet"
+
+#: app/templates/dashboard/index.html:165
+msgid "Top up the spot wallet by at least"
+msgstr "Laden Sie das Spot-Wallet um mindestens"
+
+#: app/templates/dashboard/index.html:166
+msgid "USDT to enable real trading."
+msgstr "USDT auf, um echten Handel zu aktivieren."
+
+#: app/templates/dashboard/index.html:167
+msgid "Balance empty — all assets are zero."
+msgstr "Guthaben leer — alle Assets sind null."
+
+#: app/templates/dashboard/index.html:168
+msgid "Server request error"
+msgstr "Serverfehler"
+
+#: app/templates/guides/index.html:11
+msgid "Getting Started"
+msgstr "Erste Schritte"
+
+#: app/templates/guides/index.html:15
+msgid "Create a Binance Account"
+msgstr "Binance-Konto erstellen"
+
+#: app/templates/guides/index.html:16
+msgid "Register at"
+msgstr "Registrieren auf"
+
+#: app/templates/guides/index.html:16
+msgid "Complete KYC (ID verification) to enable Spot trading."
+msgstr "Schließen Sie die KYC-Verifizierung (Ausweisprüfung) ab, um Spot-Handel zu aktivieren."
+
+#: app/templates/guides/index.html:19
+msgid "Generate API Key"
+msgstr "API-Schlüssel erstellen"
+
+#: app/templates/guides/index.html:20
+msgid "Account → API Management → Create API."
+msgstr "Konto → API-Verwaltung → API erstellen."
+
+#: app/templates/guides/index.html:21
+msgid "Official Guide"
+msgstr "Offizielles Handbuch"
+
+# ── Backtest ──────────────────────────────────────────────────────────────
+#: app/templates/guides/index.html:25
+msgid "Configure API Permissions"
+msgstr "API-Berechtigungen konfigurieren"
+
+#: app/templates/guides/index.html:27
+msgid "Enable Spot & Margin Trading"
+msgstr "Spot- & Margin-Handel aktivieren"
+
+#: app/templates/guides/index.html:28
+msgid "Enable Reading"
+msgstr "Leserechte aktivieren"
+
+#: app/templates/guides/index.html:29
+msgid "Do NOT enable Futures, Margin Loan, or Withdrawals"
+msgstr "Aktivieren Sie NICHT Futures, Margin Loan oder Auszahlungen"
+
+#: app/templates/guides/index.html:30
+msgid "Add your bot server IP to whitelist (security!)"
+msgstr "Fügen Sie die IP Ihres Bot-Servers zur Whitelist hinzu (Sicherheit!)"
+
+#: app/templates/guides/index.html:34
+#, fuzzy
+msgid "Add API Key to BOTTEU"
+msgstr "API-Schlüssel zu BOTTEU hinzufügen"
+
+#: app/templates/guides/index.html:35
+msgid ""
+"Go to Bots → API Key, paste your Key and Secret, then click Test "
+"Connection."
+msgstr "Gehen Sie zu Bots → API-Schlüssel, fügen Sie Key und Secret ein und klicken Sie auf Verbindung testen."
+
+#: app/templates/guides/index.html:38
+msgid "Create Your First Bot"
+msgstr "Erstellen Sie Ihren ersten Bot"
+
+#: app/templates/guides/index.html:39
+msgid ""
+"Go to Bots → Create Bot. Choose a pair, select an algorithm, configure "
+"parameters and press Create."
+msgstr "Gehen Sie zu Bots → Bot erstellen. Wählen Sie ein Paar, einen Algorithmus, konfigurieren Sie die Parameter und klicken Sie auf Erstellen."
+
+# ── Bot form ──────────────────────────────────────────────────────────────
+#: app/templates/guides/index.html:49
+#, fuzzy
+msgid "Algorithms Explained"
+msgstr "Algorithmus"
+
+#: app/templates/guides/index.html:54
+msgid ""
+"Moving Average Crossover compares a fast (MA7) and slow (MA25) simple "
+"moving average."
+msgstr "Moving Average Crossover vergleicht eine schnelle (MA7) und eine langsame (MA25) einfache gleitende Durchschnittslinie."
+
+#: app/templates/guides/index.html:55
+msgid "Fast MA crosses ABOVE Slow MA (golden cross)"
+msgstr "Die schnelle MA kreuzt ÜBER die langsame MA (Goldenes Kreuz)"
+
+#: app/templates/guides/index.html:56
+msgid "Fast MA crosses BELOW Slow MA (death cross)"
+msgstr "Die schnelle MA kreuzt UNTER die langsame MA (Todeskreuz)"
+
+#: app/templates/guides/index.html:57
+msgid ""
+"Suitable for trending markets. Can add optional Stop-Loss and Trailing TP"
+" for extra protection."
+msgstr "Geeignet für Trendmärkte. Optional können Stop-Loss und Trailing-TP für zusätzlichen Schutz hinzugefügt werden."
+
+#: app/templates/guides/index.html:60
+msgid "Learn more on Investopedia"
+msgstr "Mehr auf Investopedia"
+
+#: app/templates/guides/index.html:65
+msgid "RSI measures momentum on a 0–100 scale."
+msgstr "Der RSI misst das Momentum auf einer Skala von 0–100."
+
+#: app/templates/guides/index.html:66
+msgid "RSI falls below Oversold level (30 or 20) — asset is oversold"
+msgstr "RSI fällt unter das Überverkauft-Niveau (30 oder 20) — Asset ist überverkauft"
+
+#: app/templates/guides/index.html:67
+msgid "RSI rises above Overbought level (70 or 80) — asset is overbought"
+msgstr "RSI steigt über das Überkauft-Niveau (70 oder 80) — Asset ist überkauft"
+
+#: app/templates/guides/index.html:68
+msgid ""
+"Stop-Loss is REQUIRED for RSI since the signal has no inherent price-"
+"based exit."
+msgstr "Stop-Loss ist FÜR RSI ERFORDERLICH, da das Signal keinen festen preisbasierten Ausstieg liefert."
+
+#: app/templates/guides/index.html:71
+msgid "Learn RSI on Investopedia"
+msgstr "RSI auf Investopedia lernen"
+
+#: app/templates/guides/index.html:74
+#: app/templates/subscriptions/plans.html:103
+#, fuzzy
+msgid "Trailing Take-Profit"
+msgstr "Trailing Take-Profit"
+
+#: app/templates/guides/index.html:76
+#, python-format
+msgid ""
+"Trailing TP locks in profits automatically. After entry, it tracks the "
+"highest price reached. When price drops by the configured %% from that "
+"peak, the bot sells."
+msgstr "Trailing-TP sichert Gewinne automatisch. Nach dem Einstieg verfolgt er den höchsten erreichten Preis. Wenn der Preis um die konfigurierte %% vom Höchststand fällt, verkauft der Bot."
+
+#: app/templates/guides/index.html:77
+#, python-format
+msgid ""
+"Example: Entry at 40,000 USDT, price rises to 42,000, Trailing TP = 1%%. "
+"Bot sells if price drops to 41,580."
+msgstr "Beispiel: Einstieg bei 40.000 USDT, Kurs steigt auf 42.000, Trailing-TP = 1%%. Der Bot verkauft, wenn der Kurs auf 41.580 fällt."
+
+#: app/templates/guides/index.html:86
+msgid "How to Use Backtesting"
+msgstr "Wie man Backtests verwendet"
+
+#: app/templates/guides/index.html:89
+msgid "Go to the Backtest page."
+msgstr "Gehen Sie zur Backtest-Seite."
+
+#: app/templates/guides/index.html:90
+msgid "Enter a Yahoo Finance symbol (e.g. BTC-USDT, ETH-USDT, AAPL)."
+msgstr "Geben Sie ein Yahoo-Finance-Symbol ein (z. B. BTC-USDT, ETH-USDT, AAPL)."
+
+#: app/templates/guides/index.html:91
+msgid "Select a date range and interval (1d recommended for daily)."
+msgstr "Wählen Sie einen Datumsbereich und ein Intervall (1d empfohlen für Tagesdaten)."
+
+#: app/templates/guides/index.html:92
+msgid "Choose your algorithm and configure parameters."
+msgstr "Wählen Sie Ihren Algorithmus und konfigurieren Sie die Parameter."
+
+#: app/templates/guides/index.html:93
+msgid "Press Run Backtest — data loads from Yahoo Finance (works in Germany!)."
+msgstr "Klicken Sie auf 'Backtest starten' — Daten werden von Yahoo Finance geladen (funktioniert in Deutschland!)."
+
+#: app/templates/guides/index.html:94
+msgid ""
+"Review the chart: green ▲ = BUY, red ▼ = SELL. Check Win Rate and Max "
+"Drawdown."
+msgstr "Überprüfen Sie das Diagramm: grün ▲ = KAUF, rot ▼ = VERKAUF. Prüfen Sie Trefferquote und maximalen Drawdown."
+
+#: app/templates/guides/index.html:98
+msgid ""
+"Backtest results do NOT guarantee future performance. Markets change. "
+"Always test with small amounts first."
+msgstr "Backtest-Ergebnisse GARANTIEREN keine zukünftige Performance. Märkte ändern sich. Testen Sie immer zuerst mit kleinen Beträgen."
+
+#: app/templates/guides/index.html:107
+msgid "Telegram Notifications Setup"
+msgstr "Telegram-Benachrichtigungen einrichten"
+
+#: app/templates/guides/index.html:110
+msgid "Go to Bots → Telegram in your cabinet."
+msgstr "Gehen Sie in Ihrem Bereich zu Bots → Telegram."
+
+#: app/templates/guides/index.html:111
+msgid "Click \"Generate Code\" to get your 6-digit link code."
+msgstr "Klicken Sie auf \"Code generieren\", um Ihren 6-stelligen Verknüpfungscode zu erhalten."
+
+#: app/templates/guides/index.html:112
+msgid "Open Telegram and search for"
+msgstr "Öffnen Sie Telegram und suchen Sie nach"
+
+#: app/templates/guides/index.html:113
+msgid "(replace with your code)."
+msgstr "(mit Ihrem Code ersetzen)."
+
+#: app/templates/guides/index.html:114
+msgid "Done! You will receive a confirmation message."
+msgstr "Fertig! Sie erhalten eine Bestätigungsmeldung."
+
+#: app/templates/guides/index.html:116
+msgid "Available commands in Telegram:"
+msgstr "Verfügbare Befehle in Telegram:"
+
+#: app/templates/guides/index.html:118
+#, fuzzy
+msgid "List your bots"
+msgstr "Liste Ihrer Bots"
+
+# ── Balance widget ────────────────────────────────────────────────────────
+#: app/templates/guides/index.html:119
+#, fuzzy
+msgid "Check Spot balance"
+msgstr "Spot-Guthaben prüfen"
+
+#: app/templates/guides/index.html:120
+msgid "Start bot #1"
+msgstr "Starte Bot #1"
+
+#: app/templates/guides/index.html:121
+msgid "Stop bot #1"
+msgstr "Stoppe Bot #1"
+
+#: app/templates/legal/disclaimer.html:9 app/templates/legal/terms.html:9
+msgid "Last updated: March 2026"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:11
+msgid "IMPORTANT — READ CAREFULLY"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:13
+msgid ""
+"Trading in cryptocurrencies involves substantial risk. The value of "
+"cryptocurrencies can go up or down, and there is a significant risk that "
+"you may lose all of your invested capital. You should only trade with "
+"money you can afford to lose entirely."
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:15
+msgid "No Financial Advice"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:16
+msgid ""
+"BOTTEU is a software tool that automates trading strategies. Nothing on "
+"this platform constitutes financial, investment, legal, or tax advice. We"
+" are not a licensed financial advisor, broker, or investment firm. All "
+"trading decisions are made at your own discretion and risk."
+msgstr ""
+
+# ── Bot form ──────────────────────────────────────────────────────────────
+#: app/templates/legal/disclaimer.html:18
+#, fuzzy
+msgid "Algorithm Risk"
+msgstr "Algorithmus"
+
+#: app/templates/legal/disclaimer.html:19
+msgid ""
+"The trading algorithms provided (MA Crossover, RSI) are based on "
+"technical indicators. Technical analysis cannot predict future market "
+"movements. Past backtest performance does not guarantee future results. "
+"Strategies may perform differently in live market conditions due to "
+"slippage, fees, liquidity, and market volatility."
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:21
+#, fuzzy
+msgid "API Key Risk"
+msgstr "API-Schlüssel"
+
+#: app/templates/legal/disclaimer.html:22
+msgid ""
+"You are responsible for securing your Binance API keys. BOTTEU encrypts "
+"your keys — however, you must also restrict API permissions on Binance: "
+"enable only Spot Trading, add IP restrictions, and never enable "
+"withdrawal permissions."
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:24
+msgid "Platform Risk"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:25
+msgid ""
+"BOTTEU may experience technical issues, downtime, or bugs. In the event "
+"of a technical failure, trades may not be executed as expected. Always "
+"monitor your open positions."
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:27
+msgid "By Using This Service"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:28
+msgid "By registering and using BOTTEU, you confirm that:"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:30
+msgid "You are at least 18 years old"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:31
+msgid "Cryptocurrency trading is legal in your jurisdiction"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:32
+msgid "You understand and accept all risks described above"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:33
+msgid "You will not hold BOTTEU liable for any trading losses"
+msgstr ""
+
+#: app/templates/legal/disclaimer.html:37
+msgid ""
+"BOTTEU is not responsible for any financial losses resulting from the use"
+" of this platform."
+msgstr ""
+
+#: app/templates/legal/impressum.html:7
+msgid "Legal Notice"
+msgstr ""
+
+#: app/templates/legal/impressum.html:9
+msgid "Information according to § 5 TMG (German Telemedia Act)"
+msgstr ""
+
+#: app/templates/legal/impressum.html:11
+msgid "Company"
+msgstr ""
+
+#: app/templates/legal/impressum.html:13
+msgid "Street, House Number"
+msgstr ""
+
+#: app/templates/legal/impressum.html:14
+msgid "City"
+msgstr ""
+
+#: app/templates/legal/impressum.html:14
+msgid "Germany"
+msgstr ""
+
+#: app/templates/legal/impressum.html:17
+msgid "Represented by"
+msgstr ""
+
+#: app/templates/legal/impressum.html:18
+msgid "Full Name of Director/Owner"
+msgstr ""
+
+#: app/templates/legal/impressum.html:20
+#, fuzzy
+msgid "Register Entry"
+msgstr "Höchststand seit Einstieg"
+
+#: app/templates/legal/impressum.html:21
+msgid "Registration court:"
+msgstr ""
+
+#: app/templates/legal/impressum.html:22
+msgid "Registration number:"
+msgstr ""
+
+#: app/templates/legal/impressum.html:24
+msgid "VAT ID"
+msgstr ""
+
+#: app/templates/legal/impressum.html:25
+msgid "VAT identification number according to § 27a UStG:"
+msgstr ""
+
+#: app/templates/legal/impressum.html:27
+msgid "Responsible for Content"
+msgstr ""
+
+#: app/templates/legal/impressum.html:28
+msgid "According to § 55 Abs. 2 RStV:"
+msgstr ""
+
+#: app/templates/legal/impressum.html:29
+#, fuzzy
+msgid "Full Name"
+msgstr "Name"
+
+#: app/templates/legal/impressum.html:30
+#, fuzzy
+msgid "Address"
+msgstr "E-Mail-Adresse"
+
+#: app/templates/legal/impressum.html:32
+msgid "Dispute Resolution"
+msgstr ""
+
+#: app/templates/legal/impressum.html:33
+msgid ""
+"The European Commission provides an online dispute resolution (ODR) "
+"platform:"
+msgstr ""
+
+#: app/templates/legal/impressum.html:35
+msgid ""
+"We are not willing or obligated to participate in dispute resolution "
+"proceedings before a consumer arbitration board."
+msgstr ""
+
+#: app/templates/legal/impressum.html:38
+msgid "Liability for content"
+msgstr ""
+
+#: app/templates/legal/impressum.html:38
+msgid ""
+"The content of our pages was created with the utmost care. However, we "
+"cannot guarantee the accuracy, completeness or timeliness of the content."
+msgstr ""
+
+#: app/templates/legal/privacy.html:9
+msgid "Last updated: March 2026 — compliant with GDPR (EU) 2016/679"
+msgstr ""
+
+#: app/templates/legal/privacy.html:14
+msgid "Controller"
+msgstr ""
+
+#: app/templates/legal/privacy.html:16
+msgid "The data controller responsible for this website is listed in our"
+msgstr ""
+
+#: app/templates/legal/privacy.html:20
+msgid "Data We Collect"
+msgstr ""
+
+#: app/templates/legal/privacy.html:22
+msgid "Account data:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:22
+msgid "Email address, bcrypt-hashed password, registration timestamp."
+msgstr ""
+
+#: app/templates/legal/privacy.html:23
+msgid "API credentials:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:23
+msgid ""
+"Binance API key and secret, stored AES-128 encrypted. Never transmitted "
+"in plain text."
+msgstr ""
+
+#: app/templates/legal/privacy.html:24
+#, fuzzy
+msgid "Trading data:"
+msgstr "Handelspaar"
+
+#: app/templates/legal/privacy.html:24
+msgid ""
+"Bot configuration, trade history (symbol, price, quantity, P&L), "
+"algorithm parameters."
+msgstr ""
+
+#: app/templates/legal/privacy.html:25
+#, fuzzy
+msgid "Telegram:"
+msgstr "Telegram"
+
+#: app/templates/legal/privacy.html:25
+msgid "Telegram chat ID (if you choose to link your account)."
+msgstr ""
+
+#: app/templates/legal/privacy.html:26
+msgid "Payment data:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:26
+msgid ""
+"Payment processing is handled by Stripe. We do not store card numbers. We"
+" receive subscription status and Stripe customer ID."
+msgstr ""
+
+#: app/templates/legal/privacy.html:27
+msgid "Technical data:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:27
+msgid "IP address in server logs (max. 7 days retention), session cookies."
+msgstr ""
+
+#: app/templates/legal/privacy.html:30
+msgid "Legal Basis (GDPR Art. 6)"
+msgstr ""
+
+#: app/templates/legal/privacy.html:32
+msgid ""
+"Contract performance — to provide the trading bot service you signed up "
+"for."
+msgstr ""
+
+#: app/templates/legal/privacy.html:33
+msgid ""
+"Consent — for marketing emails and optional Telegram notifications "
+"(withdraw anytime)."
+msgstr ""
+
+#: app/templates/legal/privacy.html:34
+msgid ""
+"Legitimate interest — fraud prevention, service security, aggregate "
+"analytics."
+msgstr ""
+
+#: app/templates/legal/privacy.html:35
+msgid "Legal obligation — tax/invoicing records for paid subscriptions."
+msgstr ""
+
+#: app/templates/legal/privacy.html:38
+msgid "Cookies"
+msgstr ""
+
+#: app/templates/legal/privacy.html:39
+msgid "We use the following cookies:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:42
+msgid "Cookie"
+msgstr ""
+
+#: app/templates/legal/privacy.html:42
+msgid "Purpose"
+msgstr ""
+
+# ── Backtest ──────────────────────────────────────────────────────────────
+#: app/templates/legal/privacy.html:42
+#, fuzzy
+msgid "Duration"
+msgstr "Konfiguration"
+
+#: app/templates/legal/privacy.html:44
+msgid "Authentication session (required)"
+msgstr ""
+
+#: app/templates/legal/privacy.html:44
+msgid "Browser session"
+msgstr ""
+
+#: app/templates/legal/privacy.html:45
+msgid "Language preference (required)"
+msgstr ""
+
+#: app/templates/legal/privacy.html:45 app/templates/legal/privacy.html:46
+msgid "1 year"
+msgstr ""
+
+#: app/templates/legal/privacy.html:46
+msgid "Records your cookie consent"
+msgstr ""
+
+#: app/templates/legal/privacy.html:50
+msgid "We do not use third-party tracking or advertising cookies."
+msgstr ""
+
+#: app/templates/legal/privacy.html:52
+msgid "Data Sharing"
+msgstr ""
+
+#: app/templates/legal/privacy.html:54
+msgid "We do not sell your data. We share data only with:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:57
+msgid "payment processing (USA, adequacy decision / SCCs apply)."
+msgstr ""
+
+#: app/templates/legal/privacy.html:58
+msgid "your API key is sent only when placing actual trades on your behalf."
+msgstr ""
+
+#: app/templates/legal/privacy.html:59
+msgid "only if you link your account; limited to notification messages."
+msgstr ""
+
+#: app/templates/legal/privacy.html:60
+msgid "Hosting provider"
+msgstr ""
+
+#: app/templates/legal/privacy.html:60
+msgid "server infrastructure in the EU."
+msgstr ""
+
+#: app/templates/legal/privacy.html:63
+msgid "Your Rights (GDPR Art. 15–22)"
+msgstr ""
+
+#: app/templates/legal/privacy.html:65
+msgid "Access (Art. 15):"
+msgstr ""
+
+#: app/templates/legal/privacy.html:65
+msgid "Request a copy of all data we hold about you."
+msgstr ""
+
+#: app/templates/legal/privacy.html:66
+msgid "Rectification (Art. 16):"
+msgstr ""
+
+#: app/templates/legal/privacy.html:66
+msgid "Correct inaccurate data."
+msgstr ""
+
+#: app/templates/legal/privacy.html:67
+msgid "Erasure (Art. 17):"
+msgstr ""
+
+#: app/templates/legal/privacy.html:67
+msgid "Delete your account — your personal data will be anonymized."
+msgstr ""
+
+#: app/templates/legal/privacy.html:68
+msgid "Portability (Art. 20):"
+msgstr ""
+
+#: app/templates/legal/privacy.html:68
+msgid "Export your data in machine-readable format."
+msgstr ""
+
+#: app/templates/legal/privacy.html:69
+msgid "Objection (Art. 21):"
+msgstr ""
+
+#: app/templates/legal/privacy.html:69
+msgid "Object to processing based on legitimate interest."
+msgstr ""
+
+#: app/templates/legal/privacy.html:70
+msgid "Right to complain:"
+msgstr ""
+
+#: app/templates/legal/privacy.html:70
+msgid "File a complaint with the supervisory authority in your EU member state."
+msgstr ""
+
+#: app/templates/legal/privacy.html:73
+msgid ""
+"To exercise your rights, use the \"Delete Account\" feature in your "
+"profile or contact us via the Impressum."
+msgstr ""
+
+#: app/templates/legal/privacy.html:76
+msgid "Data Retention"
+msgstr ""
+
+#: app/templates/legal/privacy.html:78
+msgid ""
+"Account data: retained until account deletion, then anonymized "
+"immediately."
+msgstr ""
+
+#: app/templates/legal/privacy.html:79
+msgid ""
+"Trade records: anonymized aggregate records retained for up to 3 years "
+"for financial integrity."
+msgstr ""
+
+#: app/templates/legal/privacy.html:80
+msgid "Server logs: max. 7 days."
+msgstr ""
+
+#: app/templates/legal/privacy.html:81
+msgid "Invoices: 10 years per German tax law (§147 AO)."
+msgstr ""
+
+#: app/templates/legal/privacy.html:84
+msgid "Security"
+msgstr ""
+
+#: app/templates/legal/privacy.html:86
+#, python-format
+msgid ""
+"We implement TLS encryption in transit, AES-128 encryption at rest for "
+"API keys, bcrypt password hashing, rate limiting, CSRF protection, and "
+"Content Security Policy headers. No security measure is 100%% guaranteed."
+msgstr ""
+
+#: app/templates/legal/privacy.html:89
+#, fuzzy
+msgid "Changes"
+msgstr "Verwalten"
+
+#: app/templates/legal/privacy.html:91
+msgid ""
+"We will notify registered users by email of material changes to this "
+"policy at least 14 days in advance."
+msgstr ""
+
+#: app/templates/legal/privacy.html:100 app/templates/legal/terms.html:78
+msgid "Impressum"
+msgstr ""
+
+#: app/templates/legal/terms.html:14
+msgid "Acceptance of Terms"
+msgstr ""
+
+#: app/templates/legal/terms.html:16
+msgid ""
+"By registering and using BOTTEU (\"the Service\"), you agree to be bound "
+"by these Terms of Service. If you do not agree, do not use the Service."
+msgstr ""
+
+#: app/templates/legal/terms.html:19
+#, fuzzy
+msgid "Description of Service"
+msgstr "Nutzungsbedingungen"
+
+#: app/templates/legal/terms.html:21
+msgid ""
+"BOTTEU provides an automated trading interface that connects to the "
+"Binance cryptocurrency exchange via user-supplied API keys. The Service "
+"executes spot trades on your behalf based on the algorithms and "
+"parameters you configure."
+msgstr ""
+
+#: app/templates/legal/terms.html:24
+msgid "Risk Warning"
+msgstr ""
+
+#: app/templates/legal/terms.html:26
+msgid "IMPORTANT:"
+msgstr ""
+
+#: app/templates/legal/terms.html:27
+msgid ""
+"Cryptocurrency trading involves substantial risk of loss. Past "
+"performance of any algorithm does not guarantee future results. You may "
+"lose all of your invested capital. BOTTEU is a tool, not financial "
+"advice. You are solely responsible for all trading decisions and their "
+"consequences."
+msgstr ""
+
+#: app/templates/legal/terms.html:30
+msgid "User Responsibilities"
+msgstr ""
+
+#: app/templates/legal/terms.html:32
+msgid "You must be at least 18 years old to use the Service."
+msgstr ""
+
+#: app/templates/legal/terms.html:33
+msgid ""
+"You are responsible for keeping your API keys and account credentials "
+"secure."
+msgstr ""
+
+#: app/templates/legal/terms.html:34
+msgid ""
+"You must comply with all applicable laws and Binance Terms of Service in "
+"your jurisdiction."
+msgstr ""
+
+#: app/templates/legal/terms.html:35
+msgid ""
+"You may not use the Service for any illegal purpose or to manipulate "
+"markets."
+msgstr ""
+
+#: app/templates/legal/terms.html:38
+#, fuzzy
+msgid "API Key Security"
+msgstr "API-Schlüssel"
+
+#: app/templates/legal/terms.html:40
+msgid ""
+"Your Binance API keys are encrypted at rest using AES-128-CBC (Fernet "
+"encryption). However, you are advised to create API keys with Spot "
+"Trading permission only and to restrict access by IP address. Never "
+"enable withdrawal permissions on API keys used with BOTTEU."
+msgstr ""
+
+#: app/templates/legal/terms.html:43
+#, fuzzy
+msgid "Subscriptions and Payments"
+msgstr "Abonnement"
+
+#: app/templates/legal/terms.html:45
+msgid ""
+"The Free plan allows 1 active bot. The Pro plan allows unlimited bots and"
+" is billed monthly via Stripe. Subscriptions auto-renew unless cancelled "
+"before the renewal date. Refunds are issued at our discretion within 14 "
+"days of purchase if no trades were executed."
+msgstr ""
+
+#: app/templates/legal/terms.html:48
+msgid "Limitation of Liability"
+msgstr ""
+
+#: app/templates/legal/terms.html:50
+msgid ""
+"BOTTEU and its operators shall not be liable for any direct, indirect, "
+"incidental, or consequential damages arising from the use of the Service,"
+" including but not limited to trading losses, server downtime, or "
+"exchange API failures. The Service is provided \"as is\" without "
+"warranties of any kind."
+msgstr ""
+
+#: app/templates/legal/terms.html:53
+msgid "Service Availability"
+msgstr ""
+
+#: app/templates/legal/terms.html:55
+msgid ""
+"We strive for high availability but do not guarantee uninterrupted "
+"service. Scheduled and emergency maintenance may occur. We are not "
+"responsible for losses caused by service interruptions."
+msgstr ""
+
+#: app/templates/legal/terms.html:57
+msgid "Account Termination"
+msgstr ""
+
+#: app/templates/legal/terms.html:59
+msgid ""
+"We reserve the right to suspend or delete accounts that violate these "
+"Terms. You may delete your account at any time; see our Privacy Policy "
+"for data retention details."
+msgstr ""
+
+#: app/templates/legal/terms.html:62
+msgid "Changes to Terms"
+msgstr ""
+
+#: app/templates/legal/terms.html:64
+msgid ""
+"We may update these Terms at any time. Continued use of the Service after"
+" changes constitutes acceptance of the new Terms."
+msgstr ""
+
+#: app/templates/legal/terms.html:67
+msgid "Governing Law"
+msgstr ""
+
+#: app/templates/legal/terms.html:69
+msgid ""
+"These Terms are governed by the laws of the Federal Republic of Germany. "
+"Any disputes shall be resolved in the courts of Germany."
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:2
+#, fuzzy
+msgid "Subscription Plans"
+msgstr "Abonnement"
+
+#: app/templates/subscriptions/plans.html:6
+msgid "Choose Your Plan"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:7
+msgid "Start free. Upgrade when you need more power."
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:19
+msgid "forever"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:22
+#, fuzzy
+msgid "1 active bot"
+msgstr "Bot erstellen"
+
+#: app/templates/subscriptions/plans.html:23
+#, fuzzy
+msgid "All algorithms (MA, RSI)"
+msgstr "Alle zukünftigen Algorithmen"
+
+#: app/templates/subscriptions/plans.html:24
+#: app/templates/subscriptions/plans.html:104
+#, fuzzy
+msgid "Backtesting"
+msgstr "Backtest"
+
+#: app/templates/subscriptions/plans.html:25
+#: app/templates/subscriptions/plans.html:105
+msgid "Telegram notifications"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:26
+#, fuzzy
+msgid "Multiple bots"
+msgstr "Unbegrenzte Bots"
+
+#: app/templates/subscriptions/plans.html:27
+#: app/templates/subscriptions/plans.html:107
+#, fuzzy
+msgid "Priority support"
+msgstr "Vorrangiger Support"
+
+#: app/templates/subscriptions/plans.html:31
+msgid "Current Plan"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:33
+#, fuzzy
+msgid "Downgrade"
+msgstr "Demo-Trades"
+
+#: app/templates/subscriptions/plans.html:43
+#, fuzzy
+msgid "Most Popular"
+msgstr "Beliebt"
+
+#: app/templates/subscriptions/plans.html:49
+#, fuzzy
+msgid "cancel anytime"
+msgstr "Abbrechen"
+
+#: app/templates/subscriptions/plans.html:52
+#, fuzzy
+msgid "Unlimited bots"
+msgstr "Unbegrenzte Bots"
+
+#: app/templates/subscriptions/plans.html:53
+msgid "All algorithms (MA, RSI, + future)"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:54
+#, fuzzy
+msgid "Advanced backtesting"
+msgstr "Backtest starten"
+
+#: app/templates/subscriptions/plans.html:55
+msgid "Telegram notifications + commands"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:56
+msgid "Stop-Loss / Take-Profit / Trailing TP"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:57
+#, fuzzy
+msgid "Priority email support"
+msgstr "Vorrangiger Support"
+
+#: app/templates/subscriptions/plans.html:61
+#, fuzzy
+msgid "Active"
+msgstr "Aktionen"
+
+#: app/templates/subscriptions/plans.html:63
+msgid "Renews"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:67
+#, fuzzy
+msgid "Manage Subscription"
+msgstr "Abonnement"
+
+#: app/templates/subscriptions/plans.html:73
+msgid "Upgrade to Pro"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:86
+msgid "Full Feature Comparison"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:92
+msgid "Feature"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:98
+#, fuzzy
+msgid "Active bots"
+msgstr "Bot erstellen"
+
+#: app/templates/subscriptions/plans.html:100
+#, fuzzy
+msgid "RSI Strategy"
+msgstr "Trefferquote"
+
+#: app/templates/subscriptions/plans.html:106
+msgid "Multiple trading pairs simultaneously"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:125
+msgid "Can I cancel my subscription at any time?"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:130
+msgid ""
+"Yes. You can cancel at any time from the subscription management portal. "
+"Your Pro features remain active until the end of the billing period."
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:139
+msgid "Is there a refund policy?"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:144
+msgid ""
+"We offer refunds within 14 days of purchase if no trades were executed "
+"with Pro features. Contact us via the Impressum."
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:153
+msgid "Do you store my payment information?"
+msgstr ""
+
+#: app/templates/subscriptions/plans.html:158
+msgid ""
+"No. All payments are processed by Stripe. We never see or store your card"
+" details."
+msgstr ""
+
+#~ msgid "Guides &amp; Tutorials"
+#~ msgstr "Anleitungen &amp; Tutorials"
+
