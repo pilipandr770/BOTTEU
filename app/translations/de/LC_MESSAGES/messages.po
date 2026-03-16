@@ -400,6 +400,121 @@ msgstr ""
 msgid "Read full disclaimer"
 msgstr "Risikohinweis"
 
+# ── Landing page — neue Abschnitte ───────────────────────────────────────
+msgid "Requires Binance:"
+msgstr "Binance erforderlich:"
+
+msgid "BOTTEU works exclusively with Binance Spot (verified account required)."
+msgstr "BOTTEU funktioniert ausschließlich mit Binance Spot (verifiziertes Konto erforderlich)."
+
+msgid "No account? Register free →"
+msgstr "Kein Konto? Kostenlos registrieren →"
+
+msgid "Binance Spot · No Leverage · No Liquidations"
+msgstr "Binance Spot · Kein Hebel · Keine Liquidierungen"
+
+msgid "Your Automated"
+msgstr "Dein automatisierter"
+
+msgid "Binance Trading Bot"
+msgstr "Binance Trading Bot"
+
+msgid "Set your strategy once. The bot trades 24/7 — buys, sells, applies Stop-Loss and Trailing TP, sends you Telegram alerts, logs every trade."
+msgstr "Strategie einmal festlegen. Der Bot handelt rund um die Uhr — kauft, verkauft, setzt Stop-Loss und Trailing-TP, sendet Telegram-Benachrichtigungen, protokolliert jeden Trade."
+
+msgid "Open Binance Account"
+msgstr "Binance-Konto eröffnen"
+
+msgid "How It Works"
+msgstr "So funktioniert es"
+
+msgid "Sign up for a free verified Binance account. Only Binance Spot is supported — no futures, no leverage."
+msgstr "Eröffne ein kostenloses verifiziertes Binance-Konto. Nur Binance Spot wird unterstützt — keine Futures, kein Hebel."
+
+msgid "Register on Binance"
+msgstr "Bei Binance registrieren"
+
+msgid "Register on BOTTEU"
+msgstr "Bei BOTTEU registrieren"
+
+msgid "Create your free BOTTEU account, then add your Binance API key (read + spot-trade permissions). Your funds stay on Binance at all times."
+msgstr "Erstelle dein kostenloses BOTTEU-Konto, füge dann deinen Binance-API-Schlüssel hinzu (Lese- + Spot-Trade-Berechtigungen). Deine Gelder bleiben jederzeit auf Binance."
+
+msgid "Configure Your Bot"
+msgstr "Bot konfigurieren"
+
+msgid "Choose trading pair, algorithm (MA Crossover, RSI, Volatility Filter), timeframe, Stop-Loss, Take-Profit and deploy."
+msgstr "Wähle Handelspaar, Algorithmus (MA-Kreuzung, RSI, Volatilitätsfilter), Zeitrahmen, Stop-Loss, Take-Profit und starte den Bot."
+
+msgid "Trade on Autopilot"
+msgstr "Automatisch handeln"
+
+msgid "The bot runs 24/7, executes orders automatically, sends Telegram alerts on every BUY/SELL, and logs every trade."
+msgstr "Der Bot läuft rund um die Uhr, führt Orders automatisch aus, sendet Telegram-Benachrichtigungen bei jedem Kauf/Verkauf und protokolliert jeden Trade."
+
+msgid "What You Get"
+msgstr "Was du bekommst"
+
+#, no-python-format
+msgid "ATR%% or BBW%% filter blocks new entries during sideways markets — protects your balance from commission losses."
+msgstr "ATR%% oder BBW%%-Filter blockiert neue Einstiege in Seitwärtsmärkten — schützt dein Guthaben vor Kommissionsverlusten."
+
+msgid "Built-in Algorithms"
+msgstr "Integrierte Algorithmen"
+
+msgid "Buys when the fast Moving Average crosses above the slow one (golden cross). Sells on the death cross. Configurable fast/slow periods."
+msgstr "Kauft beim goldenen Kreuz (schneller MA kreuzt über langsamen). Verkauft beim Todeskreuz. Konfigurierbarer schneller/langsamer Zeitraum."
+
+msgid "Configurable"
+msgstr "Konfigurierbar"
+
+msgid "Trend following"
+msgstr "Trendfolge"
+
+msgid "Buys when RSI bounces up out of the oversold zone. Sells when RSI enters overbought. Configurable period, oversold and overbought levels."
+msgstr "Kauft wenn RSI aus der überkauften Zone zurückprallt. Verkauft wenn RSI in die überkaufte Zone eintritt. Konfigurierbarer Zeitraum, Über- und Unterkauft-Niveaus."
+
+msgid "Mean reversion"
+msgstr "Rückkehr zum Mittelwert"
+
+#, no-python-format
+msgid "Blocks new buy entries when the market is too quiet (ATR%% or BBW%% below your threshold). Exits are never blocked."
+msgstr "Blockiert neue Kaufeinstiege wenn der Markt zu ruhig ist (ATR%% oder BBW%% unter deinem Schwellenwert). Ausstiege werden nie blockiert."
+
+msgid "Commission saver"
+msgstr "Kommissionssparer"
+
+msgid "Don't have a Binance account yet?"
+msgstr "Noch kein Binance-Konto?"
+
+msgid "BOTTEU works exclusively with Binance Spot and requires a verified account. Creating a Binance account is free and takes under 5 minutes. Use our referral link to get started — it costs you nothing extra."
+msgstr "BOTTEU funktioniert ausschließlich mit Binance Spot und erfordert ein verifiziertes Konto. Ein Binance-Konto zu erstellen ist kostenlos und dauert unter 5 Minuten. Nutze unseren Empfehlungslink — es kostet dich nichts extra."
+
+msgid "World's largest crypto exchange by volume"
+msgstr "Weltgrößte Kryptobörse nach Volumen"
+
+#, no-python-format
+msgid "Low Spot trading fees (0.1%% or less with BNB)"
+msgstr "Niedrige Spot-Handelsgebühren (0,1%% oder weniger mit BNB)"
+
+msgid "Strong security — 2FA, anti-phishing code"
+msgstr "Starke Sicherheit — 2FA, Anti-Phishing-Code"
+
+msgid "Your funds always remain on Binance — BOTTEU only places orders via API"
+msgstr "Deine Gelder bleiben immer auf Binance — BOTTEU platziert nur Orders über die API"
+
+msgid "Open Free Binance Account"
+msgstr "Kostenloses Binance-Konto eröffnen"
+
+msgid "Free · Takes 5 minutes"
+msgstr "Kostenlos · Dauert 5 Minuten"
+
+msgid "Register via our partner link:"
+msgstr "Über unseren Partnerlink registrieren:"
+
+msgid "Create Binance Account"
+msgstr "Binance-Konto erstellen"
+
 #: app/templates/auth/delete_account.html:13
 msgid ""
 "You are about to permanently delete your BOTTEU account. This action is "

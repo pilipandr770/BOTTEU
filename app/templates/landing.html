@@ -1,36 +1,127 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Automated Binance Spot Trading Bot') }}{% endblock %}
+{% block meta_desc %}{{ _('Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade.') }}{% endblock %}
 
 {% block content %}
 
-<!-- Hero -->
-<section class="py-5 text-center">
+{# ── Binance requirement banner ── #}
+<div class="alert alert-info border-info py-2 text-center rounded-0 mb-4" style="margin:-1rem -1rem 1rem;">
+  <i class="bi bi-bank me-1"></i>
+  <strong>{{ _('Requires Binance:') }}</strong>
+  {{ _('BOTTEU works exclusively with Binance Spot (verified account required).') }}
+  <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=uk-UA&ref=GRO_28502_EMPAJ&utm_source=default"
+     target="_blank" rel="noopener nofollow" class="alert-link ms-1">
+    {{ _('No account? Register free →') }}
+  </a>
+</div>
+
+{# ── Hero ── #}
+<section class="py-5 text-center border-bottom border-secondary mb-4">
   <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <h1 class="display-4 fw-bold text-success">
-        <i class="bi bi-robot"></i> BOTTEU
+    <div class="col-lg-9">
+      <span class="badge bg-success bg-opacity-25 text-success border border-success fs-6 mb-3 px-3 py-2">
+        <i class="bi bi-lightning-charge-fill me-1"></i>{{ _('Binance Spot · No Leverage · No Liquidations') }}
+      </span>
+      <h1 class="display-3 fw-bold mt-2">
+        <span class="text-success">BOTTEU</span> — {{ _('Your Automated') }}<br>
+        {{ _('Binance Trading Bot') }}
       </h1>
-      <p class="lead text-light mt-3">
-        {{ _('Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade.') }}
+      <p class="lead text-secondary mt-3 mb-4 mx-auto" style="max-width:640px;">
+        {{ _('Set your strategy once. The bot trades 24/7 — buys, sells, applies Stop-Loss and Trailing TP, sends you Telegram alerts, logs every trade.') }}
       </p>
-      <div class="d-flex gap-3 justify-content-center mt-4">
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
         <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg px-5">
           <i class="bi bi-rocket-takeoff me-2"></i>{{ _('Get Started Free') }}
         </a>
-        <a href="{{ url_for('backtest.index') }}" class="btn btn-outline-light btn-lg px-4">
-          <i class="bi bi-graph-up-arrow me-2"></i>{{ _('Try Backtest') }}
+        <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=uk-UA&ref=GRO_28502_EMPAJ&utm_source=default"
+           target="_blank" rel="noopener nofollow"
+           class="btn btn-warning btn-lg px-4">
+          <i class="bi bi-bank me-2"></i>{{ _('Open Binance Account') }}
         </a>
       </div>
       <p class="text-muted small mt-3">
-        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+        <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
         {{ _('Not financial advice. All trading involves risk.') }}
       </p>
     </div>
   </div>
 </section>
 
-<!-- Features -->
-<section class="py-5">
+{# ── How It Works ── #}
+<section class="py-5 border-bottom border-secondary mb-4">
+  <h2 class="text-center fw-bold mb-5">
+    <i class="bi bi-signpost-2 text-success me-2"></i>{{ _('How It Works') }}
+  </h2>
+  <div class="row g-4 justify-content-center">
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-dark border-secondary h-100 text-center p-2">
+        <div class="card-body">
+          <div class="display-5 fw-bold text-success opacity-50">1</div>
+          <i class="bi bi-bank display-5 text-warning my-2"></i>
+          <h5>{{ _('Open Binance Account') }}</h5>
+          <p class="text-muted small">
+            {{ _('Sign up for a free verified Binance account. Only Binance Spot is supported — no futures, no leverage.') }}
+          </p>
+          <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=uk-UA&ref=GRO_28502_EMPAJ&utm_source=default"
+             target="_blank" rel="noopener nofollow"
+             class="btn btn-warning btn-sm mt-2">
+            <i class="bi bi-box-arrow-up-right me-1"></i>{{ _('Register on Binance') }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-dark border-secondary h-100 text-center p-2">
+        <div class="card-body">
+          <div class="display-5 fw-bold text-success opacity-50">2</div>
+          <i class="bi bi-person-check display-5 text-success my-2"></i>
+          <h5>{{ _('Register on BOTTEU') }}</h5>
+          <p class="text-muted small">
+            {{ _('Create your free BOTTEU account, then add your Binance API key (read + spot-trade permissions). Your funds stay on Binance at all times.') }}
+          </p>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-sm mt-2">
+            <i class="bi bi-person-plus me-1"></i>{{ _('Sign Up Free') }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-dark border-secondary h-100 text-center p-2">
+        <div class="card-body">
+          <div class="display-5 fw-bold text-success opacity-50">3</div>
+          <i class="bi bi-sliders display-5 text-info my-2"></i>
+          <h5>{{ _('Configure Your Bot') }}</h5>
+          <p class="text-muted small">
+            {{ _('Choose trading pair, algorithm (MA Crossover, RSI, Volatility Filter), timeframe, Stop-Loss, Take-Profit and deploy.') }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card bg-dark border-secondary h-100 text-center p-2">
+        <div class="card-body">
+          <div class="display-5 fw-bold text-success opacity-50">4</div>
+          <i class="bi bi-robot display-5 text-primary my-2"></i>
+          <h5>{{ _('Trade on Autopilot') }}</h5>
+          <p class="text-muted small">
+            {{ _('The bot runs 24/7, executes orders automatically, sends Telegram alerts on every BUY/SELL, and logs every trade.') }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{# ── Features ── #}
+<section class="py-5 border-bottom border-secondary mb-4">
+  <h2 class="text-center fw-bold mb-5">
+    <i class="bi bi-stars text-success me-2"></i>{{ _('What You Get') }}
+  </h2>
   <div class="row g-4 text-center">
     <div class="col-md-4">
       <div class="card bg-dark border-success h-100">
@@ -80,17 +171,81 @@
     <div class="col-md-4">
       <div class="card bg-dark border-info h-100">
         <div class="card-body">
-          <i class="bi bi-book display-4 text-info"></i>
-          <h5 class="mt-3">{{ _('Full Guides & Transparency') }}</h5>
-          <p class="text-muted small">{{ _('Step-by-step guides on setting up your Binance API. All legal documents available. GDPR compliant.') }}</p>
+          <i class="bi bi-funnel display-4 text-warning"></i>
+          <h5 class="mt-3">{{ _('Volatility Filter') }}</h5>
+          <p class="text-muted small">{{ _('ATR%% or BBW%% filter blocks new entries during sideways markets — protects your balance from commission losses.') }}</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Pricing -->
-<section class="py-5">
+{# ── Built-in Algorithms ── #}
+<section class="py-5 border-bottom border-secondary mb-4">
+  <h2 class="text-center fw-bold mb-5">
+    <i class="bi bi-diagram-3 text-success me-2"></i>{{ _('Built-in Algorithms') }}
+  </h2>
+  <div class="row g-4">
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-header border-secondary text-success fw-semibold">
+          <i class="bi bi-arrows-collapse me-2"></i>{{ _('MA Crossover') }}
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('Buys when the fast Moving Average crosses above the slow one (golden cross). Sells on the death cross. Configurable fast/slow periods.') }}
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary">MA7 / MA25</span>
+            <span class="badge bg-secondary">{{ _('Configurable') }}</span>
+            <span class="badge bg-success bg-opacity-25 text-success">{{ _('Trend following') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-header border-secondary text-info fw-semibold">
+          <i class="bi bi-activity me-2"></i>RSI
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('Buys when RSI bounces up out of the oversold zone. Sells when RSI enters overbought. Configurable period, oversold and overbought levels.') }}
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary">RSI-14</span>
+            <span class="badge bg-secondary">{{ _('Configurable') }}</span>
+            <span class="badge bg-info bg-opacity-25 text-info">{{ _('Mean reversion') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-header border-secondary text-warning fw-semibold">
+          <i class="bi bi-funnel me-2"></i>{{ _('Volatility Filter') }}
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('Blocks new buy entries when the market is too quiet (ATR%% or BBW%% below your threshold). Exits are never blocked.') }}
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary">ATR%%</span>
+            <span class="badge bg-secondary">BBW%%</span>
+            <span class="badge bg-warning bg-opacity-25 text-warning">{{ _('Commission saver') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{# ── Pricing ── #}
+<section class="py-5 border-bottom border-secondary mb-4">
   <h2 class="text-center fw-bold mb-4">{{ _('Pricing') }}</h2>
   <div class="row justify-content-center g-4">
     <div class="col-md-4">
@@ -129,7 +284,46 @@
   </div>
 </section>
 
-<!-- Risk Disclaimer Banner -->
+{# ── Binance CTA ── #}
+<section class="py-5 border-bottom border-secondary mb-4">
+  <div class="row align-items-center g-5">
+    <div class="col-lg-7">
+      <h2 class="fw-bold mb-3">
+        {{ _("Don't have a Binance account yet?") }}
+      </h2>
+      <p class="text-secondary mb-4">
+        {{ _('BOTTEU works exclusively with Binance Spot and requires a verified account. Creating a Binance account is free and takes under 5 minutes. Use our referral link to get started — it costs you nothing extra.') }}
+      </p>
+      <ul class="list-unstyled text-muted mb-4">
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{{ _("World's largest crypto exchange by volume") }}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{{ _('Low Spot trading fees (0.1%% or less with BNB)') }}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{{ _('Strong security — 2FA, anti-phishing code') }}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>{{ _('Your funds always remain on Binance — BOTTEU only places orders via API') }}</li>
+      </ul>
+      <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=uk-UA&ref=GRO_28502_EMPAJ&utm_source=default"
+         target="_blank" rel="noopener nofollow"
+         class="btn btn-warning btn-lg px-5 me-3">
+        <i class="bi bi-bank me-2"></i>{{ _('Open Free Binance Account') }}
+      </a>
+      <span class="text-muted small">{{ _('Free · Takes 5 minutes') }}</span>
+    </div>
+    <div class="col-lg-5 text-center">
+      <div class="card bg-dark border-warning p-4">
+        <i class="bi bi-bank display-1 text-warning mb-3"></i>
+        <h5 class="text-warning">Binance</h5>
+        <p class="text-muted small mb-3">{{ _('Register via our partner link:') }}</p>
+        <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=uk-UA&ref=GRO_28502_EMPAJ&utm_source=default"
+           target="_blank" rel="noopener nofollow"
+           class="btn btn-warning w-100 fw-semibold">
+          <i class="bi bi-box-arrow-up-right me-2"></i>{{ _('Create Binance Account') }} →
+        </a>
+        <p class="text-muted mt-2" style="font-size:0.7rem;">ref: GRO_28502_EMPAJ</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ── Risk Disclaimer ── #}
 <section class="py-4">
   <div class="alert alert-warning border-warning">
     <i class="bi bi-exclamation-triangle-fill me-2"></i>

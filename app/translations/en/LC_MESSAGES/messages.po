@@ -400,6 +400,121 @@ msgstr ""
 msgid "Read full disclaimer"
 msgstr "Risk Disclaimer"
 
+# ── Landing page — new sections ──────────────────────────────────────────
+msgid "Requires Binance:"
+msgstr "Requires Binance:"
+
+msgid "BOTTEU works exclusively with Binance Spot (verified account required)."
+msgstr "BOTTEU works exclusively with Binance Spot (verified account required)."
+
+msgid "No account? Register free →"
+msgstr "No account? Register free →"
+
+msgid "Binance Spot · No Leverage · No Liquidations"
+msgstr "Binance Spot · No Leverage · No Liquidations"
+
+msgid "Your Automated"
+msgstr "Your Automated"
+
+msgid "Binance Trading Bot"
+msgstr "Binance Trading Bot"
+
+msgid "Set your strategy once. The bot trades 24/7 — buys, sells, applies Stop-Loss and Trailing TP, sends you Telegram alerts, logs every trade."
+msgstr "Set your strategy once. The bot trades 24/7 — buys, sells, applies Stop-Loss and Trailing TP, sends you Telegram alerts, logs every trade."
+
+msgid "Open Binance Account"
+msgstr "Open Binance Account"
+
+msgid "How It Works"
+msgstr "How It Works"
+
+msgid "Sign up for a free verified Binance account. Only Binance Spot is supported — no futures, no leverage."
+msgstr "Sign up for a free verified Binance account. Only Binance Spot is supported — no futures, no leverage."
+
+msgid "Register on Binance"
+msgstr "Register on Binance"
+
+msgid "Register on BOTTEU"
+msgstr "Register on BOTTEU"
+
+msgid "Create your free BOTTEU account, then add your Binance API key (read + spot-trade permissions). Your funds stay on Binance at all times."
+msgstr "Create your free BOTTEU account, then add your Binance API key (read + spot-trade permissions). Your funds stay on Binance at all times."
+
+msgid "Configure Your Bot"
+msgstr "Configure Your Bot"
+
+msgid "Choose trading pair, algorithm (MA Crossover, RSI, Volatility Filter), timeframe, Stop-Loss, Take-Profit and deploy."
+msgstr "Choose trading pair, algorithm (MA Crossover, RSI, Volatility Filter), timeframe, Stop-Loss, Take-Profit and deploy."
+
+msgid "Trade on Autopilot"
+msgstr "Trade on Autopilot"
+
+msgid "The bot runs 24/7, executes orders automatically, sends Telegram alerts on every BUY/SELL, and logs every trade."
+msgstr "The bot runs 24/7, executes orders automatically, sends Telegram alerts on every BUY/SELL, and logs every trade."
+
+msgid "What You Get"
+msgstr "What You Get"
+
+#, no-python-format
+msgid "ATR%% or BBW%% filter blocks new entries during sideways markets — protects your balance from commission losses."
+msgstr "ATR%% or BBW%% filter blocks new entries during sideways markets — protects your balance from commission losses."
+
+msgid "Built-in Algorithms"
+msgstr "Built-in Algorithms"
+
+msgid "Buys when the fast Moving Average crosses above the slow one (golden cross). Sells on the death cross. Configurable fast/slow periods."
+msgstr "Buys when the fast Moving Average crosses above the slow one (golden cross). Sells on the death cross. Configurable fast/slow periods."
+
+msgid "Configurable"
+msgstr "Configurable"
+
+msgid "Trend following"
+msgstr "Trend following"
+
+msgid "Buys when RSI bounces up out of the oversold zone. Sells when RSI enters overbought. Configurable period, oversold and overbought levels."
+msgstr "Buys when RSI bounces up out of the oversold zone. Sells when RSI enters overbought. Configurable period, oversold and overbought levels."
+
+msgid "Mean reversion"
+msgstr "Mean reversion"
+
+#, no-python-format
+msgid "Blocks new buy entries when the market is too quiet (ATR%% or BBW%% below your threshold). Exits are never blocked."
+msgstr "Blocks new buy entries when the market is too quiet (ATR%% or BBW%% below your threshold). Exits are never blocked."
+
+msgid "Commission saver"
+msgstr "Commission saver"
+
+msgid "Don't have a Binance account yet?"
+msgstr "Don't have a Binance account yet?"
+
+msgid "BOTTEU works exclusively with Binance Spot and requires a verified account. Creating a Binance account is free and takes under 5 minutes. Use our referral link to get started — it costs you nothing extra."
+msgstr "BOTTEU works exclusively with Binance Spot and requires a verified account. Creating a Binance account is free and takes under 5 minutes. Use our referral link to get started — it costs you nothing extra."
+
+msgid "World's largest crypto exchange by volume"
+msgstr "World's largest crypto exchange by volume"
+
+#, no-python-format
+msgid "Low Spot trading fees (0.1%% or less with BNB)"
+msgstr "Low Spot trading fees (0.1%% or less with BNB)"
+
+msgid "Strong security — 2FA, anti-phishing code"
+msgstr "Strong security — 2FA, anti-phishing code"
+
+msgid "Your funds always remain on Binance — BOTTEU only places orders via API"
+msgstr "Your funds always remain on Binance — BOTTEU only places orders via API"
+
+msgid "Open Free Binance Account"
+msgstr "Open Free Binance Account"
+
+msgid "Free · Takes 5 minutes"
+msgstr "Free · Takes 5 minutes"
+
+msgid "Register via our partner link:"
+msgstr "Register via our partner link:"
+
+msgid "Create Binance Account"
+msgstr "Create Binance Account"
+
 #: app/templates/auth/delete_account.html:13
 msgid ""
 "You are about to permanently delete your BOTTEU account. This action is "
