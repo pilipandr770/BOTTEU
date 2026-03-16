@@ -28,7 +28,7 @@ class Config:
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "True") == "True"
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "BOTTEU <noreply@botteu.io>")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "BOTTEU <andrii.it.info@gmail.com>")
 
     # Telegram
     TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
