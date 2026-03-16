@@ -1,5 +1,5 @@
 # ── Builder: compile dependencies ────────────────────────────────────────────
-FROM python:3.10-slim AS builder
+FROM python:3.10.18-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -16,7 +16,7 @@ RUN pip install --upgrade pip && \
     pip install --prefix=/install -r requirements.txt
 
 # ── Runtime image ─────────────────────────────────────────────────────────────
-FROM python:3.10-slim AS runtime
+FROM python:3.10.18-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
