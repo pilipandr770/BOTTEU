@@ -1,10 +1,13 @@
 """
 Telegram notification service — sends messages to a user's linked chat.
 Called from the bot runner after trade events.
+
+Uses synchronous requests.post() instead of asyncio to avoid event-loop
+conflicts inside APScheduler background threads (Bug 5).
 """
 import logging
-import asyncio
 
+import requests
 from flask import current_app
 
 logger = logging.getLogger(__name__)
@@ -14,19 +17,17 @@ def _get_token() -> str:
     return current_app.config.get("TELEGRAM_BOT_TOKEN", "")
 
 
-async def _send_async(token: str, chat_id: int, text: str) -> None:
-    from telegram import Bot
-    async with Bot(token) as bot:
-        await bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
-
-
 def notify_user(chat_id: int, text: str) -> None:
-    """Fire-and-forget notification. Silently logs errors (never raises)."""
+    """Send a Telegram message synchronously. Silently logs errors (never raises)."""
     token = _get_token()
     if not token or not chat_id:
         return
     try:
-        asyncio.run(_send_async(token, chat_id, text))
+        requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
+            timeout=5,
+        )
     except Exception as exc:
         logger.warning("Telegram notify failed for chat_id=%s: %s", chat_id, exc)
 

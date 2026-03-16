@@ -380,6 +380,50 @@
   </div>
 </div>
 
+{# ── TradingView Webhook ──────────────────────────────────────────────────── #}
+{% set tv_token = (bot.params or {}).get('webhook_token') %}
+<div class="card bg-dark border-secondary mt-4 mb-3">
+  <div class="card-header fw-semibold d-flex align-items-center gap-2">
+    <i class="bi bi-broadcast text-info"></i>{{ _('TradingView Webhook') }}
+    <span class="ms-auto badge bg-{{ 'success' if tv_token else 'secondary' }}">
+      {{ _('Active') if tv_token else _('Not configured') }}
+    </span>
+  </div>
+  <div class="card-body small">
+    <p class="text-muted mb-3">
+      {{ _('Connect a TradingView Pine Script alert to trigger BUY/SELL directly on this bot.') }}
+    </p>
+
+    {% if tv_token %}
+    <div class="mb-2">
+      <label class="form-label text-muted">{{ _('Webhook URL') }}</label>
+      <div class="input-group">
+        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace"
+               id="tvWebhookUrl"
+               value="{{ request.host_url.rstrip('/') }}/webhook/tv/{{ bot.id }}/{{ tv_token }}"
+               readonly>
+        <button class="btn btn-sm btn-outline-secondary" type="button"
+                onclick="navigator.clipboard.writeText(document.getElementById('tvWebhookUrl').value)">
+          <i class="bi bi-clipboard"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label text-muted">{{ _('Alert message (JSON)') }}</label>
+      <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary font-monospace"
+             value='{"action":"buy"}  or  {"action":"sell"}' readonly>
+    </div>
+    {% endif %}
+
+    <button class="btn btn-sm btn-outline-info" id="tvGenBtn"
+            onclick="generateTVToken({{ bot.id }})">
+      <i class="bi bi-arrow-clockwise me-1"></i>
+      {{ _('Regenerate Token') if tv_token else _('Generate Token') }}
+    </button>
+    <div id="tvTokenMsg" class="mt-2 text-success small d-none">{{ _('Token generated — reloading…') }}</div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -454,5 +498,18 @@ autoRefreshEl.addEventListener('change', () => {
     lastUpdateEl.textContent = I18N.autoDisabled;
   }
 });
+
+function generateTVToken(botId) {
+  fetch(`/webhook/tv/token/${botId}`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token() }}'},
+  })
+  .then(r => r.json())
+  .then(() => {
+    document.getElementById('tvTokenMsg').classList.remove('d-none');
+    setTimeout(() => location.reload(), 1200);
+  })
+  .catch(() => alert('Failed to generate token'));
+}
 </script>
 {% endblock %}

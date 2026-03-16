@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import yfinance as yf
@@ -18,6 +19,8 @@ from app.algorithms.base import list_algorithms, get_algorithm
 logger = logging.getLogger(__name__)
 
 backtest_bp = Blueprint("backtest", __name__, url_prefix="/backtest")
+
+FEE_RATE = 0.001  # 0.1% Binance taker fee per side
 
 # Binance symbol → Yahoo Finance ticker
 def _to_yahoo_ticker(symbol: str) -> str:
@@ -118,14 +121,18 @@ def run():
             has_position = False
             exit_price = current_close
             pnl_pct = (exit_price - entry_price) / entry_price * 100
-            equity *= 1 + pnl_pct / 100
+            # Deduct round-trip fees: 0.1% buy + 0.1% sell = 0.2% per trade (Bug 3)
+            fee_pct = FEE_RATE * 2 * 100
+            pnl_pct_net = pnl_pct - fee_pct
+            equity *= 1 + pnl_pct_net / 100
             reason = state.get("exit_reason", "SIGNAL")
             trades.append({
                 "type": "SELL",
                 "date": date_val,
                 "price": round(exit_price, 6),
                 "idx": i,
-                "pnl_pct": round(pnl_pct, 2),
+                "pnl_pct": round(pnl_pct_net, 2),
+                "pnl_pct_gross": round(pnl_pct, 2),
                 "reason": reason,
             })
 
@@ -186,7 +193,7 @@ def run():
     wins = [t for t in sell_trades if t.get("pnl_pct", 0) > 0]
     win_rate = (len(wins) / len(sell_trades) * 100) if sell_trades else 0
 
-    # Compound total return from equity curve (correct method)
+    # Compound total return from equity curve
     total_return = (equity - 1000.0) / 1000.0 * 100
 
     # Exit reason breakdown
@@ -205,6 +212,16 @@ def run():
             dd = (peak - v) / peak * 100
             max_dd = max(max_dd, dd)
 
+    # Sharpe & Sortino ratios (per-trade, risk-free rate = 0)
+    returns = np.array([t["pnl_pct"] / 100 for t in sell_trades])
+    sharpe = sortino = 0.0
+    if len(returns) >= 2:
+        std = np.std(returns, ddof=1)
+        sharpe = float(np.mean(returns) / std) if std > 0 else 0.0
+        downside = returns[returns < 0]
+        d_std = np.std(downside, ddof=1) if len(downside) >= 2 else 0.0
+        sortino = float(np.mean(returns) / d_std) if d_std > 0 else 0.0
+
     stats = {
         "total_trades": len(sell_trades),
         "win_rate": round(win_rate, 1),
@@ -212,6 +229,8 @@ def run():
         "max_drawdown_pct": round(max_dd, 2),
         "final_equity": round(equity, 2),
         "exit_reasons": exit_reasons,
+        "sharpe_ratio": round(sharpe, 3),
+        "sortino_ratio": round(sortino, 3),
     }
 
     return jsonify({

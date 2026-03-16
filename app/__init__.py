@@ -42,6 +42,8 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.guides import guides_bp
     from app.routes.telegram_webhook import telegram_bp
     from app.routes.admin import admin_bp
+    from app.routes.risk import risk_bp
+    from app.routes.tradingview import tv_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -52,6 +54,8 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(guides_bp)
     app.register_blueprint(telegram_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(risk_bp)
+    app.register_blueprint(tv_bp)
 
     # Landing page
     from flask import render_template

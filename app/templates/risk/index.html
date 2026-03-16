@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Risk Manager{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <h3 class="fw-bold mb-1"><i class="bi bi-shield-exclamation text-warning me-2"></i>{{ _('Risk Manager') }}</h3>
+    <p class="text-muted mb-4">{{ _('Global trading limits applied across all your bots. When a limit is hit, new positions are blocked automatically.') }}</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'danger' if cat == 'error' else cat }} alert-dismissible fade show" role="alert">
+          {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    {# ── Settings form ──────────────────────────────────────────────────── #}
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-header fw-semibold"><i class="bi bi-sliders me-2"></i>{{ _('Limits') }}</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('risk.save') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch"
+                   id="enabled" name="enabled"
+                   {{ 'checked' if not rc or rc.enabled else '' }}>
+            <label class="form-check-label fw-semibold" for="enabled">{{ _('Risk Manager enabled') }}</label>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">{{ _('Max daily loss') }} <span class="text-muted small">(%)</span></label>
+              <input type="number" class="form-control bg-dark text-white border-secondary"
+                     name="max_daily_loss_pct" min="0.1" max="100" step="0.1"
+                     value="{{ rc.max_daily_loss_pct if rc and rc.max_daily_loss_pct else '' }}"
+                     placeholder="{{ _('e.g. 5') }}">
+              <div class="form-text">{{ _("Stop new BUYs if today's realised P&L falls below −N% of capital invested today.") }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">{{ _('Max drawdown') }} <span class="text-muted small">(%)</span></label>
+              <input type="number" class="form-control bg-dark text-white border-secondary"
+                     name="max_drawdown_pct" min="0.1" max="100" step="0.1"
+                     value="{{ rc.max_drawdown_pct if rc and rc.max_drawdown_pct else '' }}"
+                     placeholder="{{ _('e.g. 15') }}">
+              <div class="form-text">{{ _('Reserved for future equity-curve tracking. Not yet enforced.') }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">{{ _('Max open positions') }}</label>
+              <input type="number" class="form-control bg-dark text-white border-secondary"
+                     name="max_open_positions" min="1" max="50" step="1"
+                     value="{{ rc.max_open_positions if rc and rc.max_open_positions else '' }}"
+                     placeholder="{{ _('e.g. 3') }}">
+              <div class="form-text">{{ _('Never allow more than N bots to hold a position simultaneously.') }}</div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-lg me-1"></i>{{ _('Save') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {# ── Current status ─────────────────────────────────────────────────── #}
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-header fw-semibold"><i class="bi bi-bar-chart-line me-2"></i>{{ _('Current Status') }}</div>
+      <div class="card-body small text-muted">
+        {% set user_bots = current_user.bots %}
+        {% set open_pos = user_bots | selectattr('state') | selectattr('state.__getitem__', 'defined') | list %}
+        {% set open_count = namespace(n=0) %}
+        {% for b in user_bots %}
+          {% if b.state and b.state.get('has_position') %}{% set open_count.n = open_count.n + 1 %}{% endif %}
+        {% endfor %}
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="p-2 rounded border border-secondary text-center">
+              <div class="fs-4 fw-bold text-white">{{ open_count.n }}</div>
+              <div>{{ _('open positions') }}</div>
+              {% if rc and rc.max_open_positions %}
+                <div class="text-{{ 'danger' if open_count.n >= rc.max_open_positions else 'success' }} small">
+                  {{ _('limit') }}: {{ rc.max_open_positions }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-2 rounded border border-secondary text-center">
+              <div class="fs-4 fw-bold text-{{ 'success' if rc and rc.enabled else 'secondary' }}">
+                {{ _('ON') if rc and rc.enabled else _('OFF') }}
+              </div>
+              <div>{{ _('protection') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Emergency stop ─────────────────────────────────────────────────── #}
+    <div class="card border-danger bg-dark mb-4">
+      <div class="card-header text-danger fw-semibold"><i class="bi bi-stop-circle me-2"></i>{{ _('Emergency Stop') }}</div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">{{ _('Immediately stops all running bots. Use in case of unusual market conditions or suspected issues.') }}</p>
+        <form method="POST" action="{{ url_for('risk.do_emergency_stop') }}"
+              onsubmit="return confirm('{{ _('Stop ALL running bots immediately?') }}')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-stop-fill me-1"></i>{{ _('Stop All Bots NOW') }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
