@@ -12,6 +12,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 
 from app.telegram.handlers import (
     cmd_start,
+    cmd_myid,
     cmd_status,
     cmd_balance,
     cmd_start_bot,
@@ -27,12 +28,13 @@ logger = logging.getLogger(__name__)
 async def post_init(application: Application) -> None:
     """Set bot commands visible in Telegram menu."""
     await application.bot.set_my_commands([
-        BotCommand("start", "Link your BOTTEU account"),
-        BotCommand("status", "Show running bots"),
-        BotCommand("balance", "Show Spot balance"),
+        BotCommand("start",     "Link account or see your Chat ID"),
+        BotCommand("myid",      "Show your Telegram Chat ID"),
+        BotCommand("status",    "Show running bots"),
+        BotCommand("balance",   "Show Spot balance"),
         BotCommand("start_bot", "Start a bot: /start_bot <id>"),
-        BotCommand("stop_bot", "Stop a bot: /stop_bot <id>"),
-        BotCommand("help", "Show available commands"),
+        BotCommand("stop_bot",  "Stop a bot: /stop_bot <id>"),
+        BotCommand("help",      "Show available commands"),
     ])
 
 
@@ -65,6 +67,7 @@ def build_application(token: str | None = None, flask_app=None) -> Application:
 
     handlers = [
         ("start",     cmd_start),
+        ("myid",      cmd_myid),
         ("status",    cmd_status),
         ("balance",   cmd_balance),
         ("start_bot", cmd_start_bot),

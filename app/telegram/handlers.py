@@ -120,20 +120,35 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def cmd_myid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Reply with the user's own Telegram Chat ID — used for Direct Connect."""
+    chat_id = update.effective_chat.id
+    await update.message.reply_text(
+        f"🆔 <b>Your Telegram Chat ID:</b>\n<code>{chat_id}</code>\n\n"
+        "Copy this number and paste it into your <b>BOTTEU → Telegram</b> page "
+        "to connect instantly.",
+        parse_mode="HTML",
+    )
+
+
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    /start <6-digit-code>
-    Links this Telegram chat to a BOTTEU user account.
+    /start [<6-digit-code>]
+    Without a code: shows the user their Chat ID for direct connect.
+    With a code: links this Telegram chat to a BOTTEU user account.
     """
     from app.extensions import db
     from app.models.telegram_account import TelegramAccount
 
     args = context.args
     if not args:
+        chat_id = update.effective_chat.id
         await update.message.reply_text(
-            "👋 <b>Welcome to BOTTEU!</b>\n\n"
-            "To link your account, go to your <b>BOTTEU cabinet → Telegram</b> "
-            "and copy the 6-digit code, then send:\n"
+            f"👋 <b>Welcome to BOTTEU!</b>\n\n"
+            f"🆔 Your Telegram Chat ID:\n<code>{chat_id}</code>\n\n"
+            "<b>Option 1 – Fast:</b> Copy the ID above and paste it on your "
+            "<b>BOTTEU → Telegram</b> page.\n\n"
+            "<b>Option 2 – Code:</b> Generate a 6-digit code in your cabinet and send:\n"
             "<code>/start 123456</code>",
             parse_mode="HTML",
         )
@@ -142,6 +157,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     code = args[0].strip()
     now = datetime.now(timezone.utc)
 
+    # Expire cached objects in this thread's session so we always read fresh data
+    db.session.expire_all()
     tg_account = TelegramAccount.query.filter_by(link_code=code).first()
 
     if not tg_account:

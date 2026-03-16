@@ -119,8 +119,69 @@ def telegram():
 @bots_bp.route("/telegram/status-json")
 @login_required
 def telegram_status_json():
+    # expire_all() forces SQLAlchemy to re-read from the DB file for this request,
+    # so we always see commits made by the polling thread.
+    db.session.expire_all()
     tg = TelegramAccount.query.filter_by(user_id=current_user.id).first()
     return jsonify({"linked": bool(tg and tg.is_verified)})
+
+
+@bots_bp.route("/telegram/connect-direct", methods=["POST"])
+@login_required
+def telegram_connect_direct():
+    """Connect Telegram by pasting the numeric Chat ID from the bot."""
+    chat_id_str = request.form.get("chat_id", "").strip()
+    try:
+        chat_id = int(chat_id_str)
+        if chat_id <= 0:
+            raise ValueError
+    except ValueError:
+        flash(_("Invalid Chat ID — must be a positive number."), "danger")
+        return redirect(url_for("bots.telegram"))
+
+    # Block if another verified user already owns this chat_id
+    conflict = TelegramAccount.query.filter(
+        TelegramAccount.chat_id == chat_id,
+        TelegramAccount.user_id != current_user.id,
+        TelegramAccount.is_verified.is_(True),
+    ).first()
+    if conflict:
+        flash(_("This Telegram account is already linked to another user."), "danger")
+        return redirect(url_for("bots.telegram"))
+
+    tg = TelegramAccount.query.filter_by(user_id=current_user.id).first()
+    if not tg:
+        tg = TelegramAccount(user_id=current_user.id)
+        db.session.add(tg)
+
+    tg.chat_id = chat_id
+    tg.is_verified = True
+    tg.link_code = None
+    tg.link_code_expires_at = None
+    db.session.commit()
+
+    # Send a confirmation message so the user can verify the ID was correct
+    sent_ok = False
+    try:
+        from app.services.telegram_notifier import notify_user
+        notify_user(
+            chat_id,
+            "✅ <b>BOTTEU connected!</b>\n"
+            "You will now receive trade notifications here.\n\n"
+            "Use /help to see available commands.",
+        )
+        sent_ok = True
+    except Exception:
+        pass
+
+    if sent_ok:
+        flash(_("Telegram connected! A confirmation was sent to your Telegram."), "success")
+    else:
+        flash(
+            _("Telegram saved. Could not send a test message — make sure you started the bot with /start first."),
+            "warning",
+        )
+    return redirect(url_for("bots.telegram"))
 
 
 @bots_bp.route("/telegram/disconnect", methods=["POST"])
