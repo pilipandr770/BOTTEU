@@ -8,7 +8,7 @@
   <div>
     <nav aria-label="breadcrumb" class="mb-1">
       <ol class="breadcrumb mb-0 small">
-        <li class="breadcrumb-item"><a href="{{ url_for('bots.index') }}" class="text-info">Мои боты</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('bots.index') }}" class="text-info">{{ _('My Bots') }}</a></li>
         <li class="breadcrumb-item active">{{ bot.name }}</li>
       </ol>
     </nav>
@@ -30,17 +30,17 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       {% if bot.status.value == 'running' %}
         <button type="submit" class="btn btn-warning">
-          <i class="bi bi-stop-fill me-1"></i>Остановить
+          <i class="bi bi-stop-fill me-1"></i>{{ _('Stop') }}
         </button>
       {% else %}
         <button type="submit" class="btn btn-success">
-          <i class="bi bi-play-fill me-1"></i>Запустить
+          <i class="bi bi-play-fill me-1"></i>{{ _('Start') }}
         </button>
       {% endif %}
     </form>
     <button type="button" class="btn btn-outline-danger"
             data-bs-toggle="modal" data-bs-target="#deleteModal">
-      <i class="bi bi-trash me-1"></i>Удалить
+      <i class="bi bi-trash me-1"></i>{{ _('Delete') }}
     </button>
   </div>
 </div>
@@ -49,17 +49,17 @@
 {% if bot.status.value == 'running' %}
 <div class="alert alert-success py-2 d-flex align-items-center gap-2">
   <i class="bi bi-check-circle-fill"></i>
-  <span>Бот активен и торгует. Лог обновляется автоматически каждые 30 секунд.</span>
+  <span>{{ _('Bot is active and trading. Log updates automatically every 30 seconds.') }}</span>
 </div>
 {% elif bot.status.value == 'error' %}
 <div class="alert alert-danger py-2 d-flex align-items-center gap-2">
   <i class="bi bi-exclamation-triangle-fill"></i>
-  <strong>Ошибка:</strong> {{ bot.error_message or 'Неизвестная ошибка' }}
+  <strong>{{ _('Error:') }}</strong> {{ bot.error_message or _('Unknown error') }}
 </div>
 {% else %}
 <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
   <i class="bi bi-pause-circle"></i>
-  <span>Бот остановлен. Нажмите «Запустить» чтобы начать торговлю.</span>
+  <span>{{ _('Bot is stopped. Press Start to begin trading.') }}</span>
 </div>
 {% endif %}
 
@@ -70,7 +70,7 @@
   <div class="col-6 col-md-3">
     <div class="card bg-dark border-secondary text-center py-3 h-100">
       <div class="h3 fw-bold text-info mb-1">{{ total_trades }}</div>
-      <div class="small text-muted">Закрытых сделок</div>
+      <div class="small text-muted">{{ _('Closed Trades') }}</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
@@ -79,7 +79,7 @@
         {{ win_rate }}%
       </div>
       <div class="small text-muted">
-        Прибыльных
+        {{ _('Profitable') }}
         {% if total_trades %}({{ wins }}/{{ total_trades }}){% endif %}
       </div>
     </div>
@@ -89,17 +89,17 @@
       <div class="h3 fw-bold {{ 'text-success' if total_pnl >= 0 else 'text-danger' }} mb-1">
         {{ '{:+.2f}'.format(total_pnl) }}
       </div>
-      <div class="small text-muted">Реальный P&L (USDT)</div>
+      <div class="small text-muted">{{ _('Real P&L (USDT)') }}</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="card bg-dark border-{{ 'warning' if sim_orders else 'secondary' }} text-center py-3 h-100">
       {% if sim_orders %}
       <div class="h3 fw-bold text-warning mb-1">{{ sim_orders | selectattr('side.value', 'eq', 'SELL') | list | length }}</div>
-      <div class="small text-warning">🧪 Тест-сделок</div>
+      <div class="small text-warning">🧪 {{ _('Demo Trades') }}</div>
       {% else %}
       <div class="h3 fw-bold text-success mb-1"><i class="bi bi-check-circle"></i></div>
-      <div class="small text-muted">Только реальные</div>
+      <div class="small text-muted">{{ _('Real orders only') }}</div>
       {% endif %}
     </div>
   </div>
@@ -113,16 +113,16 @@
   <div class="col-md-6">
     <div class="card bg-dark border-success h-100">
       <div class="card-header text-success fw-semibold">
-        <i class="bi bi-cart-check-fill me-2"></i>Открытая позиция
+        <i class="bi bi-cart-check-fill me-2"></i>{{ _('Open Position') }}
       </div>
       <div class="card-body">
         <div class="row g-3">
           <div class="col-6">
-            <div class="text-muted small mb-1">Цена входа</div>
+            <div class="text-muted small mb-1">{{ _('Entry Price') }}</div>
             <div class="fw-bold font-monospace fs-6">{{ '%.6f'|format(state.get('entry_price', 0)|float) }}</div>
           </div>
           <div class="col-6">
-            <div class="text-muted small mb-1">Последняя цена</div>
+            <div class="text-muted small mb-1">{{ _('Last Price') }}</div>
             <div class="fw-bold font-monospace fs-6">
               {% if state.get('last_price') %}
                 {{ '%.6f'|format(state.get('last_price')|float) }}
@@ -137,7 +137,7 @@
           {% set upnl_pct = (lp - ep) / ep * 100 %}
           {% set upnl_usdt = upnl_pct / 100 * bot.position_size_usdt|float %}
           <div class="col-12">
-            <div class="text-muted small mb-1">Нереализованный P&L</div>
+            <div class="text-muted small mb-1">{{ _('Unrealised P&L') }}</div>
             <div class="fw-bold fs-5 {{ 'text-success' if upnl_pct >= 0 else 'text-danger' }}">
               {{ '{:+.2f}%'.format(upnl_pct) }}
               <span class="fs-6">(≈ {{ '{:+.2f}'.format(upnl_usdt) }} USDT)</span>
@@ -146,12 +146,12 @@
           {% endif %}
           {% if state.get('max_price') %}
           <div class="col-12">
-            <div class="text-muted small mb-1">Максимум с момента входа</div>
+            <div class="text-muted small mb-1">{{ _('Peak since entry') }}</div>
             <div class="font-monospace small text-info">
               {{ '%.6f'|format(state.get('max_price')|float) }}
               {% set p = bot.params or {} %}
               {% if p.get('trailing_tp_pct') %}
-              <span class="text-muted">· трейлинг-стоп при откате {{ p.get('trailing_tp_pct') }}%</span>
+              <span class="text-muted">· {{ _('trailing stop at') }} {{ p.get('trailing_tp_pct') }}%</span>
               {% endif %}
             </div>
           </div>
@@ -166,7 +166,7 @@
   <div class="{{ 'col-md-6' if state.get('has_position') else 'col-12' }}">
     <div class="card bg-dark border-secondary h-100">
       <div class="card-header fw-semibold">
-        <i class="bi bi-gear me-2 text-secondary"></i>Настройки бота
+        <i class="bi bi-gear me-2 text-secondary"></i>{{ _('Bot Settings') }}
       </div>
       <div class="card-body">
         {% set p = bot.params or {} %}
@@ -174,7 +174,7 @@
 
           {% if p.get('modules') %}
           <div class="col-12">
-            <span class="text-muted">Модули:</span>
+            <span class="text-muted">{{ _('Modules:') }}</span>
             {% for m in p.get('modules', []) %}
               <span class="badge bg-info text-dark me-1">{{ m }}</span>
             {% endfor %}
@@ -182,23 +182,23 @@
           </div>
           {% endif %}
 
-          <div class="col-6"><span class="text-muted">Таймфрейм:</span> <strong>{{ p.get('timeframe', '1h') }}</strong></div>
-          <div class="col-6"><span class="text-muted">Алгоритм:</span> <span class="badge bg-secondary">{{ bot.algorithm }}</span></div>
+          <div class="col-6"><span class="text-muted">{{ _('Timeframe:') }}</span> <strong>{{ p.get('timeframe', '1h') }}</strong></div>
+          <div class="col-6"><span class="text-muted">{{ _('Algorithm:') }}</span> <span class="badge bg-secondary">{{ bot.algorithm }}</span></div>
 
           {% if p.get('fast_ma') %}
-          <div class="col-6"><span class="text-muted">MA быстрая:</span> <strong>{{ p.get('fast_ma') }}</strong></div>
+          <div class="col-6"><span class="text-muted">{{ _('Fast MA:') }}</span> <strong>{{ p.get('fast_ma') }}</strong></div>
           {% endif %}
           {% if p.get('slow_ma') %}
-          <div class="col-6"><span class="text-muted">MA медленная:</span> <strong>{{ p.get('slow_ma') }}</strong></div>
+          <div class="col-6"><span class="text-muted">{{ _('Slow MA:') }}</span> <strong>{{ p.get('slow_ma') }}</strong></div>
           {% endif %}
           {% if p.get('rsi_period') %}
-          <div class="col-6"><span class="text-muted">RSI период:</span> <strong>{{ p.get('rsi_period') }}</strong></div>
+          <div class="col-6"><span class="text-muted">{{ _('RSI period:') }}</span> <strong>{{ p.get('rsi_period') }}</strong></div>
           {% endif %}
           {% if p.get('oversold') %}
-          <div class="col-6"><span class="text-muted">RSI перепродан:</span> <strong>&lt;{{ p.get('oversold') }}</strong></div>
+          <div class="col-6"><span class="text-muted">{{ _('RSI oversold:') }}</span> <strong>&lt;{{ p.get('oversold') }}</strong></div>
           {% endif %}
           {% if p.get('overbought') %}
-          <div class="col-6"><span class="text-muted">RSI перекуплен:</span> <strong>&gt;{{ p.get('overbought') }}</strong></div>
+          <div class="col-6"><span class="text-muted">{{ _('RSI overbought:') }}</span> <strong>&gt;{{ p.get('overbought') }}</strong></div>
           {% endif %}
 
           <div class="col-12 mt-1">
@@ -215,11 +215,11 @@
               {% endif %}
               {% if p.get('trailing_tp_pct') %}
               <span class="badge bg-info bg-opacity-25 border border-info text-info">
-                📉 Трейлинг {{ p.get('trailing_tp_pct') }}%
+                📉 {{ _('Trailing') }} {{ p.get('trailing_tp_pct') }}%
               </span>
               {% endif %}
               {% if not p.get('stop_loss_pct') and not p.get('take_profit_pct') and not p.get('trailing_tp_pct') %}
-              <span class="text-muted">Защитные уровни не заданы</span>
+              <span class="text-muted">{{ _('No protection levels set') }}</span>
               {% endif %}
             </div>
           </div>
@@ -233,13 +233,13 @@
 <div class="card bg-dark border-secondary mb-4">
   <div class="card-header d-flex align-items-center gap-2">
     <i class="bi bi-terminal text-info"></i>
-    <span class="fw-semibold">Лог торговли</span>
+    <span class="fw-semibold">{{ _('Trading Log') }}</span>
     <span class="badge bg-secondary ms-1" id="logCount">{{ logs|length }}</span>
     <div class="ms-auto d-flex align-items-center gap-3">
       <span class="text-muted small" id="lastUpdate"></span>
-      <div class="form-check form-switch mb-0" title="Авто-обновление каждые 30 сек">
+      <div class="form-check form-switch mb-0" title="{{ _('Auto-refresh every 30 seconds') }}">
         <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-        <label class="form-check-label small text-muted" for="autoRefresh">авто</label>
+        <label class="form-check-label small text-muted" for="autoRefresh">{{ _('auto') }}</label>
       </div>
     </div>
   </div>
@@ -249,7 +249,7 @@
       {% if not logs %}
       <div class="text-center text-muted py-5" id="noLogsMsg">
         <i class="bi bi-hourglass-split display-5 d-block mb-2 text-secondary"></i>
-        Логи появятся после первого тика бота
+        {{ _('Logs will appear after the first bot tick') }}
       </div>
       {% else %}
       {% for log in logs %}
@@ -278,7 +278,7 @@
 
 {# ── Trade History ────────────────────────────────────────────────────────────── #}
 <h5 class="fw-bold mb-3">
-  <i class="bi bi-receipt text-success me-2"></i>История сделок
+  <i class="bi bi-receipt text-success me-2"></i>{{ _('Trade History') }}
 </h5>
 {% if orders %}
 <div class="card bg-dark border-secondary mb-4">
@@ -286,13 +286,13 @@
     <table class="table table-dark table-hover align-middle mb-0 small">
       <thead class="table-secondary">
         <tr>
-          <th>Время</th>
-          <th>Тип</th>
-          <th>Цена</th>
-          <th>Кол-во</th>
+          <th>{{ _('Time') }}</th>
+          <th>{{ _('Type') }}</th>
+          <th>{{ _('Price') }}</th>
+          <th>{{ _('Qty') }}</th>
           <th>USDT</th>
           <th>P&L</th>
-          <th>Причина</th>
+          <th>{{ _('Reason') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -304,7 +304,7 @@
               {{ o.side.value }}
             </span>
             {% if o.is_simulated %}
-            <span class="badge bg-warning text-dark ms-1" title="Тестовая сделка — реального исполнения не было">🧪</span>
+            <span class="badge bg-warning text-dark ms-1" title="{{ _('Demo trade — no real execution') }}">🧪</span>
             {% endif %}
           </td>
           <td class="font-monospace">{{ '%.4f'|format(o.price|float) if o.price else '—' }}</td>
@@ -328,9 +328,9 @@
               {% elif er == 'TRAILING_TP' %}
                 <span class="badge bg-info text-dark">📉 Trail</span>
               {% elif er == 'SIGNAL' %}
-                <span class="badge bg-secondary">📊 МА/RSI</span>
+                <span class="badge bg-secondary">📊 MA/RSI</span>
               {% elif er == 'MANUAL' %}
-                <span class="badge bg-warning text-dark">✋ Ручная</span>
+                <span class="badge bg-warning text-dark">✋ {{ _('Manual') }}</span>
               {% else %}
                 <span class="badge bg-secondary">{{ er }}</span>
               {% endif %}
@@ -346,7 +346,7 @@
 <div class="card bg-dark border-secondary text-center py-5 mb-4">
   <div class="card-body text-muted">
     <i class="bi bi-inbox display-4 d-block mb-2"></i>
-    Сделок ещё нет. Они появятся здесь по мере работы бота.
+    {{ _('No trades yet. They will appear here as the bot works.') }}
   </div>
 </div>
 {% endif %}
@@ -356,18 +356,18 @@
   <div class="modal-dialog modal-sm">
     <div class="modal-content bg-dark border-danger">
       <div class="modal-header border-danger">
-        <h6 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>Удалить бота</h6>
+        <h6 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>{{ _('Delete Bot') }}</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body small text-muted">
-        Удалить <strong>{{ bot.name }}</strong>?
-        Все сделки и логи будут удалены. Это действие нельзя отменить.
+        {{ _('Delete') }} <strong>{{ bot.name }}</strong>?
+        {{ _('All trades and logs will be deleted. This action cannot be undone.') }}
       </div>
       <div class="modal-footer border-0">
-        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
         <form method="POST" action="{{ url_for('bots.delete', bot_id=bot.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+          <button type="submit" class="btn btn-sm btn-danger">{{ _('Delete') }}</button>
         </form>
       </div>
     </div>
@@ -378,6 +378,11 @@
 
 {% block extra_scripts %}
 <script>
+const LOCALE = "{{ get_locale() }}";
+const I18N = {
+  updated:     "{{ _('updated') }}",
+  autoDisabled: "{{ _('auto-update disabled') }}",
+};
 const BOT_ID = {{ bot.id }};
 // logs are rendered newest-first, so logs[0].id is highest
 let lastLogId = {{ logs[0].id if logs else 0 }};
@@ -424,8 +429,8 @@ async function pollLogs() {
       const prev = parseInt(logCountEl.textContent) || 0;
       logCountEl.textContent = prev + entries.length;
     }
-    lastUpdateEl.textContent = 'обновлено ' +
-      new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    lastUpdateEl.textContent = I18N.updated + ' ' +
+      new Date().toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   } catch (err) {
     console.warn('Log poll error:', err);
   }
@@ -440,7 +445,7 @@ autoRefreshEl.addEventListener('change', () => {
     timer = setInterval(pollLogs, 30_000);
   } else {
     clearInterval(timer);
-    lastUpdateEl.textContent = 'авто-обновление отключено';
+    lastUpdateEl.textContent = I18N.autoDisabled;
   }
 });
 </script>

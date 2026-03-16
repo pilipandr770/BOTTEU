@@ -57,13 +57,13 @@ class RSIStrategy(BaseStrategy):
 
         if len(df) < period + 2:
             logger.debug("RSI: not enough candles (%d < %d)", len(df), period + 2)
-            state["_log"] = [("WARN", f"Недостаточно свечей ({len(df)} < {period + 2}) — ждём накопления данных")]
+            state["_log"] = [("WARN", f"Not enough candles ({len(df)} < {period + 2}) — waiting for data")]
             return "HOLD", state
 
         close = df["close"].astype(float)
         rsi_series = _rsi(close, period)
         if rsi_series.dropna().empty:
-            state["_log"] = [("WARN", "Не удалось рассчитать RSI — недостаточно данных")]
+            state["_log"] = [("WARN", "Failed to calculate RSI — insufficient data")]
             return "HOLD", state
 
         rsi_prev = float(rsi_series.iloc[-2]) if len(rsi_series.dropna()) >= 2 else None
@@ -88,7 +88,7 @@ class RSIStrategy(BaseStrategy):
                 sl_price = entry_price * (1 - float(sl_pct) / 100)
                 if current_price <= sl_price:
                     state.update({"has_position": False, "exit_reason": "STOP_LOSS"})
-                    state["_log"] = [("SELL", f"🛑 Стоп-лосс: цена {current_price:.6f} упала ниже SL {sl_price:.6f} (−{sl_pct}%) — продаём")]
+                    state["_log"] = [("SELL", f"🛑 Stop-loss: price {current_price:.6f} fell below SL {sl_price:.6f} (−{sl_pct}%) — selling")]
                     return "SELL", state
 
             # Take-Profit
@@ -96,7 +96,7 @@ class RSIStrategy(BaseStrategy):
                 tp_price = entry_price * (1 + float(tp_pct) / 100)
                 if current_price >= tp_price:
                     state.update({"has_position": False, "exit_reason": "TAKE_PROFIT"})
-                    state["_log"] = [("SELL", f"💰 Тейк-профит: цена {current_price:.6f} достигла TP {tp_price:.6f} (+{tp_pct}%) — продаём")]
+                    state["_log"] = [("SELL", f"💰 Take-profit: price {current_price:.6f} reached TP {tp_price:.6f} (+{tp_pct}%) — selling")]
                     return "SELL", state
 
             # Trailing Take-Profit
@@ -104,26 +104,26 @@ class RSIStrategy(BaseStrategy):
                 trail_price = max_price * (1 - float(trail_pct) / 100)
                 if current_price <= trail_price:
                     state.update({"has_position": False, "exit_reason": "TRAILING_TP"})
-                    state["_log"] = [("SELL", f"📉 Трейлинг-стоп: откат от максимума {max_price:.6f} до {current_price:.6f} — продаём")]
+                    state["_log"] = [("SELL", f"📉 Trailing stop: retraced from peak {max_price:.6f} to {current_price:.6f} — selling")]
                     return "SELL", state
 
             # RSI overbought → exit signal
             if rsi_now >= overbought:
                 state.update({"has_position": False, "exit_reason": "SIGNAL"})
-                state["_log"] = [("SELL", f"🔴 RSI({period})={rsi_now:.1f} перекуплен (≥{overbought:.0f}) — продаём по {current_price:.6f}")]
+                state["_log"] = [("SELL", f"🔴 RSI({period})={rsi_now:.1f} overbought (≥{overbought:.0f}) — selling at {current_price:.6f}")]
                 return "SELL", state
 
             # Still holding
             pnl_pct = (current_price - entry_price) / entry_price * 100 if entry_price else 0.0
             if rsi_now >= overbought * 0.85:
-                zone = f"приближается к зоне перекупленности ({overbought:.0f})"
+                zone = f"approaching overbought zone ({overbought:.0f})"
             elif rsi_now <= oversold * 1.15:
-                zone = f"близко к перепроданности ({oversold:.0f})"
+                zone = f"near oversold zone ({oversold:.0f})"
             else:
-                zone = "нейтральная зона"
+                zone = "neutral zone"
             state["_log"] = [("INFO", (
                 f"📊 RSI({period})={rsi_now:.1f} — {zone}. "
-                f"Удерживаем позицию (вход {entry_price:.6f}, сейчас {current_price:.6f}, P&L {pnl_pct:+.2f}%)"
+                f"Holding position (entry {entry_price:.6f}, now {current_price:.6f}, P&L {pnl_pct:+.2f}%)"
             ))]
 
         # ── Entry logic ───────────────────────────────────────────────────
@@ -136,14 +136,14 @@ class RSIStrategy(BaseStrategy):
                     "exit_reason": None,
                 })
                 prev_str = f"{rsi_prev:.1f} → " if rsi_prev is not None else ""
-                state["_log"] = [("BUY", f"🟢 RSI({period})={prev_str}{rsi_now:.1f} — перепродан (≤{oversold:.0f}) — покупаем по {current_price:.6f}")]
+                state["_log"] = [("BUY", f"🟢 RSI({period})={prev_str}{rsi_now:.1f} — oversold (≤{oversold:.0f}) — buying at {current_price:.6f}")]
                 return "BUY", state
 
             if rsi_now >= overbought:
-                state["_log"] = [("INFO", f"📊 RSI({period})={rsi_now:.1f} — перекуплен (≥{overbought:.0f}), ждём коррекции")]
+                state["_log"] = [("INFO", f"📊 RSI({period})={rsi_now:.1f} — overbought (≥{overbought:.0f}), waiting for correction")]
             elif rsi_now <= oversold * 1.3:
-                state["_log"] = [("INFO", f"📊 RSI({period})={rsi_now:.1f} — приближается к зоне перепроданности ({oversold:.0f}), наблюдаем")]
+                state["_log"] = [("INFO", f"📊 RSI({period})={rsi_now:.1f} — approaching oversold zone ({oversold:.0f}), watching")]
             else:
-                state["_log"] = [("INFO", f"📊 RSI({period})={rsi_now:.1f} — нейтральная зона, ждём перепроданности < {oversold:.0f}")]
+                state["_log"] = [("INFO", f"📊 RSI({period})={rsi_now:.1f} — neutral zone, waiting for oversold < {oversold:.0f}")]
 
         return "HOLD", state

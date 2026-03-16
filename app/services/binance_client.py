@@ -137,7 +137,7 @@ def get_spot_balance(user_id: int) -> dict:
         return {"balances": [], "error": str(exc)}
     except Exception as exc:
         logger.warning("get_spot_balance failed for user %d: %s", user_id, exc)
-        return {"balances": [], "error": "Не удалось получить баланс. Проверьте API ключ."}
+        return {"balances": [], "error": "Failed to fetch balance. Check your API key."}
 
 
 def get_quote_free_balance(client, symbol: str) -> float:

@@ -7,7 +7,7 @@ No Redis / Celery needed. Works out-of-the-box with `python run.py`.
 Real vs Demo logic:
     - If free quote balance >= position_size_usdt  → REAL order on Binance
     - Otherwise                                    → DEMO order (is_simulated=True)
-    Logs always written; demo ticks are prefixed with 🧪 [ДЕМО].
+    Logs always written; demo ticks are prefixed with 🧪 [DEMO].
 """
 import logging
 import os
@@ -74,8 +74,8 @@ def _tick_bot(bot_id: int) -> None:
 
         if simulate:
             log_entries.insert(0, ("INFO",
-                f"🧪 [ДЕМО] Баланс {free_balance:.4f} USDT < нужно {position_size:.2f} USDT — "
-                f"реальных сделок нет, идёт демо-торговля"
+                f"🧪 [DEMO] Balance {free_balance:.4f} USDT < required {position_size:.2f} USDT — "
+                f"no real orders, demo trading active"
             ))
 
         for level, msg in log_entries:
@@ -107,8 +107,8 @@ def _tick_bot(bot_id: int) -> None:
                 ))
                 db.session.add(BotLog(bot_id=bot.id, level="BUY",
                     message=(
-                        f"🧪 [ДЕМО] Покупка {bot.symbol}: цена {float(current_price):.6f}, "
-                        f"объём {float(exec_qty):.6f} (демо-ордер, Binance не использован)"
+                        f"🧪 [DEMO] Buy {bot.symbol}: price {float(current_price):.6f}, "
+                        f"qty {float(exec_qty):.6f} (demo order, Binance not used)"
                     )
                 ))
             else:
@@ -158,8 +158,8 @@ def _tick_bot(bot_id: int) -> None:
                     ))
                     db.session.add(BotLog(bot_id=bot.id, level="SELL",
                         message=(
-                            f"🧪 [ДЕМО] Продажа {bot.symbol}: цена {float(exec_price):.6f}, "
-                            f"P&L {pnl_pct:+.2f}% (демо-ордер)"
+                            f"🧪 [DEMO] Sell {bot.symbol}: price {float(exec_price):.6f}, "
+                            f"P&L {pnl_pct:+.2f}% (demo order)"
                         )
                     ))
                 else:

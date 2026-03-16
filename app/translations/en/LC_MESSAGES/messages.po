@@ -5,6 +5,405 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: en\n"
 
+# ── Navigation ──────────────────────────────────────────────────────────
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Bots"
+msgstr "Bots"
+
+msgid "Backtest"
+msgstr "Backtest"
+
+msgid "Guides"
+msgstr "Guides"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Sign Up Free"
+msgstr "Sign Up Free"
+
+msgid "Logout"
+msgstr "Logout"
+
+msgid "API Key"
+msgstr "API Key"
+
+msgid "Telegram"
+msgstr "Telegram"
+
+msgid "Subscription"
+msgstr "Subscription"
+
+msgid "Delete Account"
+msgstr "Delete Account"
+
+msgid "Legal"
+msgstr "Legal"
+
+msgid "Terms of Service"
+msgstr "Terms of Service"
+
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
+msgid "Risk Disclaimer"
+msgstr "Risk Disclaimer"
+
+msgid "Support"
+msgstr "Support"
+
+msgid "Guides &amp; Tutorials"
+msgstr "Guides & Tutorials"
+
+msgid "All rights reserved."
+msgstr "All rights reserved."
+
+# ── Auth ─────────────────────────────────────────────────────────────────
+msgid "Trading involves risk. Past performance is not indicative of future results."
+msgstr "Trading involves risk. Past performance is not indicative of future results."
+
+msgid "Create Account"
+msgstr "Create Account"
+
+msgid "Email Address"
+msgstr "Email Address"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Confirm Password"
+msgstr "Confirm Password"
+
+msgid "min 8 characters"
+msgstr "min 8 characters"
+
+msgid "Remember me"
+msgstr "Remember me"
+
+# ── Bot form ──────────────────────────────────────────────────────────────
+msgid "Algorithm"
+msgstr "Algorithm"
+
+msgid "Algorithm:"
+msgstr "Algorithm:"
+
+msgid "Trading Pair"
+msgstr "Trading Pair"
+
+msgid "Bot Name"
+msgstr "Bot Name"
+
+msgid "Position Size (USDT)"
+msgstr "Position Size (USDT)"
+
+msgid "Create Bot"
+msgstr "Create Bot"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "New Bot"
+msgstr "New Bot"
+
+# ── Dashboard ─────────────────────────────────────────────────────────────
+msgid "Total Bots"
+msgstr "Total Bots"
+
+msgid "Running"
+msgstr "Running"
+
+msgid "Total P&L"
+msgstr "Total P&L"
+
+msgid "Recent Trades"
+msgstr "Recent Trades"
+
+msgid "Your Bots"
+msgstr "Your Bots"
+
+msgid "Manage"
+msgstr "Manage"
+
+msgid "No bots yet."
+msgstr "No bots yet."
+
+msgid "Create one!"
+msgstr "Create one!"
+
+msgid "No trades yet."
+msgstr "No trades yet."
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Side"
+msgstr "Side"
+
+msgid "Symbol"
+msgstr "Symbol"
+
+# ── Balance widget ────────────────────────────────────────────────────────
+msgid "Spot Balance Binance"
+msgstr "Spot Balance Binance"
+
+msgid "Add API key"
+msgstr "Add API key"
+
+msgid "to see the balance."
+msgstr "to see the balance."
+
+msgid "Loading balance…"
+msgstr "Loading balance…"
+
+msgid "Real trading enabled"
+msgstr "Real trading enabled"
+
+msgid "available"
+msgstr "available"
+
+msgid "threshold"
+msgstr "threshold"
+
+msgid "Bots place real orders."
+msgstr "Bots place real orders."
+
+msgid "Simulation mode (DEMO)"
+msgstr "Simulation mode (DEMO)"
+
+msgid "Free USDT/USDC:"
+msgstr "Free USDT/USDC:"
+
+msgid "missing ~"
+msgstr "missing ~"
+
+msgid "to threshold of"
+msgstr "to threshold of"
+
+msgid "The bot analyzes the market normally, but real orders are not placed. All trades are recorded as demo orders"
+msgstr "The bot analyzes the market normally, but real orders are not placed. All trades are recorded as demo orders"
+
+msgid "Top up the spot wallet by at least"
+msgstr "Top up the spot wallet by at least"
+
+msgid "USDT to enable real trading."
+msgstr "USDT to enable real trading."
+
+msgid "Balance empty — all assets are zero."
+msgstr "Balance empty — all assets are zero."
+
+msgid "Server request error"
+msgstr "Server request error"
+
+msgid "updated"
+msgstr "updated"
+
+# ── Bot detail ────────────────────────────────────────────────────────────
+msgid "My Bots"
+msgstr "My Bots"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Bot is active and trading. Log updates automatically every 30 seconds."
+msgstr "Bot is active and trading. Log updates automatically every 30 seconds."
+
+msgid "Error:"
+msgstr "Error:"
+
+msgid "Unknown error"
+msgstr "Unknown error"
+
+msgid "Bot is stopped. Press Start to begin trading."
+msgstr "Bot is stopped. Press Start to begin trading."
+
+msgid "Closed Trades"
+msgstr "Closed Trades"
+
+msgid "Profitable"
+msgstr "Profitable"
+
+msgid "Real P&L (USDT)"
+msgstr "Real P&L (USDT)"
+
+msgid "Demo Trades"
+msgstr "Demo Trades"
+
+msgid "Real orders only"
+msgstr "Real orders only"
+
+msgid "Open Position"
+msgstr "Open Position"
+
+msgid "Entry Price"
+msgstr "Entry Price"
+
+msgid "Last Price"
+msgstr "Last Price"
+
+msgid "Unrealised P&L"
+msgstr "Unrealised P&L"
+
+msgid "Peak since entry"
+msgstr "Peak since entry"
+
+msgid "trailing stop at"
+msgstr "trailing stop at"
+
+msgid "Bot Settings"
+msgstr "Bot Settings"
+
+msgid "Modules:"
+msgstr "Modules:"
+
+msgid "Timeframe:"
+msgstr "Timeframe:"
+
+msgid "Fast MA:"
+msgstr "Fast MA:"
+
+msgid "Slow MA:"
+msgstr "Slow MA:"
+
+msgid "RSI period:"
+msgstr "RSI period:"
+
+msgid "RSI oversold:"
+msgstr "RSI oversold:"
+
+msgid "RSI overbought:"
+msgstr "RSI overbought:"
+
+msgid "Trailing"
+msgstr "Trailing"
+
+msgid "No protection levels set"
+msgstr "No protection levels set"
+
+msgid "Trading Log"
+msgstr "Trading Log"
+
+msgid "auto"
+msgstr "auto"
+
+msgid "Auto-refresh every 30 seconds"
+msgstr "Auto-refresh every 30 seconds"
+
+msgid "auto-update disabled"
+msgstr "auto-update disabled"
+
+msgid "Logs will appear after the first bot tick"
+msgstr "Logs will appear after the first bot tick"
+
+msgid "Trade History"
+msgstr "Trade History"
+
+msgid "Time"
+msgstr "Time"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Price"
+msgstr "Price"
+
+msgid "Qty"
+msgstr "Qty"
+
+msgid "Reason"
+msgstr "Reason"
+
+msgid "Demo trade — no real execution"
+msgstr "Demo trade — no real execution"
+
+msgid "Manual"
+msgstr "Manual"
+
+msgid "No trades yet. They will appear here as the bot works."
+msgstr "No trades yet. They will appear here as the bot works."
+
+msgid "Delete Bot"
+msgstr "Delete Bot"
+
+msgid "All trades and logs will be deleted. This action cannot be undone."
+msgstr "All trades and logs will be deleted. This action cannot be undone."
+
+# ── Backtest ──────────────────────────────────────────────────────────────
+msgid "Configuration"
+msgstr "Configuration"
+
+msgid "Run Backtest"
+msgstr "Run Backtest"
+
+msgid "Trades"
+msgstr "Trades"
+
+msgid "Win Rate"
+msgstr "Win Rate"
+
+msgid "Total Return"
+msgstr "Total Return"
+
+msgid "Max Drawdown"
+msgstr "Max Drawdown"
+
+# ── Landing / Subscriptions ────────────────────────────────────────────────
+msgid "Not financial advice. All trading involves risk."
+msgstr "Not financial advice. All trading involves risk."
+
+msgid "Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade."
+msgstr "Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade."
+
+msgid "Get Started Free"
+msgstr "Get Started Free"
+
+msgid "Try Backtest"
+msgstr "Try Backtest"
+
+msgid "month"
+msgstr "month"
+
+msgid "Unlimited Bots"
+msgstr "Unlimited Bots"
+
+msgid "Unlimited Pairs"
+msgstr "Unlimited Pairs"
+
+msgid "Priority Support"
+msgstr "Priority Support"
+
+msgid "All future algorithms"
+msgstr "All future algorithms"
+
+msgid "No commission on profits"
+msgstr "No commission on profits"
+
+msgid "Popular"
+msgstr "Popular"
+
+msgid "Start Pro Trial"
+msgstr "Start Pro Trial"
+
+msgid "Get Started"
+msgstr "Get Started"
+
+
 msgid "Dashboard"
 msgstr "Dashboard"
 

@@ -41,7 +41,7 @@
 <div class="card bg-dark border-secondary mb-4">
   <div class="card-header d-flex align-items-center gap-2">
     <i class="bi bi-wallet2 text-warning"></i>
-    <span class="fw-semibold">Спот-баланс Binance</span>
+    <span class="fw-semibold">{{ _('Spot Balance Binance') }}</span>
     <div class="ms-auto d-flex align-items-center gap-2">
       <span class="text-muted small" id="balanceUpdated"></span>
       <button class="btn btn-sm btn-outline-secondary" id="refreshBalanceBtn" onclick="loadBalance()">
@@ -53,11 +53,11 @@
     {% if not has_api_key %}
     <div class="text-center text-muted py-3">
       <i class="bi bi-key me-2"></i>
-      <a href="{{ url_for('bots.api_key') }}" class="text-info">Добавьте API ключ</a>, чтобы видеть баланс.
+      <a href="{{ url_for('bots.api_key') }}" class="text-info">{{ _('Add API key') }}</a>, {{ _('to see the balance.') }}
     </div>
     {% else %}
     <div class="text-center py-3 text-muted" id="balanceLoading">
-      <span class="spinner-border spinner-border-sm me-2"></span>Загрузка баланса…
+      <span class="spinner-border spinner-border-sm me-2"></span>{{ _('Loading balance…') }}
     </div>
     <div id="balanceContent" style="display:none;">
       <!-- Mode banner (injected by JS) -->
@@ -149,7 +149,24 @@
 {% block extra_scripts %}
 {% if has_api_key %}
 <script>
-const REAL_TRADE_MIN = 5.0;   // must match scheduler.py REAL_TRADE_MIN
+const REAL_TRADE_MIN = 5.0;
+const LOCALE = "{{ get_locale() }}";
+const I18N = {
+  updated:      "{{ _('updated') }}",
+  realTitle:    "{{ _('Real trading enabled') }}",
+  available:    "{{ _('available') }}",
+  threshold:    "{{ _('threshold') }}",
+  botsReal:     "{{ _('Bots place real orders.') }}",
+  demoTitle:    "{{ _('Simulation mode (DEMO)') }}",
+  freeLabel:    "{{ _('Free USDT/USDC:') }}",
+  missing:      "{{ _('missing ~') }}",
+  toThreshold:  "{{ _('to threshold of') }}",
+  botAnalyzes:  "{{ _('The bot analyzes the market normally, but real orders are not placed. All trades are recorded as demo orders') }}",
+  topUp:        "{{ _('Top up the spot wallet by at least') }}",
+  toEnable:     "{{ _('USDT to enable real trading.') }}",
+  empty:        "{{ _('Balance empty — all assets are zero.') }}",
+  serverError:  "{{ _('Server request error') }}",
+};
 
 async function loadBalance() {
   const btn     = document.getElementById('refreshBalanceBtn');
@@ -194,9 +211,9 @@ async function loadBalance() {
       banner.className = 'alert alert-success mb-3 py-2 px-3 d-flex align-items-center gap-2';
       banner.innerHTML =
         '<span style="font-size:1.2rem">✅</span>' +
-        `<div><strong>Реальная торговля включена</strong> — ` +
-        `доступно ${stableFree.toLocaleString('ru-RU', {maximumFractionDigits: 2})} USDT/USDC ` +
-        `(порог ${REAL_TRADE_MIN} USDT). Боты размещают реальные ордера.</div>`;
+        `<div><strong>${I18N.realTitle}</strong> — ` +
+        `${I18N.available} ${stableFree.toLocaleString(LOCALE, {maximumFractionDigits: 2})} USDT/USDC ` +
+        `(${I18N.threshold} ${REAL_TRADE_MIN} USDT). ${I18N.botsReal}</div>`;
     } else {
       const needed = REAL_TRADE_MIN;
       const diff   = (needed - stableFree).toFixed(2);
@@ -204,13 +221,11 @@ async function loadBalance() {
       banner.innerHTML =
         '<span style="font-size:1.3rem;line-height:1">🧪</span>' +
         '<div>' +
-          '<strong>Режим симуляции (ДЕМО)</strong><br>' +
-          `Свободно USDT/USDC: <strong>${stableFree.toLocaleString('ru-RU', {maximumFractionDigits: 4})}</strong> — ` +
-          `не хватает ~${diff} USDT до порога (${needed} USDT).<br>` +
-          '<span class="small text-muted">Бот работает в штатном режиме и анализирует рынок, ' +
-          'но <em>реальные ордера не размещаются</em>. ' +
-          'Все сделки записываются как демо-сделки 🧪. ' +
-          `Пополните спот-кошелёк минимум на ${diff} USDT чтобы включить реальную торговлю.</span>` +
+          `<strong>${I18N.demoTitle}</strong><br>` +
+          `${I18N.freeLabel} <strong>${stableFree.toLocaleString(LOCALE, {maximumFractionDigits: 4})}</strong> — ` +
+          `${I18N.missing}${diff} USDT ${I18N.toThreshold} ${needed} USDT.<br>` +
+          `<span class="small text-muted">${I18N.botAnalyzes} 🧪. ` +
+          `${I18N.topUp} ${diff} ${I18N.toEnable}</span>` +
         '</div>';
     }
 
@@ -218,12 +233,12 @@ async function loadBalance() {
     cards.innerHTML = '';
     if (balances.length === 0) {
       empty.style.display = 'block';
-      empty.textContent   = 'Баланс пустой — все активы нулевые.';
+      empty.textContent   = I18N.empty;
     } else {
       empty.style.display = 'none';
       balances.forEach(b => {
         const isStable = b.asset === 'USDT' || b.asset === 'USDC';
-        const freeStr  = b.free.toLocaleString('ru-RU', {
+        const freeStr  = b.free.toLocaleString(LOCALE, {
           maximumFractionDigits: b.free < 1 ? 6 : 2
         });
         const col = document.createElement('div');
@@ -233,21 +248,21 @@ async function loadBalance() {
             <div class="fw-bold ${isStable ? 'text-success' : 'text-info'}" style="font-size:1.1rem;">${freeStr}</div>
             <div class="text-muted small">${b.asset}</div>
             ${b.locked > 0
-              ? `<div class="text-warning" style="font-size:0.7rem;">🔒 ${b.locked.toLocaleString('ru-RU',{maximumFractionDigits:6})}</div>`
+              ? `<div class="text-warning" style="font-size:0.7rem;">🔒 ${b.locked.toLocaleString(LOCALE,{maximumFractionDigits:6})}</div>`
               : ''}
           </div>`;
         cards.appendChild(col);
       });
     }
 
-    updated.textContent = 'обновлено ' +
-      new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+    updated.textContent = I18N.updated + ' ' +
+      new Date().toLocaleTimeString(LOCALE, {hour:'2-digit', minute:'2-digit'});
 
   } catch (e) {
     loading.style.display = 'none';
     content.style.display = 'block';
     errEl.style.display   = 'block';
-    errEl.textContent     = '⚠️ Ошибка запроса к серверу';
+    errEl.textContent     = '⚠️ ' + I18N.serverError;
   } finally {
     btn.disabled    = false;
     btn.innerHTML   = '<i class="bi bi-arrow-repeat"></i>';

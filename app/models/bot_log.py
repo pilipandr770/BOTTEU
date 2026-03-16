@@ -12,11 +12,11 @@ class BotLog(db.Model):
         nullable=False,
         index=True,
     )
-    # INFO  — обычный тик (индикаторы, удержание)
-    # BUY   — сигнал на покупку
-    # SELL  — сигнал на продажу
-    # WARN  — предупреждение (мало свечей и т.п.)
-    # ERROR — ошибка исполнения
+    # INFO  — normal tick (indicators, hold)
+    # BUY   — buy signal
+    # SELL  — sell signal
+    # WARN  — warning (too few candles, etc.)
+    # ERROR — execution error
     level = db.Column(db.String(10), nullable=False, default="INFO")
     message = db.Column(db.Text, nullable=False)
     created_at = db.Column(

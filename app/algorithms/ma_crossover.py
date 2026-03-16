@@ -48,7 +48,7 @@ class MACrossoverStrategy(BaseStrategy):
 
         if len(df) < slow + 2:
             logger.debug("MA Crossover: not enough candles (%d < %d)", len(df), slow + 2)
-            state["_log"] = [("WARN", f"Недостаточно свечей ({len(df)} < {slow + 2}) — ждём накопления данных")]
+            state["_log"] = [("WARN", f"Not enough candles ({len(df)} < {slow + 2}) — waiting for data")]
             return "HOLD", state
 
         close = df["close"].astype(float)
@@ -58,7 +58,7 @@ class MACrossoverStrategy(BaseStrategy):
         ma_slow = _sma(close, slow)
 
         if ma_fast.dropna().empty or ma_slow.dropna().empty:
-            state["_log"] = [("WARN", "Не удалось рассчитать MA — недостаточно данных")]
+            state["_log"] = [("WARN", "Failed to calculate MA — insufficient data")]
             return "HOLD", state
 
         fast_prev, fast_curr = float(ma_fast.iloc[-2]), float(ma_fast.iloc[-1])
@@ -84,7 +84,7 @@ class MACrossoverStrategy(BaseStrategy):
                 sl_price = entry_price * (1 - float(sl_pct) / 100)
                 if current_price <= sl_price:
                     state.update({"has_position": False, "exit_reason": "STOP_LOSS"})
-                    state["_log"] = [("SELL", f"🛑 Стоп-лосс: цена {current_price:.6f} упала ниже SL {sl_price:.6f} (−{sl_pct}%) — продаём")]
+                    state["_log"] = [("SELL", f"🛑 Stop-loss: price {current_price:.6f} fell below SL {sl_price:.6f} (−{sl_pct}%) — selling")]
                     return "SELL", state
 
             # Take-Profit
@@ -92,7 +92,7 @@ class MACrossoverStrategy(BaseStrategy):
                 tp_price = entry_price * (1 + float(tp_pct) / 100)
                 if current_price >= tp_price:
                     state.update({"has_position": False, "exit_reason": "TAKE_PROFIT"})
-                    state["_log"] = [("SELL", f"💰 Тейк-профит: цена {current_price:.6f} достигла TP {tp_price:.6f} (+{tp_pct}%) — продаём")]
+                    state["_log"] = [("SELL", f"💰 Take-profit: price {current_price:.6f} reached TP {tp_price:.6f} (+{tp_pct}%) — selling")]
                     return "SELL", state
 
             # Trailing Take-Profit
@@ -100,23 +100,23 @@ class MACrossoverStrategy(BaseStrategy):
                 trail_price = max_price * (1 - float(trail_pct) / 100)
                 if current_price <= trail_price:
                     state.update({"has_position": False, "exit_reason": "TRAILING_TP"})
-                    state["_log"] = [("SELL", f"📉 Трейлинг-стоп: откат от максимума {max_price:.6f} до {current_price:.6f} — продаём")]
+                    state["_log"] = [("SELL", f"📉 Trailing stop: retraced from peak {max_price:.6f} to {current_price:.6f} — selling")]
                     return "SELL", state
 
             # MA cross-down → exit signal
             cross_down = (fast_prev >= slow_prev) and (fast_curr < slow_curr)
             if cross_down:
                 state.update({"has_position": False, "exit_reason": "SIGNAL"})
-                state["_log"] = [("SELL", f"🔴 Мёртвый крест: MA{fast}={fast_curr:.6f} упала ниже MA{slow}={slow_curr:.6f} — продаём")]
+                state["_log"] = [("SELL", f"🔴 Death cross: MA{fast}={fast_curr:.6f} dropped below MA{slow}={slow_curr:.6f} — selling")]
                 return "SELL", state
 
             # Still holding
             pnl_pct = (current_price - entry_price) / entry_price * 100 if entry_price else 0.0
-            trend = "выше" if fast_curr > slow_curr else "ниже"
+            trend = "above" if fast_curr > slow_curr else "below"
             state["_log"] = [("INFO", (
                 f"📊 MA{fast}={fast_curr:.6f} {trend} MA{slow}={slow_curr:.6f} — "
-                f"{'тренд вверх' if fast_curr > slow_curr else 'тренд вниз'}, "
-                f"удерживаем позицию (вход {entry_price:.6f}, сейчас {current_price:.6f}, P&L {pnl_pct:+.2f}%)"
+                f"{'uptrend' if fast_curr > slow_curr else 'downtrend'}, "
+                f"holding position (entry {entry_price:.6f}, now {current_price:.6f}, P&L {pnl_pct:+.2f}%)"
             ))]
 
         # ── Entry logic ───────────────────────────────────────────────────
@@ -129,12 +129,12 @@ class MACrossoverStrategy(BaseStrategy):
                     "max_price": current_price,
                     "exit_reason": None,
                 })
-                state["_log"] = [("BUY", f"🟢 Золотой крест: MA{fast}={fast_curr:.6f} пересекла MA{slow}={slow_curr:.6f} снизу вверх — покупаем по {current_price:.6f}")]
+                state["_log"] = [("BUY", f"🟢 Golden cross: MA{fast}={fast_curr:.6f} crossed above MA{slow}={slow_curr:.6f} — buying at {current_price:.6f}")]
                 return "BUY", state
 
             if fast_curr < slow_curr:
-                state["_log"] = [("INFO", f"📊 MA{fast}={fast_curr:.6f} < MA{slow}={slow_curr:.6f} — нисходящий тренд, держим стейбл, ждём разворота")]
+                state["_log"] = [("INFO", f"📊 MA{fast}={fast_curr:.6f} < MA{slow}={slow_curr:.6f} — downtrend, holding stable, waiting for reversal")]
             else:
-                state["_log"] = [("INFO", f"📊 MA{fast}={fast_curr:.6f} > MA{slow}={slow_curr:.6f} — восходящий тренд, нет пересечения, ждём сигнала")]
+                state["_log"] = [("INFO", f"📊 MA{fast}={fast_curr:.6f} > MA{slow}={slow_curr:.6f} — uptrend, no crossover, waiting for signal")]
 
         return "HOLD", state

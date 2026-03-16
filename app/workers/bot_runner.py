@@ -104,7 +104,7 @@ def run_bot(self, bot_id: int) -> None:
         # Prefix simulation notice on first log entry of a tick
         if simulate and log_entries:
             log_entries.insert(0, ("INFO",
-                f"🧪 [ТЕСТ] Баланс {free_balance:.2f} < {position_size:.2f} — симуляция (реальных сделок нет)"
+                f"🧪 [DEMO] Balance {free_balance:.2f} < {position_size:.2f} — demo mode (no real orders)"
             ))
 
         _write_logs(bot.id, log_entries)
@@ -129,7 +129,7 @@ def run_bot(self, bot_id: int) -> None:
                 )
                 db.session.add(order)
                 db.session.add(BotLog(bot_id=bot.id, level="BUY",
-                    message=f"🧪 [ТЕСТ] Симуляция покупки {bot.symbol}: цена {float(exec_price):.6f}, кол-во {float(exec_qty):.6f}"))
+                    message=f"🧪 [DEMO] Buy {bot.symbol}: price {float(exec_price):.6f}, qty {float(exec_qty):.6f}"))
             else:
                 response = place_market_order(client, bot.symbol, "BUY", quote_amount=quote_amount)
                 exec_qty = Decimal(response.get("executedQty", "0"))
@@ -183,7 +183,7 @@ def run_bot(self, bot_id: int) -> None:
                     )
                     db.session.add(order)
                     db.session.add(BotLog(bot_id=bot.id, level="SELL",
-                        message=f"🧪 [ТЕСТ] Симуляция продажи {bot.symbol}: цена {float(exec_price):.6f}, P&L {pnl_pct:+.2f}%"))
+                        message=f"🧪 [DEMO] Sell {bot.symbol}: price {float(exec_price):.6f}, P&L {pnl_pct:+.2f}%"))
                 else:
                     response = place_market_order(client, bot.symbol, "SELL", quantity=last_buy.qty)
                     exec_qty = Decimal(response.get("executedQty", "0"))
