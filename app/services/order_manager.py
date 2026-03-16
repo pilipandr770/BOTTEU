@@ -84,3 +84,93 @@ def place_market_order(
 
     logger.info("Order placed: %s %s response=%s", side, symbol, response.get("orderId"))
     return response
+
+
+def place_stop_loss_order(
+    client: Client,
+    symbol: str,
+    quantity: Decimal,
+    stop_price: Decimal,
+) -> dict:
+    """
+    Place a STOP_LOSS_LIMIT SELL order on Binance so the exchange enforces the
+    stop-loss even if the server goes offline (P1 fix).
+
+    Uses stopLimitPrice = stopPrice * 0.999 (0.1% below trigger) to avoid
+    immediate fill rejection in fast-moving markets.
+    """
+    filters = get_symbol_filters(client, symbol)
+    step_size  = filters["step_size"]
+    tick_size  = filters["tick_size"]
+
+    quantity    = _round_step(quantity, step_size)
+    stop_price  = _round_step(stop_price, tick_size)
+    limit_price = _round_step(stop_price * Decimal("0.999"), tick_size)
+
+    if quantity <= 0:
+        raise ValueError("Rounded quantity is zero — cannot place stop-loss order.")
+
+    response = client.create_order(
+        symbol=symbol,
+        side="SELL",
+        type="STOP_LOSS_LIMIT",
+        timeInForce="GTC",
+        quantity=str(quantity),
+        stopPrice=str(stop_price),
+        price=str(limit_price),
+    )
+    logger.info("Stop-loss order placed: %s stopPrice=%s response=%s",
+                symbol, stop_price, response.get("orderId"))
+    return response
+
+
+def place_oco_sell_order(
+    client: Client,
+    symbol: str,
+    quantity: Decimal,
+    stop_price: Decimal,
+    take_profit_price: Decimal,
+) -> dict:
+    """
+    Place an OCO (One-Cancels-the-Other) SELL order:
+      - LIMIT_MAKER leg at take_profit_price (TP)
+      - STOP_LOSS_LIMIT leg at stop_price (SL)
+
+    Whichever triggers first cancels the other.
+    Requires BOTH stop_price < current_price < take_profit_price.
+    """
+    filters = get_symbol_filters(client, symbol)
+    step_size  = filters["step_size"]
+    tick_size  = filters["tick_size"]
+
+    quantity         = _round_step(quantity, step_size)
+    stop_price       = _round_step(stop_price, tick_size)
+    stop_limit_price = _round_step(stop_price * Decimal("0.999"), tick_size)
+    take_profit_price = _round_step(take_profit_price, tick_size)
+
+    if quantity <= 0:
+        raise ValueError("Rounded quantity is zero — cannot place OCO order.")
+
+    response = client.order_oco_sell(
+        symbol=symbol,
+        quantity=str(quantity),
+        price=str(take_profit_price),        # TP limit price
+        stopPrice=str(stop_price),           # SL trigger
+        stopLimitPrice=str(stop_limit_price),
+        stopLimitTimeInForce="GTC",
+    )
+    logger.info("OCO sell order placed: %s tp=%s sl=%s listId=%s",
+                symbol, take_profit_price, stop_price, response.get("orderListId"))
+    return response
+
+
+def cancel_open_orders(client: Client, symbol: str) -> list[dict]:
+    """Cancel all open orders for a symbol. Called before a market SELL to avoid
+    'would reduce position' conflicts with existing stop/OCO orders."""
+    try:
+        result = client.cancel_open_orders(symbol=symbol)
+        logger.info("Cancelled open orders for %s: %d order(s)", symbol, len(result))
+        return result
+    except Exception:
+        logger.exception("Failed to cancel open orders for %s", symbol)
+        return []

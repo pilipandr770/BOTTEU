@@ -29,6 +29,7 @@ TIMEFRAME_MAP = {
 
 # Minimum free quote balance to allow real trading
 REAL_TRADE_MIN = 5.0  # USDT / USDC
+FEE_RATE = Decimal("0.001")  # 0.1% Binance taker fee per side → ~0.2% round-trip
 
 
 # ── Core tick ────────────────────────────────────────────────────────────────
@@ -41,7 +42,10 @@ def _tick_bot(bot_id: int) -> None:
     from app.models.order import Order, OrderSide, ExitReason
     from app.algorithms.base import get_algorithm
     from app.services.binance_client import get_client_for_user, get_quote_free_balance
-    from app.services.order_manager import place_market_order
+    from app.services.order_manager import (
+        place_market_order, place_stop_loss_order,
+        place_oco_sell_order, cancel_open_orders,
+    )
     from app.services.telegram_notifier import notify_buy, notify_sell, notify_error
     from app.models.telegram_account import TelegramAccount
 
@@ -95,7 +99,7 @@ def _tick_bot(bot_id: int) -> None:
                 BotLog.bot_id == bot.id, BotLog.id < oldest
             ).delete(synchronize_session=False)
 
-        current_price = Decimal(str(float(df["close"].iloc[-1])))
+        current_price = Decimal(str(df["close"].iloc[-1]))
 
         # ── Telegram chat_id for this bot's owner ─────────────────────────
         _tg = TelegramAccount.query.filter_by(
@@ -139,6 +143,33 @@ def _tick_bot(bot_id: int) -> None:
                 if _chat_id:
                     notify_buy(_chat_id, bot.symbol, float(exec_price), float(exec_qty), bot.name)
 
+                # ── Place exchange SL/TP order so the exchange protects the
+                # position even if the server goes offline (P1 fix) ────────
+                sl_pct_param = bot.params.get("stop_loss_pct")
+                tp_pct_param = bot.params.get("take_profit_pct")
+                if sl_pct_param and exec_price and exec_qty:
+                    sl_price = exec_price * (1 - Decimal(str(sl_pct_param)) / 100)
+                    try:
+                        if tp_pct_param:
+                            tp_price = exec_price * (1 + Decimal(str(tp_pct_param)) / 100)
+                            oco_resp = place_oco_sell_order(
+                                client, bot.symbol, exec_qty, sl_price, tp_price
+                            )
+                            new_state["oco_order_list_id"] = str(oco_resp.get("orderListId", ""))
+                            db.session.add(BotLog(bot_id=bot.id, level="INFO",
+                                message=f"🛡 OCO order placed: SL {float(sl_price):.6f} / TP {float(tp_price):.6f}"))
+                        else:
+                            sl_resp = place_stop_loss_order(
+                                client, bot.symbol, exec_qty, sl_price
+                            )
+                            new_state["sl_order_id"] = str(sl_resp.get("orderId", ""))
+                            db.session.add(BotLog(bot_id=bot.id, level="INFO",
+                                message=f"🛡 Stop-loss order placed at {float(sl_price):.6f}"))
+                    except Exception as _oco_exc:
+                        logger.warning("Could not place exchange SL/TP order for bot %d: %s", bot.id, _oco_exc)
+                        db.session.add(BotLog(bot_id=bot.id, level="WARN",
+                            message=f"⚠️ Exchange SL/TP order skipped: {_oco_exc}"))
+
         # ── SELL ──────────────────────────────────────────────────────────
         elif signal == "SELL" and state.get("has_position", False):
             last_buy = (
@@ -155,10 +186,12 @@ def _tick_bot(bot_id: int) -> None:
                 if simulate:
                     exec_qty = last_buy.qty
                     exec_price = current_price
-                    pnl_usdt = (exec_price - last_buy.price) * exec_qty if last_buy.price else Decimal("0")
+                    buy_fee  = last_buy.price * exec_qty * FEE_RATE
+                    sell_fee = exec_price * exec_qty * FEE_RATE
+                    pnl_usdt = (exec_price - last_buy.price) * exec_qty - buy_fee - sell_fee if last_buy.price else Decimal("0")
                     pnl_pct = float(
-                        (exec_price - last_buy.price) / last_buy.price * 100
-                    ) if last_buy.price else 0.0
+                        pnl_usdt / (last_buy.price * exec_qty) * 100
+                    ) if last_buy.price and exec_qty else 0.0
                     db.session.add(Order(
                         bot_id=bot.id, symbol=bot.symbol, side=OrderSide.SELL,
                         price=exec_price, qty=exec_qty,
@@ -178,16 +211,21 @@ def _tick_bot(bot_id: int) -> None:
                         notify_sell(_chat_id, bot.symbol, float(exec_price), float(exec_qty),
                                     f"🧪 {bot.name} [DEMO]", exit_reason_str, pnl_pct)
                 else:
+                    # Cancel any open exchange SL/OCO orders before placing market SELL
+                    if state.get("oco_order_list_id") or state.get("sl_order_id"):
+                        cancel_open_orders(client, bot.symbol)
                     resp = place_market_order(client, bot.symbol, "SELL", quantity=last_buy.qty)
                     exec_qty = Decimal(resp.get("executedQty", "0"))
                     exec_price = (
                         Decimal(resp.get("cummulativeQuoteQty", "0")) / exec_qty
                         if exec_qty else Decimal("0")
                     )
-                    pnl_usdt = (exec_price - last_buy.price) * exec_qty if last_buy.price else Decimal("0")
+                    buy_fee  = last_buy.price * exec_qty * FEE_RATE
+                    sell_fee = exec_price * exec_qty * FEE_RATE
+                    pnl_usdt = (exec_price - last_buy.price) * exec_qty - buy_fee - sell_fee if last_buy.price else Decimal("0")
                     pnl_pct = float(
-                        (exec_price - last_buy.price) / last_buy.price * 100
-                    ) if last_buy.price else 0.0
+                        pnl_usdt / (last_buy.price * exec_qty) * 100
+                    ) if last_buy.price and exec_qty else 0.0
                     db.session.add(Order(
                         bot_id=bot.id,
                         binance_order_id=str(resp.get("orderId")),

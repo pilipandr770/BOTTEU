@@ -46,10 +46,14 @@ class MACrossoverStrategy(BaseStrategy):
         tp_pct = params.get("take_profit_pct")
         trail_pct = params.get("trailing_tp_pct")
 
-        if len(df) < slow + 2:
-            logger.debug("MA Crossover: not enough candles (%d < %d)", len(df), slow + 2)
-            state["_log"] = [("WARN", f"Not enough candles ({len(df)} < {slow + 2}) — waiting for data")]
+        if len(df) < slow + 3:
+            logger.debug("MA Crossover: not enough candles (%d < %d)", len(df), slow + 3)
+            state["_log"] = [("WARN", f"Not enough candles ({len(df)} < {slow + 3}) — waiting for data")]
             return "HOLD", state
+
+        # Use live (unclosed) candle price for SL/TP; compute MAs on closed candles only.
+        current_price = float(df["close"].iloc[-1])
+        df = df.iloc[:-1].copy()
 
         close = df["close"].astype(float)
 
@@ -63,14 +67,15 @@ class MACrossoverStrategy(BaseStrategy):
 
         fast_prev, fast_curr = float(ma_fast.iloc[-2]), float(ma_fast.iloc[-1])
         slow_prev, slow_curr = float(ma_slow.iloc[-2]), float(ma_slow.iloc[-1])
-        current_price = float(close.iloc[-1])
 
         # Always store last seen price for the detail page
         state["last_price"] = current_price
 
+        if not isinstance(state, dict):
+            state = {}
         has_position = state.get("has_position", False)
-        entry_price = state.get("entry_price", 0.0)
-        max_price = state.get("max_price", current_price)
+        entry_price = state.get("entry_price") or 0.0
+        max_price = state.get("max_price") or current_price
 
         # ── Exit logic (checked first) ────────────────────────────────────
         if has_position:
@@ -87,19 +92,26 @@ class MACrossoverStrategy(BaseStrategy):
                     state["_log"] = [("SELL", f"🛑 Stop-loss: price {current_price:.6f} fell below SL {sl_price:.6f} (−{sl_pct}%) — selling")]
                     return "SELL", state
 
-            # Take-Profit
+            # Take-Profit — if trailing also configured, TP activates trailing mode
             if tp_pct and entry_price:
                 tp_price = entry_price * (1 + float(tp_pct) / 100)
                 if current_price >= tp_price:
-                    state.update({"has_position": False, "exit_reason": "TAKE_PROFIT"})
-                    state["_log"] = [("SELL", f"💰 Take-profit: price {current_price:.6f} reached TP {tp_price:.6f} (+{tp_pct}%) — selling")]
-                    return "SELL", state
+                    if trail_pct:
+                        if not state.get("tp_trailing_active"):
+                            state["tp_trailing_active"] = True
+                            state["max_price"] = current_price
+                            max_price = current_price
+                            state["_log"] = [("INFO", f"💰 TP {tp_price:.6f} reached — trailing stop activated at {current_price:.6f}")]
+                    else:
+                        state.update({"has_position": False, "exit_reason": "TAKE_PROFIT", "tp_trailing_active": False})
+                        state["_log"] = [("SELL", f"💰 Take-profit: price {current_price:.6f} reached TP {tp_price:.6f} (+{tp_pct}%) — selling")]
+                        return "SELL", state
 
-            # Trailing Take-Profit
-            if trail_pct and max_price:
+            # Trailing Take-Profit (standalone, or after TP has activated it)
+            if trail_pct and max_price and (not tp_pct or state.get("tp_trailing_active")):
                 trail_price = max_price * (1 - float(trail_pct) / 100)
                 if current_price <= trail_price:
-                    state.update({"has_position": False, "exit_reason": "TRAILING_TP"})
+                    state.update({"has_position": False, "exit_reason": "TRAILING_TP", "tp_trailing_active": False})
                     state["_log"] = [("SELL", f"📉 Trailing stop: retraced from peak {max_price:.6f} to {current_price:.6f} — selling")]
                     return "SELL", state
 
@@ -128,6 +140,7 @@ class MACrossoverStrategy(BaseStrategy):
                     "entry_price": current_price,
                     "max_price": current_price,
                     "exit_reason": None,
+                    "tp_trailing_active": False,
                 })
                 state["_log"] = [("BUY", f"🟢 Golden cross: MA{fast}={fast_curr:.6f} crossed above MA{slow}={slow_curr:.6f} — buying at {current_price:.6f}")]
                 return "BUY", state
