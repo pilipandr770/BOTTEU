@@ -70,6 +70,21 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.workers.scheduler import start_scheduler
     start_scheduler(app)
 
+    # ── Telegram webhook auto-registration (production only) ─────────────────
+    _tg_webhook = app.config.get("TELEGRAM_WEBHOOK_URL", "")
+    _tg_token   = app.config.get("TELEGRAM_BOT_TOKEN", "")
+    if _tg_webhook and _tg_token and "yourdomain.com" not in _tg_webhook:
+        try:
+            import requests as _req
+            _resp = _req.post(
+                f"https://api.telegram.org/bot{_tg_token}/setWebhook",
+                json={"url": _tg_webhook},
+                timeout=10,
+            )
+            app.logger.info("Telegram webhook registered: %s", _resp.json())
+        except Exception as _exc:
+            app.logger.warning("Telegram webhook registration failed: %s", _exc)
+
     # ── Security Headers ──────────────────────────────────────
     @app.after_request
     def set_security_headers(response):

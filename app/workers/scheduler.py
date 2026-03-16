@@ -42,6 +42,8 @@ def _tick_bot(bot_id: int) -> None:
     from app.algorithms.base import get_algorithm
     from app.services.binance_client import get_client_for_user, get_quote_free_balance
     from app.services.order_manager import place_market_order
+    from app.services.telegram_notifier import notify_buy, notify_sell, notify_error
+    from app.models.telegram_account import TelegramAccount
 
     bot: Bot | None = db.session.get(Bot, bot_id)
     if not bot or bot.status != BotStatus.RUNNING:
@@ -95,6 +97,12 @@ def _tick_bot(bot_id: int) -> None:
 
         current_price = Decimal(str(float(df["close"].iloc[-1])))
 
+        # ── Telegram chat_id for this bot's owner ─────────────────────────
+        _tg = TelegramAccount.query.filter_by(
+            user_id=bot.user_id, is_verified=True
+        ).first()
+        _chat_id: int | None = _tg.chat_id if _tg else None
+
         # ── BUY ───────────────────────────────────────────────────────────
         if signal == "BUY" and not state.get("has_position", False):
             quote_amount = Decimal(str(bot.position_size_usdt))
@@ -111,6 +119,8 @@ def _tick_bot(bot_id: int) -> None:
                         f"qty {float(exec_qty):.6f} (demo order, Binance not used)"
                     )
                 ))
+                if _chat_id:
+                    notify_buy(_chat_id, bot.symbol, float(current_price), float(exec_qty), f"🧪 {bot.name} [DEMO]")
             else:
                 resp = place_market_order(client, bot.symbol, "BUY", quote_amount=quote_amount)
                 exec_qty = Decimal(resp.get("executedQty", "0"))
@@ -126,6 +136,8 @@ def _tick_bot(bot_id: int) -> None:
                     quote_qty=Decimal(resp.get("cummulativeQuoteQty", "0")),
                     is_simulated=False,
                 ))
+                if _chat_id:
+                    notify_buy(_chat_id, bot.symbol, float(exec_price), float(exec_qty), bot.name)
 
         # ── SELL ──────────────────────────────────────────────────────────
         elif signal == "SELL" and state.get("has_position", False):
@@ -162,6 +174,9 @@ def _tick_bot(bot_id: int) -> None:
                             f"P&L {pnl_pct:+.2f}% (demo order)"
                         )
                     ))
+                    if _chat_id:
+                        notify_sell(_chat_id, bot.symbol, float(exec_price), float(exec_qty),
+                                    f"🧪 {bot.name} [DEMO]", exit_reason_str, pnl_pct)
                 else:
                     resp = place_market_order(client, bot.symbol, "SELL", quantity=last_buy.qty)
                     exec_qty = Decimal(resp.get("executedQty", "0"))
@@ -184,6 +199,9 @@ def _tick_bot(bot_id: int) -> None:
                         pnl_pct=Decimal(str(round(pnl_pct, 4))),
                         is_simulated=False,
                     ))
+                    if _chat_id:
+                        notify_sell(_chat_id, bot.symbol, float(exec_price), float(exec_qty),
+                                    bot.name, exit_reason_str, pnl_pct)
 
         bot.state = new_state
         db.session.commit()
@@ -197,6 +215,9 @@ def _tick_bot(bot_id: int) -> None:
             bot.status = BotStatus.ERROR
             bot.error_message = str(exc)[:500]
             db.session.commit()
+            # Notify owner about bot error
+            if _chat_id:
+                notify_error(_chat_id, bot.name, str(exc))
         except Exception:
             from app.extensions import db
             db.session.rollback()
@@ -244,3 +265,13 @@ def start_scheduler(app) -> None:
     _scheduler.start()
     atexit.register(lambda: _scheduler.shutdown(wait=False))
     logger.info("Bot scheduler started (interval=60s)")
+
+    # Start Telegram in polling mode when there is no real webhook URL
+    # (i.e. local dev or the placeholder hasn't been replaced yet)
+    webhook_url = app.config.get("TELEGRAM_WEBHOOK_URL", "")
+    if not webhook_url or "yourdomain.com" in webhook_url:
+        try:
+            from app.telegram.polling import start_polling
+            start_polling(app)
+        except Exception:
+            logger.warning("Telegram polling could not start", exc_info=True)

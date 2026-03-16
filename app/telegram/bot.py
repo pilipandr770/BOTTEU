@@ -1,9 +1,11 @@
 """
-Telegram Bot — webhook mode entry point.
-Registers handlers and sets the webhook URL on startup.
+Telegram Bot — entry point.
+Registers handlers and (optionally) wraps them with a Flask app context
+when running in polling mode.
 """
 import logging
 import os
+from typing import Callable, Awaitable, Any
 
 from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -32,8 +34,23 @@ async def post_init(application: Application) -> None:
     ])
 
 
-def build_application() -> Application:
-    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+def _with_app_ctx(flask_app, func: Callable[..., Awaitable[Any]]) -> Callable:
+    """Return an async wrapper that pushes a Flask app context around *func*."""
+    async def _wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        with flask_app.app_context():
+            await func(update, context)
+    return _wrapper
+
+
+def build_application(token: str | None = None, flask_app=None) -> Application:
+    """Build a configured Application.
+
+    Args:
+        token:     Bot token; falls back to TELEGRAM_BOT_TOKEN env var.
+        flask_app: If provided, every handler is wrapped to run inside a
+                   Flask app context (needed for polling mode).
+    """
+    token = token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set.")
 
@@ -44,11 +61,17 @@ def build_application() -> Application:
         .build()
     )
 
-    app.add_handler(CommandHandler("start", cmd_start))
-    app.add_handler(CommandHandler("status", cmd_status))
-    app.add_handler(CommandHandler("balance", cmd_balance))
-    app.add_handler(CommandHandler("start_bot", cmd_start_bot))
-    app.add_handler(CommandHandler("stop_bot", cmd_stop_bot))
-    app.add_handler(CommandHandler("help", cmd_help))
+    handlers = [
+        ("start",     cmd_start),
+        ("status",    cmd_status),
+        ("balance",   cmd_balance),
+        ("start_bot", cmd_start_bot),
+        ("stop_bot",  cmd_stop_bot),
+        ("help",      cmd_help),
+    ]
+    for cmd, func in handlers:
+        if flask_app is not None:
+            func = _with_app_ctx(flask_app, func)
+        app.add_handler(CommandHandler(cmd, func))
 
     return app
