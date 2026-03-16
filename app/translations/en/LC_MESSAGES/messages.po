@@ -837,13 +837,13 @@ msgid "Indicator"
 msgstr "Indicator"
 
 msgid "Average True Range %"
-msgstr "Average True Range %"
+msgstr "Average True Range %%"
 
 msgid "Bollinger Band Width %"
-msgstr "Bollinger Band Width %"
+msgstr "Bollinger Band Width %%"
 
 msgid "Min ATR%"
-msgstr "Min ATR%"
+msgstr "Min ATR%%"
 
 #, no-python-format
 msgid "ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart \u2014 market is quiet, entry skipped."

@@ -832,17 +832,17 @@ msgid "Indicator"
 msgstr "Indikator"
 
 msgid "Average True Range %"
-msgstr "Durchschnittliche wahre Spanne %"
+msgstr "Durchschnittliche wahre Spanne %%"
 
 msgid "Bollinger Band Width %"
-msgstr "Bollinger-Band-Breite %"
+msgstr "Bollinger-Band-Breite %%"
 
 msgid "Min ATR%"
-msgstr "Min ATR%"
+msgstr "Min ATR%%"
 
 #, no-python-format
 msgid "ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart — market is quiet, entry skipped."
-msgstr "ATR%: Durchschnittliche Kerzenspanne geteilt durch den Preis. Wenn ATR(14)% < 0,5 auf 1h-Chart — Markt ist ruhig, Einstieg übersprungen."
+msgstr "ATR%%: Durchschnittliche Kerzenspanne geteilt durch den Preis. Wenn ATR(14)%% < 0,5 auf 1h-Chart — Markt ist ruhig, Einstieg übersprungen."
 
 #: app/templates/bots/create.html:145
 msgid "Buys on golden cross (fast MA crosses above slow). Sells on death cross."
