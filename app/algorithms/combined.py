@@ -1,11 +1,11 @@
 """
 Combined / Modular Strategy
 ────────────────────────────
-Lets you assemble a bot from independent signal modules (MA Crossover, RSI)
-and combine their entry signals with AND or OR logic.
+Lets you assemble a bot from independent signal modules (MA Crossover, RSI,
+Volatility Filter) and combine their entry signals with AND or OR logic.
 
 Params:
-    modules         : list  e.g. ["ma_crossover", "rsi"]
+    modules         : list  e.g. ["ma_crossover", "rsi", "volatility"]
     entry_logic     : "AND" | "OR"   (default: "OR")
     timeframe       : str            (used by the worker to fetch candles)
 
@@ -18,14 +18,22 @@ Params:
     oversold        : float          (default: 30)
     overbought      : float          (default: 70)
 
+    # Volatility Filter module (active when "volatility" in modules):
+    vol_indicator   : "atr" | "bbw"  (default: "atr")
+    vol_period      : int            (default: 14)
+    vol_min_pct     : float          (default: 0.5)  — minimum ATR% or BBW%
+                                     Below this value → no new entries allowed.
+
     # Shared risk management:
     stop_loss_pct   : float | None
     take_profit_pct : float | None
     trailing_tp_pct : float | None
 
 Entry  : BUY  when enabled modules agree (AND) or any fires (OR)
+         AND volatility filter passes (if enabled)
 Exit   : SELL when any module signals exit  (always OR — safer)
          OR SL / TP / Trailing TP is hit
+         Note: volatility filter does NOT block exits — only entries.
 """
 import logging
 
@@ -51,6 +59,52 @@ def _rsi(series: pd.Series, length: int) -> pd.Series:
     avg_loss = loss.ewm(alpha=1 / length, min_periods=length, adjust=False).mean()
     rs = avg_gain / avg_loss
     return 100 - (100 / (1 + rs))
+
+
+def _atr_pct(df: pd.DataFrame, length: int) -> float | None:
+    """
+    ATR% = ATR(length) / close * 100
+
+    Measures the average candle range relative to price.
+    Low value  → market is quiet / sideways → filter blocks entry.
+    High value → market is moving  → entry allowed.
+    """
+    if len(df) < length + 1:
+        return None
+    high  = df["high"].astype(float)
+    low   = df["low"].astype(float)
+    close = df["close"].astype(float)
+    prev_close = close.shift(1)
+    true_range = pd.concat([
+        high - low,
+        (high - prev_close).abs(),
+        (low  - prev_close).abs(),
+    ], axis=1).max(axis=1)
+    atr = true_range.ewm(alpha=1 / length, min_periods=length, adjust=False).mean()
+    atr_val = float(atr.iloc[-1])
+    price   = float(close.iloc[-1])
+    return (atr_val / price * 100) if price else None
+
+
+def _bbw_pct(series: pd.Series, length: int, num_std: float = 2.0) -> float | None:
+    """
+    Bollinger Band Width % = (Upper − Lower) / Middle * 100
+
+    Very low value → "BB squeeze" / low volatility → filter blocks entry.
+    Expanding bands → volatility returning → entry allowed.
+    """
+    if len(series) < length:
+        return None
+    mid = series.rolling(window=length).mean()
+    std = series.rolling(window=length).std()
+    upper = mid + num_std * std
+    lower = mid - num_std * std
+    mid_v   = float(mid.iloc[-1])
+    upper_v = float(upper.iloc[-1])
+    lower_v = float(lower.iloc[-1])
+    if mid_v == 0 or pd.isna(mid_v):
+        return None
+    return (upper_v - lower_v) / mid_v * 100
 
 
 # ── Strategy ──────────────────────────────────────────────────────────────────
@@ -160,9 +214,38 @@ class CombinedStrategy(BaseStrategy):
             state["_log"] = [("WARN", "No active modules — check bot settings")]
             return "HOLD", state
 
-        # ── Combine entry signals ─────────────────────────────────────────
-        do_buy  = all(buy_signals)  if entry_logic == "AND" else any(buy_signals)
-        do_sell = any(sell_signals)   # exit logic is always OR
+        # ── Volatility Filter module ───────────────────────────────────────
+        # Checked AFTER signal modules so we can still log their values.
+        # Blocks new ENTRIES when market is too quiet; never blocks EXITS.
+        vol_blocked = False
+        if "volatility" in modules and not has_position:
+            vol_indicator = str(params.get("vol_indicator", "atr")).lower()
+            vol_period    = int(params.get("vol_period", 14))
+            vol_min_pct   = float(params.get("vol_min_pct", 0.5))
+
+            if vol_indicator == "bbw":
+                vol_value = _bbw_pct(close, vol_period)
+                label = f"BBW({vol_period})"
+            else:
+                vol_value = _atr_pct(df, vol_period)
+                label = f"ATR%({vol_period})"
+
+            if vol_value is None:
+                log_lines.append(("WARN", f"⏸ Volatility filter: not enough data for {label}"))
+                vol_blocked = True
+            elif vol_value < vol_min_pct:
+                log_lines.append(("INFO",
+                    f"⏸ Volatility filter: {label}={vol_value:.3f}% < min {vol_min_pct:.2f}% "
+                    f"— market too quiet, entry blocked"
+                ))
+                vol_blocked = True
+            else:
+                log_lines.append(("INFO",
+                    f"✅ Volatility filter: {label}={vol_value:.3f}% ≥ min {vol_min_pct:.2f}% — OK"
+                ))
+        # vol_blocked is False when volatility module is disabled or already in position (exits not blocked)
+        do_buy  = (all(buy_signals) if entry_logic == "AND" else any(buy_signals)) and not vol_blocked
+        do_sell = any(sell_signals)   # exit logic is always OR — vol filter never blocks exits
 
         # ── Exit checks (evaluated before entry) ──────────────────────────
         if has_position:

@@ -817,11 +817,37 @@ msgstr ""
 
 #: app/templates/bots/create.html:140 app/templates/subscriptions/plans.html:99
 msgid "MA Crossover"
-msgstr ""
+msgstr "MA Crossover"
 
 #: app/templates/bots/create.html:145
 msgid "Buys on golden cross (fast MA crosses above slow). Sells on death cross."
-msgstr ""
+msgstr "Buys on golden cross (fast MA crosses above slow). Sells on death cross."
+
+#: app/templates/bots/create.html (volatility module)
+msgid "Volatility Filter"
+msgstr "Volatility Filter"
+
+msgid "recommended"
+msgstr "recommended"
+
+msgid "Blocks new entries when the market is too quiet (sideways). Exits are never blocked \u2014 only entries. Prevents commission losses from small-range candles."
+msgstr "Blocks new entries when the market is too quiet (sideways). Exits are never blocked \u2014 only entries. Prevents commission losses from small-range candles."
+
+msgid "Indicator"
+msgstr "Indicator"
+
+msgid "Average True Range %"
+msgstr "Average True Range %"
+
+msgid "Bollinger Band Width %"
+msgstr "Bollinger Band Width %"
+
+msgid "Min ATR%"
+msgstr "Min ATR%"
+
+#, no-python-format
+msgid "ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart \u2014 market is quiet, entry skipped."
+msgstr "ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart \u2014 market is quiet, entry skipped."
 
 #: app/templates/bots/create.html:149
 #, fuzzy

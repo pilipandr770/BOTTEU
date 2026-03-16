@@ -817,11 +817,36 @@ msgstr ""
 
 #: app/templates/bots/create.html:140 app/templates/subscriptions/plans.html:99
 msgid "MA Crossover"
-msgstr ""
+msgstr "MA-Kreuzungsstrategie"
+
+msgid "Volatility Filter"
+msgstr "Volatilität-Filter"
+
+msgid "recommended"
+msgstr "empfohlen"
+
+msgid "Blocks new entries when the market is too quiet (sideways). Exits are never blocked — only entries. Prevents commission losses from small-range candles."
+msgstr "Blockiert neue Einstiege, wenn der Markt zu ruhig ist (Seitwärtsbewegung). Ausstiege werden nie blockiert — nur Einstiege. Verhindert Kommissionsverluste bei kleinen Kerzenbewegungen."
+
+msgid "Indicator"
+msgstr "Indikator"
+
+msgid "Average True Range %"
+msgstr "Durchschnittliche wahre Spanne %"
+
+msgid "Bollinger Band Width %"
+msgstr "Bollinger-Band-Breite %"
+
+msgid "Min ATR%"
+msgstr "Min ATR%"
+
+#, no-python-format
+msgid "ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart — market is quiet, entry skipped."
+msgstr "ATR%: Durchschnittliche Kerzenspanne geteilt durch den Preis. Wenn ATR(14)% < 0,5 auf 1h-Chart — Markt ist ruhig, Einstieg übersprungen."
 
 #: app/templates/bots/create.html:145
 msgid "Buys on golden cross (fast MA crosses above slow). Sells on death cross."
-msgstr ""
+msgstr "Kauft beim goldenen Kreuz (schnelle MA kreuzt über langsame). Verkauft beim Todeskreuz."
 
 #: app/templates/bots/create.html:149
 #, fuzzy
@@ -835,13 +860,13 @@ msgstr "Langsame MA:"
 
 #: app/templates/bots/create.html:171
 msgid "RSI"
-msgstr ""
+msgstr "RSI"
 
 #: app/templates/bots/create.html:176
 msgid ""
 "Buys when RSI bounces up through oversold. Sells when RSI enters "
 "overbought zone."
-msgstr ""
+msgstr "Kauft wenn RSI aus überverkauft zurückprallt. Verkauft wenn RSI in überkauft-Zone eintritt."
 
 #: app/templates/bots/create.html:180
 #, fuzzy
@@ -860,33 +885,33 @@ msgstr "RSI überkauft:"
 
 #: app/templates/bots/create.html:203
 msgid "Entry Logic — how to combine the two signals"
-msgstr ""
+msgstr "Einstiegslogik — wie die zwei Signale kombiniert werden"
 
 #: app/templates/bots/create.html:208
 msgid "any signal fires"
-msgstr ""
+msgstr "ein beliebiges Signal"
 
 #: app/templates/bots/create.html:209
 msgid "More trades · aggressive"
-msgstr ""
+msgstr "Mehr Trades · aggressiv"
 
 #: app/templates/bots/create.html:213
 msgid "both signals agree"
-msgstr ""
+msgstr "beide Signale stimmen überein"
 
 #: app/templates/bots/create.html:214
 msgid "Fewer trades · conservative"
-msgstr ""
+msgstr "Weniger Trades · konservativ"
 
 #: app/templates/bots/create.html:228
 msgid "Risk Management"
-msgstr ""
+msgstr "Risikomanagement"
 
 #: app/templates/bots/create.html:232
 msgid ""
 "Applied to all active modules. The bot exits a position if any of these "
 "levels is hit."
-msgstr ""
+msgstr "Gilt für alle aktiven Module. Der Bot verlässt eine Position, wenn eines dieser Niveaus erreicht wird."
 
 #: app/templates/bots/create.html:237
 #: app/templates/subscriptions/plans.html:101
@@ -896,25 +921,25 @@ msgstr "Stoppen"
 
 #: app/templates/bots/create.html:238
 msgid "Required"
-msgstr ""
+msgstr "Pflichtfeld"
 
 #: app/templates/bots/create.html:239 app/templates/bots/create.html:249
 #: app/templates/bots/create.html:258
 msgid "optional"
-msgstr ""
+msgstr "optional"
 
 #: app/templates/bots/create.html:246
 msgid "Exit if price drops this much from entry."
-msgstr ""
+msgstr "Ausstieg wenn Preis so weit vom Einstieg fällt."
 
 #: app/templates/bots/create.html:249
 #: app/templates/subscriptions/plans.html:102
 msgid "Take-Profit"
-msgstr ""
+msgstr "Take-Profit"
 
 #: app/templates/bots/create.html:255
 msgid "Exit at fixed profit target."
-msgstr ""
+msgstr "Ausstieg bei festem Gewinnziel."
 
 #: app/templates/bots/create.html:258
 #, fuzzy
@@ -923,7 +948,7 @@ msgstr "Trailing"
 
 #: app/templates/bots/create.html:264
 msgid "Exit if price drops this much from its peak."
-msgstr ""
+msgstr "Ausstieg wenn Preis so weit von seinem Höchststand fällt."
 
 # ── Bot detail ────────────────────────────────────────────────────────────
 #: app/templates/bots/detail.html:11 app/templates/bots/index.html:2

@@ -198,7 +198,59 @@
 
         </div><!-- /row -->
 
-        <!-- Entry logic — visible only when BOTH modules enabled -->
+        <!-- Volatility Filter card — full width below MA + RSI -->
+        <div class="row g-3 mt-0">
+          <div class="col-12">
+            <div class="module-card p-3" id="card-vol">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('vol')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-vol" name="modules" value="volatility">
+                <label class="form-check-label fw-semibold mb-0" for="mod-vol">
+                  <i class="bi bi-wind text-info me-1"></i>{{ _('Volatility Filter') }}
+                  <span class="badge bg-info text-dark ms-2 fw-normal small">{{ _('recommended') }}</span>
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Blocks new entries when the market is too quiet (sideways). Exits are never blocked — only entries. Prevents commission losses from small-range candles.') }}
+                </p>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label small">{{ _('Indicator') }}</label>
+                    <select name="param_vol_indicator" id="volIndicator" class="form-select form-select-sm"
+                            onchange="updateVolHelp()">
+                      <option value="atr" selected>ATR% — {{ _('Average True Range %') }}</option>
+                      <option value="bbw">BBW% — {{ _('Bollinger Band Width %') }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small">{{ _('Period') }}</label>
+                    <input type="number" name="param_vol_period"
+                           class="form-control form-control-sm" value="14" min="5" max="100">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small" id="volMinLabel">{{ _('Min ATR%') }}</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" name="param_vol_min_pct"
+                             class="form-control form-control-sm" id="volMinInput"
+                             value="0.5" min="0.05" step="0.05">
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <span class="badge bg-secondary small" id="volBadge">1h BTC ≈ 0.3–1.5%</span>
+                  </div>
+                </div>
+                <div class="form-text mt-2" id="volHelp">
+                  {{ _('ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart — market is quiet, entry skipped.') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Entry logic — visible only when BOTH MA+RSI modules enabled -->
         <div id="logicRow" class="mt-3 p-3 rounded border border-secondary" style="display:none;">
           <div class="section-label">{{ _('Entry Logic — how to combine the two signals') }}</div>
           <input type="hidden" name="param_entry_logic" id="entryLogicInput" value="OR">
@@ -284,8 +336,10 @@
 <script>
 const modMA   = document.getElementById('mod-ma');
 const modRSI  = document.getElementById('mod-rsi');
+const modVOL  = document.getElementById('mod-vol');
 const cardMA  = document.getElementById('card-ma');
 const cardRSI = document.getElementById('card-rsi');
+const cardVOL = document.getElementById('card-vol');
 const logicRow    = document.getElementById('logicRow');
 const noModWarn   = document.getElementById('noModuleWarning');
 const slBadge     = document.getElementById('slBadge');
@@ -297,9 +351,12 @@ function toggleModule(which) {
   if (which === 'ma') {
     modMA.checked = !modMA.checked;
     cardMA.classList.toggle('enabled', modMA.checked);
-  } else {
+  } else if (which === 'rsi') {
     modRSI.checked = !modRSI.checked;
     cardRSI.classList.toggle('enabled', modRSI.checked);
+  } else {
+    modVOL.checked = !modVOL.checked;
+    cardVOL.classList.toggle('enabled', modVOL.checked);
   }
   updateUI();
 }
@@ -315,11 +372,38 @@ modRSI.addEventListener('change', (e) => {
   cardRSI.classList.toggle('enabled', modRSI.checked);
   updateUI();
 });
+modVOL.addEventListener('change', (e) => {
+  e.stopPropagation();
+  cardVOL.classList.toggle('enabled', modVOL.checked);
+  updateUI();
+});
 
 function setLogic(val) {
   document.getElementById('entryLogicInput').value = val;
   document.getElementById('btn-or').classList.toggle('active', val === 'OR');
   document.getElementById('btn-and').classList.toggle('active', val === 'AND');
+}
+
+const volHelpTexts = {
+  atr: "ATR%: average candle range / price. ATR%(14) < 0.5% on 1h → quiet market, entry skipped.",
+  bbw: "BBW%: (Upper Band − Lower Band) / Middle Band. BBW%(20) < 1% → BB squeeze, entry skipped.",
+};
+const volBadgeTexts = {
+  atr: "1h BTC ≈ 0.3–1.5%",
+  bbw: "1h BTC ≈ 2–8%",
+};
+const volMinDefaults = { atr: "0.5", bbw: "2.0" };
+const volMinLabels   = { atr: "Min ATR%", bbw: "Min BBW%" };
+
+function updateVolHelp() {
+  const ind = document.getElementById('volIndicator').value;
+  document.getElementById('volHelp').textContent = volHelpTexts[ind] || '';
+  document.getElementById('volBadge').textContent = volBadgeTexts[ind] || '';
+  document.getElementById('volMinLabel').textContent = volMinLabels[ind] || 'Min %';
+  const inp = document.getElementById('volMinInput');
+  if (inp.value === volMinDefaults[ind === 'atr' ? 'bbw' : 'atr']) {
+    inp.value = volMinDefaults[ind];
+  }
 }
 
 function updateUI() {
