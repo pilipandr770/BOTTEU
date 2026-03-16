@@ -1,5 +1,5 @@
 """Dashboard blueprint — main user overview."""
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 
 from app.models.bot import Bot, BotStatus
@@ -11,6 +11,13 @@ dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.route("/")
+def root():
+    """Redirect root to landing for guests, dashboard for authenticated users."""
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard.index"))
+    return redirect(url_for("landing"))
+
+
 @dashboard_bp.route("/dashboard")
 @login_required
 def index():
