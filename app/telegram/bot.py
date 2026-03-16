@@ -8,7 +8,7 @@ import os
 from typing import Callable, Awaitable, Any
 
 from telegram import Update, BotCommand
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 from app.telegram.handlers import (
     cmd_start,
@@ -17,6 +17,8 @@ from app.telegram.handlers import (
     cmd_start_bot,
     cmd_stop_bot,
     cmd_help,
+    handle_callback_query,
+    ptb_error_handler,
 )
 
 logger = logging.getLogger(__name__)
@@ -73,5 +75,14 @@ def build_application(token: str | None = None, flask_app=None) -> Application:
         if flask_app is not None:
             func = _with_app_ctx(flask_app, func)
         app.add_handler(CommandHandler(cmd, func))
+
+    # Inline-keyboard callback handler
+    cbq_func = handle_callback_query
+    if flask_app is not None:
+        cbq_func = _with_app_ctx(flask_app, cbq_func)
+    app.add_handler(CallbackQueryHandler(cbq_func))
+
+    # Global error handler — user sees ❌ instead of silence
+    app.add_error_handler(ptb_error_handler)
 
     return app

@@ -116,6 +116,27 @@ def telegram():
     return render_template("bots/telegram.html", tg=tg)
 
 
+@bots_bp.route("/telegram/status-json")
+@login_required
+def telegram_status_json():
+    tg = TelegramAccount.query.filter_by(user_id=current_user.id).first()
+    return jsonify({"linked": bool(tg and tg.is_verified)})
+
+
+@bots_bp.route("/telegram/disconnect", methods=["POST"])
+@login_required
+def telegram_disconnect():
+    tg = TelegramAccount.query.filter_by(user_id=current_user.id).first()
+    if tg:
+        tg.chat_id = None
+        tg.is_verified = False
+        tg.link_code = None
+        tg.link_code_expires_at = None
+        db.session.commit()
+        flash(_("Telegram disconnected."), "info")
+    return redirect(url_for("bots.telegram"))
+
+
 # ── Bot CRUD ─────────────────────────────────────────────────────────────────
 
 @bots_bp.route("/")

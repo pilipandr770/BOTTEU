@@ -29,22 +29,20 @@ def start_polling(flask_app) -> None:
         return
 
     def _run() -> None:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        from app.telegram.bot import build_application
-        application = build_application(token=token, flask_app=flask_app)
-
         async def _main() -> None:
+            # Build inside the coroutine so PTB asyncio objects bind to this loop
+            from app.telegram.bot import build_application
+            application = build_application(token=token, flask_app=flask_app)
             async with application:
                 await application.start()
-                await application.updater.start_polling(drop_pending_updates=True)
+                # drop_pending_updates=False so messages sent while app was down
+                # aren't silently discarded — the bot will process them on startup
+                await application.updater.start_polling(drop_pending_updates=False)
                 logger.info("Telegram polling active — awaiting updates …")
-                # Block until the process exits (daemon thread is killed automatically)
-                await asyncio.Event().wait()
+                await asyncio.Event().wait()  # block until daemon thread is killed
 
         try:
-            loop.run_until_complete(_main())
+            asyncio.run(_main())
         except Exception:
             logger.exception("Telegram polling thread crashed")
 
