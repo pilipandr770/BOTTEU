@@ -36,8 +36,8 @@ def checkout():
             metadata={"user_id": str(current_user.id)},
         )
         return redirect(session.url, code=303)
-    except stripe.error.StripeError as exc:
-        flash(_(f"Stripe error: {exc.user_message}"), "danger")
+    except stripe.error.StripeError:
+        flash(_("Payment error. Please try again or contact support."), "danger")
         return redirect(url_for("subscriptions.plans"))
 
 
@@ -63,8 +63,8 @@ def portal():
             return_url=url_for("subscriptions.plans", _external=True),
         )
         return redirect(session.url, code=303)
-    except stripe.error.StripeError as exc:
-        flash(_(f"Stripe error: {exc.user_message}"), "danger")
+    except stripe.error.StripeError:
+        flash(_("Payment error. Please try again or contact support."), "danger")
         return redirect(url_for("subscriptions.plans"))
 
 

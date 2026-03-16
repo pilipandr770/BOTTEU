@@ -52,6 +52,15 @@ class Config:
     RATELIMIT_DEFAULT = "200 per day;50 per hour"
     RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", "memory://")
 
+    # ── Session / Cookie security ──────────────────────────────────────────
+    SESSION_COOKIE_HTTPONLY = True      # JS cannot read the session cookie
+    SESSION_COOKIE_SAMESITE = "Lax"    # CSRF mitigation for cross-site requests
+    SESSION_COOKIE_SECURE = False       # Overridden to True in ProductionConfig
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = False      # Overridden to True in ProductionConfig
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    PERMANENT_SESSION_LIFETIME = 86400  # 24 h in seconds
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -60,6 +69,8 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
 
 
 class TestingConfig(Config):

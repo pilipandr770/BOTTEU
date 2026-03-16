@@ -214,11 +214,11 @@ def toggle(bot_id: int):
     bot = Bot.query.filter_by(id=bot_id, user_id=current_user.id).first_or_404()
     if bot.status == BotStatus.RUNNING:
         bot.status = BotStatus.STOPPED
-        flash(_(f"Bot '{bot.name}' stopped."), "info")
+        flash(_("Bot stopped."), "info")
     else:
         bot.status = BotStatus.RUNNING
         bot.error_message = None
-        flash(_(f"Bot '{bot.name}' started."), "success")
+        flash(_("Bot started."), "success")
     db.session.commit()
     return redirect(url_for("bots.index"))
 

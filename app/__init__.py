@@ -74,15 +74,18 @@ def create_app(config_name: str | None = None) -> Flask:
     @app.after_request
     def set_security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # HSTS — only effective over HTTPS (ignored over HTTP)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         csp = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.plot.ly; "
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "img-src 'self' data:; "
             "font-src 'self' https://cdn.jsdelivr.net; "
-            "connect-src 'self';"
+            "connect-src 'self'; "
+            "frame-ancestors 'none';"
         )
         response.headers["Content-Security-Policy"] = csp
         return response

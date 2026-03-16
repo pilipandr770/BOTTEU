@@ -7,6 +7,7 @@ import bcrypt
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, session
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_babel import gettext as _
+from urllib.parse import urlparse, urljoin
 
 from app.extensions import db, limiter
 from app.models.user import User
@@ -122,7 +123,12 @@ def login():
 
         login_user(user, remember=request.form.get("remember") == "on")
         session["lang"] = user.preferred_lang
-        next_page = request.args.get("next")
+        next_page = request.args.get("next", "")
+        # Validate next_page to prevent open redirect (only allow relative paths)
+        if next_page:
+            parsed = urlparse(next_page)
+            if parsed.netloc or parsed.scheme:  # absolute URL — reject
+                next_page = ""
         return redirect(next_page or url_for("dashboard.index"))
 
     return render_template("auth/login.html")
