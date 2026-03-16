@@ -1,4 +1,9 @@
-# English translations — BOTTEU
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
@@ -6,9 +11,7 @@ msgstr ""
 "POT-Creation-Date: 2026-03-16 13:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
-"Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -59,9 +62,8 @@ msgid "Email verified! You can now log in."
 msgstr ""
 
 #: app/routes/auth.py:157
-#, fuzzy
 msgid "Incorrect password."
-msgstr "Confirm Password"
+msgstr ""
 
 #: app/routes/auth.py:163
 msgid "Your account has been permanently deleted."
@@ -76,9 +78,8 @@ msgid "API Key saved. Test the connection to verify."
 msgstr ""
 
 #: app/routes/bots.py:71
-#, fuzzy
 msgid "API Key deleted."
-msgstr "API Key"
+msgstr ""
 
 #: app/routes/bots.py:140
 msgid "Free plan allows 1 bot. Upgrade to Pro for unlimited bots."
@@ -105,9 +106,8 @@ msgid "Bot created successfully!"
 msgstr ""
 
 #: app/routes/bots.py:232
-#, fuzzy
 msgid "Bot deleted."
-msgstr "Delete"
+msgstr ""
 
 #: app/routes/subscriptions.py:25
 msgid "Payment is not configured yet. Please contact support."
@@ -121,106 +121,100 @@ msgstr ""
 msgid "No active subscription found."
 msgstr ""
 
-# ── Navigation ──────────────────────────────────────────────────────────
 #: app/templates/base.html:32 app/templates/dashboard/index.html:2
 #: app/templates/dashboard/index.html:6
 msgid "Dashboard"
-msgstr "Dashboard"
+msgstr ""
 
 #: app/templates/base.html:33
 msgid "Bots"
-msgstr "Bots"
+msgstr ""
 
 #: app/templates/backtest/index.html:2 app/templates/base.html:34
 #: app/templates/landing.html:105
 msgid "Backtest"
-msgstr "Backtest"
+msgstr ""
 
 #: app/templates/base.html:35
 msgid "Guides"
-msgstr "Guides"
+msgstr ""
 
 #: app/templates/base.html:43 app/templates/bots/api_key.html:2
 #: app/templates/bots/api_key.html:64
 msgid "API Key"
-msgstr "API Key"
+msgstr ""
 
 #: app/templates/base.html:44 app/templates/bots/telegram.html:2
 msgid "Telegram"
-msgstr "Telegram"
+msgstr ""
 
 #: app/templates/base.html:45
 msgid "Subscription"
-msgstr "Subscription"
+msgstr ""
 
 #: app/templates/base.html:48
-#, fuzzy
 msgid "Admin Panel"
-msgstr "Trading Pair"
+msgstr ""
 
 #: app/templates/auth/delete_account.html:2
 #: app/templates/auth/delete_account.html:9 app/templates/base.html:51
 msgid "Delete Account"
-msgstr "Delete Account"
+msgstr ""
 
 #: app/templates/base.html:52
 msgid "Logout"
-msgstr "Logout"
+msgstr ""
 
 #: app/templates/auth/login.html:2 app/templates/auth/login.html:8
 #: app/templates/auth/login.html:23 app/templates/auth/register.html:45
 #: app/templates/base.html:58
 msgid "Login"
-msgstr "Login"
+msgstr ""
 
 #: app/templates/base.html:59
 msgid "Sign Up Free"
-msgstr "Sign Up Free"
+msgstr ""
 
 #: app/templates/base.html:96
 msgid "Legal"
-msgstr "Legal"
+msgstr ""
 
 #: app/templates/auth/register.html:34 app/templates/base.html:98
 #: app/templates/legal/privacy.html:98 app/templates/legal/terms.html:2
 #: app/templates/legal/terms.html:8
 msgid "Terms of Service"
-msgstr "Terms of Service"
+msgstr ""
 
 #: app/templates/auth/register.html:36 app/templates/base.html:99
 #: app/templates/base.html:124 app/templates/legal/privacy.html:2
 #: app/templates/legal/privacy.html:8 app/templates/legal/terms.html:76
 msgid "Privacy Policy"
-msgstr "Privacy Policy"
+msgstr ""
 
 #: app/templates/auth/register.html:33 app/templates/base.html:100
 #: app/templates/legal/disclaimer.html:2 app/templates/legal/disclaimer.html:7
 #: app/templates/legal/privacy.html:102 app/templates/legal/terms.html:80
 msgid "Risk Disclaimer"
-msgstr "Risk Disclaimer"
+msgstr ""
 
 #: app/templates/base.html:105
 msgid "Support"
-msgstr "Support"
+msgstr ""
 
 #: app/templates/base.html:107 app/templates/guides/index.html:2
 #: app/templates/guides/index.html:4
-#, fuzzy
 msgid "Guides & Tutorials"
-msgstr "Guides & Tutorials"
+msgstr ""
 
 #: app/templates/base.html:113
 msgid "All rights reserved."
-msgstr "All rights reserved."
+msgstr ""
 
-# ── Auth ─────────────────────────────────────────────────────────────────
 #: app/templates/base.html:114
 msgid ""
 "Trading involves risk. Past performance is not indicative of future "
 "results."
 msgstr ""
-"Trading involves risk. Past performance is not indicative of future "
-"results."
 
 #: app/templates/base.html:123
 msgid "We use cookies to improve your experience. See our"
@@ -231,9 +225,8 @@ msgid "Accept"
 msgstr ""
 
 #: app/templates/base.html:128
-#, fuzzy
 msgid "Decline"
-msgstr "Delete"
+msgstr ""
 
 #: app/templates/landing.html:2
 msgid "Automated Binance Spot Trading Bot"
@@ -244,21 +237,18 @@ msgid ""
 "Automate your Binance Spot trading with MA Crossover and RSI strategies. "
 "Backtest on real history. Get Telegram notifications for every trade."
 msgstr ""
-"Automate your Binance Spot trading with MA Crossover and RSI strategies. "
-"Backtest on real history. Get Telegram notifications for every trade."
 
 #: app/templates/landing.html:18
 msgid "Get Started Free"
-msgstr "Get Started Free"
+msgstr ""
 
 #: app/templates/landing.html:21
 msgid "Try Backtest"
-msgstr "Try Backtest"
+msgstr ""
 
-# ── Landing / Subscriptions ────────────────────────────────────────────────
 #: app/templates/landing.html:26
 msgid "Not financial advice. All trading involves risk."
-msgstr "Not financial advice. All trading involves risk."
+msgstr ""
 
 #: app/templates/landing.html:39
 msgid "Secure API Storage"
@@ -271,9 +261,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/landing.html:48
-#, fuzzy
 msgid "Trading Algorithms"
-msgstr "Trading Log"
+msgstr ""
 
 #: app/templates/landing.html:49
 msgid ""
@@ -292,9 +281,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/landing.html:66 app/templates/landing.html:106
-#, fuzzy
 msgid "Telegram Alerts"
-msgstr "Telegram"
+msgstr ""
 
 #: app/templates/landing.html:67
 msgid ""
@@ -323,9 +311,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/landing.html:94
-#, fuzzy
 msgid "Pricing"
-msgstr "Trailing"
+msgstr ""
 
 #: app/templates/landing.html:99 app/templates/subscriptions/plans.html:17
 #: app/templates/subscriptions/plans.html:93
@@ -333,59 +320,56 @@ msgid "Free"
 msgstr ""
 
 #: app/templates/landing.html:102
-#, fuzzy
 msgid "Trading Bot"
-msgstr "Trading Log"
+msgstr ""
 
 #: app/templates/bots/create.html:55 app/templates/landing.html:103
 msgid "Trading Pair"
-msgstr "Trading Pair"
+msgstr ""
 
 #: app/templates/landing.html:104
-#, fuzzy
 msgid "All Algorithms"
-msgstr "All future algorithms"
+msgstr ""
 
 #: app/templates/landing.html:108
 msgid "Get Started"
-msgstr "Get Started"
+msgstr ""
 
 #: app/templates/landing.html:115
 msgid "Popular"
-msgstr "Popular"
+msgstr ""
 
 #: app/templates/landing.html:117 app/templates/subscriptions/plans.html:48
 msgid "month"
-msgstr "month"
+msgstr ""
 
 #: app/templates/landing.html:119
 msgid "Unlimited Bots"
-msgstr "Unlimited Bots"
+msgstr ""
 
 #: app/templates/landing.html:120
 msgid "Unlimited Pairs"
-msgstr "Unlimited Pairs"
+msgstr ""
 
 #: app/templates/landing.html:121
 msgid "Priority Support"
-msgstr "Priority Support"
+msgstr ""
 
 #: app/templates/landing.html:122
 msgid "All future algorithms"
-msgstr "All future algorithms"
+msgstr ""
 
 #: app/templates/landing.html:123
 msgid "No commission on profits"
-msgstr "No commission on profits"
+msgstr ""
 
 #: app/templates/landing.html:125
 msgid "Start Pro Trial"
-msgstr "Start Pro Trial"
+msgstr ""
 
 #: app/templates/landing.html:136
-#, fuzzy
 msgid "Risk Disclaimer:"
-msgstr "Risk Disclaimer"
+msgstr ""
 
 #: app/templates/landing.html:137
 msgid ""
@@ -396,9 +380,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/landing.html:138
-#, fuzzy
 msgid "Read full disclaimer"
-msgstr "Risk Disclaimer"
+msgstr ""
 
 #: app/templates/auth/delete_account.html:13
 msgid ""
@@ -447,12 +430,11 @@ msgstr ""
 #: app/templates/auth/delete_account.html:46 app/templates/bots/create.html:275
 #: app/templates/bots/detail.html:367 app/templates/bots/index.html:116
 msgid "Cancel"
-msgstr "Cancel"
+msgstr ""
 
 #: app/templates/auth/delete_account.html:49
-#, fuzzy
 msgid "Delete My Account"
-msgstr "Delete Account"
+msgstr ""
 
 #: app/templates/auth/login.html:12
 msgid "Email"
@@ -460,37 +442,36 @@ msgstr ""
 
 #: app/templates/auth/login.html:16 app/templates/auth/register.html:16
 msgid "Password"
-msgstr "Password"
+msgstr ""
 
 #: app/templates/auth/login.html:21
 msgid "Remember me"
-msgstr "Remember me"
+msgstr ""
 
 #: app/templates/auth/login.html:27
 msgid "Don't have an account?"
 msgstr ""
 
 #: app/templates/auth/login.html:27
-#, fuzzy
 msgid "Sign up free"
-msgstr "Sign Up Free"
+msgstr ""
 
 #: app/templates/auth/register.html:2 app/templates/auth/register.html:8
 #: app/templates/auth/register.html:41
 msgid "Create Account"
-msgstr "Create Account"
+msgstr ""
 
 #: app/templates/auth/register.html:12
 msgid "Email Address"
-msgstr "Email Address"
+msgstr ""
 
 #: app/templates/auth/register.html:16
 msgid "min 8 characters"
-msgstr "min 8 characters"
+msgstr ""
 
 #: app/templates/auth/register.html:20
 msgid "Confirm Password"
-msgstr "Confirm Password"
+msgstr ""
 
 #: app/templates/auth/register.html:27
 msgid ""
@@ -507,31 +488,26 @@ msgstr ""
 msgid "and"
 msgstr ""
 
-# ── Landing / Subscriptions ────────────────────────────────────────────────
 #: app/templates/auth/register.html:37
-#, fuzzy
 msgid "I understand trading involves risk."
-msgstr "Not financial advice. All trading involves risk."
+msgstr ""
 
 #: app/templates/auth/register.html:45
-#, fuzzy
 msgid "Already have an account?"
-msgstr "Create Account"
+msgstr ""
 
 #: app/templates/backtest/index.html:9
-#, fuzzy
 msgid "Strategy Backtester"
-msgstr "Try Backtest"
+msgstr ""
 
-# ── Backtest ──────────────────────────────────────────────────────────────
 #: app/templates/backtest/index.html:15
 msgid "Configuration"
-msgstr "Configuration"
+msgstr ""
 
 #: app/templates/backtest/index.html:18 app/templates/bots/index.html:139
 #: app/templates/dashboard/index.html:83 app/templates/dashboard/index.html:126
 msgid "Symbol"
-msgstr "Symbol"
+msgstr ""
 
 #: app/templates/backtest/index.html:20
 msgid "Yahoo Finance format: BTC-USD, ETH-USD"
@@ -546,23 +522,20 @@ msgid "Note: intraday data limited to 60 days"
 msgstr ""
 
 #: app/templates/backtest/index.html:37
-#, fuzzy
 msgid "Start Date"
-msgstr "Start"
+msgstr ""
 
 #: app/templates/backtest/index.html:41
-#, fuzzy
 msgid "End Date"
-msgstr "Date"
+msgstr ""
 
-# ── Bot form ──────────────────────────────────────────────────────────────
 #: app/templates/backtest/index.html:45 app/templates/dashboard/index.html:84
 msgid "Algorithm"
-msgstr "Algorithm"
+msgstr ""
 
 #: app/templates/backtest/index.html:77
 msgid "Run Backtest"
-msgstr "Run Backtest"
+msgstr ""
 
 #: app/templates/backtest/index.html:87
 msgid "Fetching data & running strategy..."
@@ -570,24 +543,23 @@ msgstr ""
 
 #: app/templates/backtest/index.html:96
 msgid "Trades"
-msgstr "Trades"
+msgstr ""
 
 #: app/templates/backtest/index.html:102
 msgid "Win Rate"
-msgstr "Win Rate"
+msgstr ""
 
 #: app/templates/backtest/index.html:108
 msgid "Total Return"
-msgstr "Total Return"
+msgstr ""
 
 #: app/templates/backtest/index.html:114
 msgid "Max Drawdown"
-msgstr "Max Drawdown"
+msgstr ""
 
 #: app/templates/backtest/index.html:121
-#, fuzzy
 msgid "Exit reasons:"
-msgstr "Reason"
+msgstr ""
 
 #: app/templates/backtest/index.html:123
 msgid "Final equity:"
@@ -598,36 +570,34 @@ msgid "Price Chart + Signals"
 msgstr ""
 
 #: app/templates/backtest/index.html:136
-#, fuzzy
 msgid "Trade List"
-msgstr "Trade History"
+msgstr ""
 
 #: app/templates/backtest/index.html:140 app/templates/bots/detail.html:290
 msgid "Type"
-msgstr "Type"
+msgstr ""
 
 #: app/templates/backtest/index.html:140 app/templates/dashboard/index.html:126
 msgid "Date"
-msgstr "Date"
+msgstr ""
 
 #: app/templates/backtest/index.html:140 app/templates/bots/detail.html:291
 #: app/templates/bots/index.html:141 app/templates/dashboard/index.html:126
 msgid "Price"
-msgstr "Price"
+msgstr ""
 
 #: app/templates/backtest/index.html:140 app/templates/bots/detail.html:295
 #: app/templates/dashboard/index.html:126
 msgid "Reason"
-msgstr "Reason"
+msgstr ""
 
 #: app/templates/backtest/index.html:149
 msgid "Configure your backtest on the left and press Run."
 msgstr ""
 
 #: app/templates/bots/api_key.html:8
-#, fuzzy
 msgid "Binance API Key"
-msgstr "Add API key"
+msgstr ""
 
 #: app/templates/bots/api_key.html:17
 msgid "API key is active and verified."
@@ -700,9 +670,8 @@ msgid "Test Connection"
 msgstr ""
 
 #: app/templates/bots/api_key.html:100
-#, fuzzy
 msgid "Remove API Key"
-msgstr "API Key"
+msgstr ""
 
 #: app/templates/bots/api_key.html:103
 msgid "Removing the API key will stop all running bots that depend on it."
@@ -735,7 +704,7 @@ msgstr ""
 #: app/templates/bots/create.html:2 app/templates/bots/create.html:273
 #: app/templates/bots/index.html:19
 msgid "Create Bot"
-msgstr "Create Bot"
+msgstr ""
 
 #: app/templates/bots/create.html:36
 msgid "Bot Constructor"
@@ -753,7 +722,7 @@ msgstr ""
 
 #: app/templates/bots/create.html:50
 msgid "Bot Name"
-msgstr "Bot Name"
+msgstr ""
 
 #: app/templates/bots/create.html:52
 msgid "e.g. BTC Long Bot"
@@ -789,12 +758,11 @@ msgstr ""
 
 #: app/templates/bots/create.html:83
 msgid "Position Size (USDT)"
-msgstr "Position Size (USDT)"
+msgstr ""
 
 #: app/templates/bots/create.html:94
-#, fuzzy
 msgid "Timeframe"
-msgstr "Timeframe:"
+msgstr ""
 
 #: app/templates/bots/create.html:99
 msgid "Candle interval"
@@ -805,9 +773,8 @@ msgid "How often the bot reads the candle and evaluates signals."
 msgstr ""
 
 #: app/templates/bots/create.html:124
-#, fuzzy
 msgid "Signal Modules"
-msgstr "Modules:"
+msgstr ""
 
 #: app/templates/bots/create.html:128
 msgid ""
@@ -824,14 +791,12 @@ msgid "Buys on golden cross (fast MA crosses above slow). Sells on death cross."
 msgstr ""
 
 #: app/templates/bots/create.html:149
-#, fuzzy
 msgid "Fast MA"
-msgstr "Fast MA:"
+msgstr ""
 
 #: app/templates/bots/create.html:154
-#, fuzzy
 msgid "Slow MA"
-msgstr "Slow MA:"
+msgstr ""
 
 #: app/templates/bots/create.html:171
 msgid "RSI"
@@ -844,19 +809,16 @@ msgid ""
 msgstr ""
 
 #: app/templates/bots/create.html:180
-#, fuzzy
 msgid "Period"
-msgstr "RSI period:"
+msgstr ""
 
 #: app/templates/bots/create.html:185
-#, fuzzy
 msgid "Oversold"
-msgstr "RSI oversold:"
+msgstr ""
 
 #: app/templates/bots/create.html:190
-#, fuzzy
 msgid "Overbought"
-msgstr "RSI overbought:"
+msgstr ""
 
 #: app/templates/bots/create.html:203
 msgid "Entry Logic — how to combine the two signals"
@@ -890,9 +852,8 @@ msgstr ""
 
 #: app/templates/bots/create.html:237
 #: app/templates/subscriptions/plans.html:101
-#, fuzzy
 msgid "Stop-Loss"
-msgstr "Stop"
+msgstr ""
 
 #: app/templates/bots/create.html:238
 msgid "Required"
@@ -917,202 +878,199 @@ msgid "Exit at fixed profit target."
 msgstr ""
 
 #: app/templates/bots/create.html:258
-#, fuzzy
 msgid "Trailing TP"
-msgstr "Trailing"
+msgstr ""
 
 #: app/templates/bots/create.html:264
 msgid "Exit if price drops this much from its peak."
 msgstr ""
 
-# ── Bot detail ────────────────────────────────────────────────────────────
 #: app/templates/bots/detail.html:11 app/templates/bots/index.html:2
 #: app/templates/bots/index.html:6
 msgid "My Bots"
-msgstr "My Bots"
+msgstr ""
 
 #: app/templates/bots/detail.html:33 app/templates/bots/index.html:70
 msgid "Stop"
-msgstr "Stop"
+msgstr ""
 
 #: app/templates/bots/detail.html:37 app/templates/bots/index.html:74
 msgid "Start"
-msgstr "Start"
+msgstr ""
 
 #: app/templates/bots/detail.html:43 app/templates/bots/detail.html:363
 #: app/templates/bots/detail.html:370 app/templates/bots/index.html:113
 #: app/templates/bots/index.html:119
 msgid "Delete"
-msgstr "Delete"
+msgstr ""
 
 #: app/templates/bots/detail.html:52
 msgid "Bot is active and trading. Log updates automatically every 30 seconds."
-msgstr "Bot is active and trading. Log updates automatically every 30 seconds."
+msgstr ""
 
 #: app/templates/bots/detail.html:57
 msgid "Error:"
-msgstr "Error:"
+msgstr ""
 
 #: app/templates/bots/detail.html:57
 msgid "Unknown error"
-msgstr "Unknown error"
+msgstr ""
 
 #: app/templates/bots/detail.html:62
 msgid "Bot is stopped. Press Start to begin trading."
-msgstr "Bot is stopped. Press Start to begin trading."
+msgstr ""
 
 #: app/templates/bots/detail.html:73
 msgid "Closed Trades"
-msgstr "Closed Trades"
+msgstr ""
 
 #: app/templates/bots/detail.html:82
 msgid "Profitable"
-msgstr "Profitable"
+msgstr ""
 
 #: app/templates/bots/detail.html:92
 msgid "Real P&L (USDT)"
-msgstr "Real P&L (USDT)"
+msgstr ""
 
 #: app/templates/bots/detail.html:99
 msgid "Demo Trades"
-msgstr "Demo Trades"
+msgstr ""
 
 #: app/templates/bots/detail.html:102
 msgid "Real orders only"
-msgstr "Real orders only"
+msgstr ""
 
 #: app/templates/bots/detail.html:116
 msgid "Open Position"
-msgstr "Open Position"
+msgstr ""
 
 #: app/templates/bots/detail.html:121
 msgid "Entry Price"
-msgstr "Entry Price"
+msgstr ""
 
 #: app/templates/bots/detail.html:125
 msgid "Last Price"
-msgstr "Last Price"
+msgstr ""
 
 #: app/templates/bots/detail.html:140
 msgid "Unrealised P&L"
-msgstr "Unrealised P&L"
+msgstr ""
 
 #: app/templates/bots/detail.html:149
 msgid "Peak since entry"
-msgstr "Peak since entry"
+msgstr ""
 
 #: app/templates/bots/detail.html:154
 msgid "trailing stop at"
-msgstr "trailing stop at"
+msgstr ""
 
 #: app/templates/bots/detail.html:169
 msgid "Bot Settings"
-msgstr "Bot Settings"
+msgstr ""
 
 #: app/templates/bots/detail.html:177
 msgid "Modules:"
-msgstr "Modules:"
+msgstr ""
 
 #: app/templates/bots/detail.html:185
 msgid "Timeframe:"
-msgstr "Timeframe:"
+msgstr ""
 
 #: app/templates/bots/detail.html:186
 msgid "Algorithm:"
-msgstr "Algorithm:"
+msgstr ""
 
 #: app/templates/bots/detail.html:189
 msgid "Fast MA:"
-msgstr "Fast MA:"
+msgstr ""
 
 #: app/templates/bots/detail.html:192
 msgid "Slow MA:"
-msgstr "Slow MA:"
+msgstr ""
 
 #: app/templates/bots/detail.html:195
 msgid "RSI period:"
-msgstr "RSI period:"
+msgstr ""
 
 #: app/templates/bots/detail.html:198
 msgid "RSI oversold:"
-msgstr "RSI oversold:"
+msgstr ""
 
 #: app/templates/bots/detail.html:201
 msgid "RSI overbought:"
-msgstr "RSI overbought:"
+msgstr ""
 
 #: app/templates/bots/detail.html:218
 msgid "Trailing"
-msgstr "Trailing"
+msgstr ""
 
 #: app/templates/bots/detail.html:222
 msgid "No protection levels set"
-msgstr "No protection levels set"
+msgstr ""
 
 #: app/templates/bots/detail.html:236
 msgid "Trading Log"
-msgstr "Trading Log"
+msgstr ""
 
 #: app/templates/bots/detail.html:240
 msgid "Auto-refresh every 30 seconds"
-msgstr "Auto-refresh every 30 seconds"
+msgstr ""
 
 #: app/templates/bots/detail.html:242
 msgid "auto"
-msgstr "auto"
+msgstr ""
 
 #: app/templates/bots/detail.html:252
 msgid "Logs will appear after the first bot tick"
-msgstr "Logs will appear after the first bot tick"
+msgstr ""
 
 #: app/templates/bots/detail.html:281
 msgid "Trade History"
-msgstr "Trade History"
+msgstr ""
 
 #: app/templates/bots/detail.html:289 app/templates/bots/index.html:137
 msgid "Time"
-msgstr "Time"
+msgstr ""
 
 #: app/templates/bots/detail.html:292 app/templates/bots/index.html:142
 msgid "Qty"
-msgstr "Qty"
+msgstr ""
 
 #: app/templates/bots/detail.html:307
 msgid "Demo trade — no real execution"
-msgstr "Demo trade — no real execution"
+msgstr ""
 
 #: app/templates/bots/detail.html:333
 msgid "Manual"
-msgstr "Manual"
+msgstr ""
 
 #: app/templates/bots/detail.html:349
 msgid "No trades yet. They will appear here as the bot works."
-msgstr "No trades yet. They will appear here as the bot works."
+msgstr ""
 
 #: app/templates/bots/detail.html:359 app/templates/bots/index.html:109
 msgid "Delete Bot"
-msgstr "Delete Bot"
+msgstr ""
 
 #: app/templates/bots/detail.html:364
 msgid "All trades and logs will be deleted. This action cannot be undone."
-msgstr "All trades and logs will be deleted. This action cannot be undone."
+msgstr ""
 
 #: app/templates/bots/detail.html:383 app/templates/dashboard/index.html:155
 msgid "updated"
-msgstr "updated"
+msgstr ""
 
 #: app/templates/bots/detail.html:384
 msgid "auto-update disabled"
-msgstr "auto-update disabled"
+msgstr ""
 
 #: app/templates/bots/index.html:8 app/templates/dashboard/index.html:7
 msgid "New Bot"
-msgstr "New Bot"
+msgstr ""
 
 #: app/templates/bots/index.html:16
-#, fuzzy
 msgid "No bots yet"
-msgstr "No bots yet."
+msgstr ""
 
 #: app/templates/bots/index.html:17
 msgid "Create your first automated trading bot to get started."
@@ -1121,17 +1079,15 @@ msgstr ""
 #: app/templates/bots/index.html:51 app/templates/dashboard/index.html:21
 #: app/templates/dashboard/index.html:96
 msgid "Running"
-msgstr "Running"
+msgstr ""
 
 #: app/templates/bots/index.html:53 app/templates/dashboard/index.html:98
-#, fuzzy
 msgid "Error"
-msgstr "Error:"
+msgstr ""
 
 #: app/templates/bots/index.html:55 app/templates/dashboard/index.html:100
-#, fuzzy
 msgid "Stopped"
-msgstr "Stop"
+msgstr ""
 
 #: app/templates/bots/index.html:82
 msgid "Stats & Logs"
@@ -1144,16 +1100,15 @@ msgstr ""
 #: app/templates/bots/index.html:131 app/templates/dashboard/index.html:35
 #: app/templates/dashboard/index.html:122
 msgid "Recent Trades"
-msgstr "Recent Trades"
+msgstr ""
 
 #: app/templates/bots/index.html:138
-#, fuzzy
 msgid "Bot"
-msgstr "Bots"
+msgstr ""
 
 #: app/templates/bots/index.html:140 app/templates/dashboard/index.html:126
 msgid "Side"
-msgstr "Side"
+msgstr ""
 
 #: app/templates/bots/index.html:143 app/templates/dashboard/index.html:126
 msgid "P&L"
@@ -1165,7 +1120,7 @@ msgstr ""
 
 #: app/templates/bots/index.html:168 app/templates/dashboard/index.html:141
 msgid "No trades yet."
-msgstr "No trades yet."
+msgstr ""
 
 #: app/templates/bots/telegram.html:8
 msgid "Telegram Notifications"
@@ -1177,7 +1132,7 @@ msgstr ""
 
 #: app/templates/bots/telegram.html:20 app/templates/dashboard/index.html:84
 msgid "Status"
-msgstr "Status"
+msgstr ""
 
 #: app/templates/bots/telegram.html:21
 msgid "Connected"
@@ -1188,9 +1143,8 @@ msgid "Chat ID"
 msgstr ""
 
 #: app/templates/bots/telegram.html:29
-#, fuzzy
 msgid "Available Commands"
-msgstr "available"
+msgstr ""
 
 #: app/templates/bots/telegram.html:34
 msgid "List all your bots and their status"
@@ -1241,9 +1195,8 @@ msgid "Send"
 msgstr ""
 
 #: app/templates/bots/telegram.html:75
-#, fuzzy
 msgid "to"
-msgstr "Stop"
+msgstr ""
 
 #: app/templates/bots/telegram.html:86
 msgid "Generate New Code"
@@ -1253,121 +1206,115 @@ msgstr ""
 msgid "Generate Linking Code"
 msgstr ""
 
-# ── Dashboard ─────────────────────────────────────────────────────────────
 #: app/templates/dashboard/index.html:15
 msgid "Total Bots"
-msgstr "Total Bots"
+msgstr ""
 
 #: app/templates/dashboard/index.html:29
 msgid "Total P&L"
-msgstr "Total P&L"
+msgstr ""
 
-# ── Balance widget ────────────────────────────────────────────────────────
 #: app/templates/dashboard/index.html:44
 msgid "Spot Balance Binance"
-msgstr "Spot Balance Binance"
+msgstr ""
 
 #: app/templates/dashboard/index.html:56
 msgid "Add API key"
-msgstr "Add API key"
+msgstr ""
 
 #: app/templates/dashboard/index.html:56
 msgid "to see the balance."
-msgstr "to see the balance."
+msgstr ""
 
 #: app/templates/dashboard/index.html:60
 msgid "Loading balance…"
-msgstr "Loading balance…"
+msgstr ""
 
 #: app/templates/dashboard/index.html:76
 msgid "Your Bots"
-msgstr "Your Bots"
+msgstr ""
 
 #: app/templates/dashboard/index.html:77
 msgid "Manage"
-msgstr "Manage"
+msgstr ""
 
 #: app/templates/dashboard/index.html:83
 msgid "Name"
-msgstr "Name"
+msgstr ""
 
 #: app/templates/dashboard/index.html:84
 msgid "Actions"
-msgstr "Actions"
+msgstr ""
 
 #: app/templates/dashboard/index.html:113
 msgid "No bots yet."
-msgstr "No bots yet."
+msgstr ""
 
 #: app/templates/dashboard/index.html:113
 msgid "Create one!"
-msgstr "Create one!"
+msgstr ""
 
 #: app/templates/dashboard/index.html:156
 msgid "Real trading enabled"
-msgstr "Real trading enabled"
+msgstr ""
 
 #: app/templates/dashboard/index.html:157
 msgid "available"
-msgstr "available"
+msgstr ""
 
 #: app/templates/dashboard/index.html:158
 msgid "threshold"
-msgstr "threshold"
+msgstr ""
 
 #: app/templates/dashboard/index.html:159
 msgid "Bots place real orders."
-msgstr "Bots place real orders."
+msgstr ""
 
 #: app/templates/dashboard/index.html:160
 msgid "Simulation mode (DEMO)"
-msgstr "Simulation mode (DEMO)"
+msgstr ""
 
 #: app/templates/dashboard/index.html:161
 msgid "Free USDT/USDC:"
-msgstr "Free USDT/USDC:"
+msgstr ""
 
 #: app/templates/dashboard/index.html:162
 msgid "missing ~"
-msgstr "missing ~"
+msgstr ""
 
 #: app/templates/dashboard/index.html:163
 msgid "to threshold of"
-msgstr "to threshold of"
+msgstr ""
 
 #: app/templates/dashboard/index.html:164
 msgid ""
 "The bot analyzes the market normally, but real orders are not placed. All"
 " trades are recorded as demo orders"
 msgstr ""
-"The bot analyzes the market normally, but real orders are not placed. All"
-" trades are recorded as demo orders"
 
 #: app/templates/dashboard/index.html:165
 msgid "Top up the spot wallet by at least"
-msgstr "Top up the spot wallet by at least"
+msgstr ""
 
 #: app/templates/dashboard/index.html:166
 msgid "USDT to enable real trading."
-msgstr "USDT to enable real trading."
+msgstr ""
 
 #: app/templates/dashboard/index.html:167
 msgid "Balance empty — all assets are zero."
-msgstr "Balance empty — all assets are zero."
+msgstr ""
 
 #: app/templates/dashboard/index.html:168
 msgid "Server request error"
-msgstr "Server request error"
+msgstr ""
 
 #: app/templates/guides/index.html:11
-#, fuzzy
 msgid "Getting Started"
-msgstr "Get Started"
+msgstr ""
 
 #: app/templates/guides/index.html:15
-#, fuzzy
 msgid "Create a Binance Account"
-msgstr "Create Account"
+msgstr ""
 
 #: app/templates/guides/index.html:16
 msgid "Register at"
@@ -1378,9 +1325,8 @@ msgid "Complete KYC (ID verification) to enable Spot trading."
 msgstr ""
 
 #: app/templates/guides/index.html:19
-#, fuzzy
 msgid "Generate API Key"
-msgstr "Add API key"
+msgstr ""
 
 #: app/templates/guides/index.html:20
 msgid "Account → API Management → Create API."
@@ -1390,20 +1336,17 @@ msgstr ""
 msgid "Official Guide"
 msgstr ""
 
-# ── Backtest ──────────────────────────────────────────────────────────────
 #: app/templates/guides/index.html:25
-#, fuzzy
 msgid "Configure API Permissions"
-msgstr "Configuration"
+msgstr ""
 
 #: app/templates/guides/index.html:27
 msgid "Enable Spot & Margin Trading"
 msgstr ""
 
 #: app/templates/guides/index.html:28
-#, fuzzy
 msgid "Enable Reading"
-msgstr "USDT to enable real trading."
+msgstr ""
 
 #: app/templates/guides/index.html:29
 msgid "Do NOT enable Futures, Margin Loan, or Withdrawals"
@@ -1414,9 +1357,8 @@ msgid "Add your bot server IP to whitelist (security!)"
 msgstr ""
 
 #: app/templates/guides/index.html:34
-#, fuzzy
 msgid "Add API Key to BOTTEU"
-msgstr "Add API key"
+msgstr ""
 
 #: app/templates/guides/index.html:35
 msgid ""
@@ -1425,9 +1367,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/guides/index.html:38
-#, fuzzy
 msgid "Create Your First Bot"
-msgstr "Create Bot"
+msgstr ""
 
 #: app/templates/guides/index.html:39
 msgid ""
@@ -1435,11 +1376,9 @@ msgid ""
 "parameters and press Create."
 msgstr ""
 
-# ── Bot form ──────────────────────────────────────────────────────────────
 #: app/templates/guides/index.html:49
-#, fuzzy
 msgid "Algorithms Explained"
-msgstr "Algorithm"
+msgstr ""
 
 #: app/templates/guides/index.html:54
 msgid ""
@@ -1489,9 +1428,8 @@ msgstr ""
 
 #: app/templates/guides/index.html:74
 #: app/templates/subscriptions/plans.html:103
-#, fuzzy
 msgid "Trailing Take-Profit"
-msgstr "trailing stop at"
+msgstr ""
 
 #: app/templates/guides/index.html:76
 #, python-format
@@ -1573,15 +1511,12 @@ msgid "Available commands in Telegram:"
 msgstr ""
 
 #: app/templates/guides/index.html:118
-#, fuzzy
 msgid "List your bots"
-msgstr "Your Bots"
+msgstr ""
 
-# ── Balance widget ────────────────────────────────────────────────────────
 #: app/templates/guides/index.html:119
-#, fuzzy
 msgid "Check Spot balance"
-msgstr "Spot Balance Binance"
+msgstr ""
 
 #: app/templates/guides/index.html:120
 msgid "Start bot #1"
@@ -1619,11 +1554,9 @@ msgid ""
 "trading decisions are made at your own discretion and risk."
 msgstr ""
 
-# ── Bot form ──────────────────────────────────────────────────────────────
 #: app/templates/legal/disclaimer.html:18
-#, fuzzy
 msgid "Algorithm Risk"
-msgstr "Algorithm"
+msgstr ""
 
 #: app/templates/legal/disclaimer.html:19
 msgid ""
@@ -1635,9 +1568,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/disclaimer.html:21
-#, fuzzy
 msgid "API Key Risk"
-msgstr "API Key"
+msgstr ""
 
 #: app/templates/legal/disclaimer.html:22
 msgid ""
@@ -1721,9 +1653,8 @@ msgid "Full Name of Director/Owner"
 msgstr ""
 
 #: app/templates/legal/impressum.html:20
-#, fuzzy
 msgid "Register Entry"
-msgstr "Peak since entry"
+msgstr ""
 
 #: app/templates/legal/impressum.html:21
 msgid "Registration court:"
@@ -1750,14 +1681,12 @@ msgid "According to § 55 Abs. 2 RStV:"
 msgstr ""
 
 #: app/templates/legal/impressum.html:29
-#, fuzzy
 msgid "Full Name"
-msgstr "Name"
+msgstr ""
 
 #: app/templates/legal/impressum.html:30
-#, fuzzy
 msgid "Address"
-msgstr "Email Address"
+msgstr ""
 
 #: app/templates/legal/impressum.html:32
 msgid "Dispute Resolution"
@@ -1820,9 +1749,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/privacy.html:24
-#, fuzzy
 msgid "Trading data:"
-msgstr "Trading Pair"
+msgstr ""
 
 #: app/templates/legal/privacy.html:24
 msgid ""
@@ -1831,9 +1759,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/privacy.html:25
-#, fuzzy
 msgid "Telegram:"
-msgstr "Telegram"
+msgstr ""
 
 #: app/templates/legal/privacy.html:25
 msgid "Telegram chat ID (if you choose to link your account)."
@@ -1899,11 +1826,9 @@ msgstr ""
 msgid "Purpose"
 msgstr ""
 
-# ── Backtest ──────────────────────────────────────────────────────────────
 #: app/templates/legal/privacy.html:42
-#, fuzzy
 msgid "Duration"
-msgstr "Configuration"
+msgstr ""
 
 #: app/templates/legal/privacy.html:44
 msgid "Authentication session (required)"
@@ -2052,9 +1977,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/privacy.html:89
-#, fuzzy
 msgid "Changes"
-msgstr "Manage"
+msgstr ""
 
 #: app/templates/legal/privacy.html:91
 msgid ""
@@ -2077,9 +2001,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/terms.html:19
-#, fuzzy
 msgid "Description of Service"
-msgstr "Terms of Service"
+msgstr ""
 
 #: app/templates/legal/terms.html:21
 msgid ""
@@ -2133,9 +2056,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/terms.html:38
-#, fuzzy
 msgid "API Key Security"
-msgstr "API Key"
+msgstr ""
 
 #: app/templates/legal/terms.html:40
 msgid ""
@@ -2146,9 +2068,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/legal/terms.html:43
-#, fuzzy
 msgid "Subscriptions and Payments"
-msgstr "Subscription"
+msgstr ""
 
 #: app/templates/legal/terms.html:45
 msgid ""
@@ -2214,9 +2135,8 @@ msgid ""
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:2
-#, fuzzy
 msgid "Subscription Plans"
-msgstr "Subscription"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:6
 msgid "Choose Your Plan"
@@ -2231,20 +2151,17 @@ msgid "forever"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:22
-#, fuzzy
 msgid "1 active bot"
-msgstr "Create Bot"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:23
-#, fuzzy
 msgid "All algorithms (MA, RSI)"
-msgstr "All future algorithms"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:24
 #: app/templates/subscriptions/plans.html:104
-#, fuzzy
 msgid "Backtesting"
-msgstr "Backtest"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:25
 #: app/templates/subscriptions/plans.html:105
@@ -2252,48 +2169,41 @@ msgid "Telegram notifications"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:26
-#, fuzzy
 msgid "Multiple bots"
-msgstr "Unlimited Bots"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:27
 #: app/templates/subscriptions/plans.html:107
-#, fuzzy
 msgid "Priority support"
-msgstr "Priority Support"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:31
 msgid "Current Plan"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:33
-#, fuzzy
 msgid "Downgrade"
-msgstr "Demo Trades"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:43
-#, fuzzy
 msgid "Most Popular"
-msgstr "Popular"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:49
-#, fuzzy
 msgid "cancel anytime"
-msgstr "Cancel"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:52
-#, fuzzy
 msgid "Unlimited bots"
-msgstr "Unlimited Bots"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:53
 msgid "All algorithms (MA, RSI, + future)"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:54
-#, fuzzy
 msgid "Advanced backtesting"
-msgstr "Run Backtest"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:55
 msgid "Telegram notifications + commands"
@@ -2304,23 +2214,20 @@ msgid "Stop-Loss / Take-Profit / Trailing TP"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:57
-#, fuzzy
 msgid "Priority email support"
-msgstr "Priority Support"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:61
-#, fuzzy
 msgid "Active"
-msgstr "Actions"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:63
 msgid "Renews"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:67
-#, fuzzy
 msgid "Manage Subscription"
-msgstr "Subscription"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:73
 msgid "Upgrade to Pro"
@@ -2335,14 +2242,12 @@ msgid "Feature"
 msgstr ""
 
 #: app/templates/subscriptions/plans.html:98
-#, fuzzy
 msgid "Active bots"
-msgstr "Create Bot"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:100
-#, fuzzy
 msgid "RSI Strategy"
-msgstr "Win Rate"
+msgstr ""
 
 #: app/templates/subscriptions/plans.html:106
 msgid "Multiple trading pairs simultaneously"
