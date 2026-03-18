@@ -946,17 +946,16 @@ msgstr "Blockiert neue Einstiege, wenn der Markt zu ruhig ist (Seitwärtsbewegun
 msgid "Indicator"
 msgstr "Indikator"
 
-msgid "Average True Range %"
+msgid "Average True Range %%"
 msgstr "Durchschnittliche wahre Spanne %%"
 
-msgid "Bollinger Band Width %"
+msgid "Bollinger Band Width %%"
 msgstr "Bollinger-Band-Breite %%"
 
-msgid "Min ATR%"
+msgid "Min ATR%%"
 msgstr "Min ATR%%"
 
-#, no-python-format
-msgid "ATR%: average candle range divided by price. If ATR(14)% < 0.5 on 1h chart — market is quiet, entry skipped."
+msgid "ATR%%: average candle range divided by price. If ATR(14)%% < 0.5 on 1h chart — market is quiet, entry skipped."
 msgstr "ATR%%: Durchschnittliche Kerzenspanne geteilt durch den Preis. Wenn ATR(14)%% < 0,5 auf 1h-Chart — Markt ist ruhig, Einstieg übersprungen."
 
 #: app/templates/bots/create.html:145
