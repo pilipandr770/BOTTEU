@@ -1,28 +1,43 @@
 import multiprocessing
 
-# Bind
-bind = "0.0.0.0:10000"              # Render injects PORT=10000 by default
+# Bind — Render/Docker expose port 5000
+bind = "0.0.0.0:5000"
 
-# Workers: 2-4 x CPU cores  (free tier: 1 CPU → 2 workers)
-workers = multiprocessing.cpu_count() * 2 + 1
-
-# Worker class — sync is fine for Flask (no async views)
-worker_class = "sync"
+# IMPORTANT: keep workers=1 so only one APScheduler instance runs.
+# Use threads for concurrency instead.
+workers = 1
+threads = 4
+worker_class = "gthread"
 
 # Timeouts
-timeout = 120         # Binance API calls can be slow
+timeout = 120
 keepalive = 5
 
 # Logging
-accesslog = "-"       # stdout → Render log viewer
+accesslog = "-"
 errorlog = "-"
 loglevel = "info"
 
-# Run DB migrations at startup (safe with Alembic's lock mechanism)
+
 def on_starting(server):
-    import subprocess, sys
+    """Run DB migrations before workers start."""
+    import subprocess, sys, os
     subprocess.run(
         [sys.executable, "-m", "flask", "db", "upgrade"],
-        env=__import__("os").environ | {"FLASK_APP": "run.py"},
+        env=os.environ | {"FLASK_APP": "run.py"},
         check=True,
     )
+
+
+def post_fork(server, worker):
+    """Restart APScheduler inside the worker process.
+
+    Gunicorn forks worker processes after loading the app.
+    Background threads (APScheduler) do NOT survive fork, so we
+    must restart the scheduler in every worker after forking.
+    With workers=1 this runs exactly once.
+    """
+    import app.workers.scheduler as sched_module
+    import run
+    sched_module._scheduler = None   # reset so start_scheduler doesn't bail early
+    sched_module.start_scheduler(run.app)
