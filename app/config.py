@@ -1,8 +1,14 @@
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# CURL_CA_BUNDLE / REQUESTS_CA_BUNDLE are Windows-only SSL fixes.
+# On Linux (Render/Docker) these paths don't exist — unset them to avoid errors.
+if sys.platform != "win32":
+    os.environ.pop("CURL_CA_BUNDLE", None)
+    os.environ.pop("REQUESTS_CA_BUNDLE", None)
 
 class Config:
     # Core
