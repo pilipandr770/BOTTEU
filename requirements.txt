@@ -12,7 +12,7 @@ Werkzeug==3.0.3
 gunicorn==22.0.0
 
 # Database
-psycopg2-binary==2.9.9
+# psycopg2-binary==2.9.9  # production only (PostgreSQL); not needed for local SQLite
 SQLAlchemy==2.0.35
 
 # Security
@@ -27,7 +27,7 @@ flower==2.0.1
 # Binance & Trading
 python-binance==1.0.19
 pandas==2.2.3
-numpy==1.26.4
+numpy==2.2.3
 
 # Historical Data (Yahoo Finance — works from DE, bypasses Binance geo-block)
 yfinance>=1.2.0
