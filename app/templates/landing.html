@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Automated Binance Spot Trading Bot') }}{% endblock %}
-{% block meta_desc %}{{ _('Automate your Binance Spot trading with MA Crossover and RSI strategies. Backtest on real history. Get Telegram notifications for every trade.') }}{% endblock %}
+{% block meta_desc %}{{ _('Automate your Binance Spot trading with 5 built-in strategies: MA Crossover, RSI, MACD, SuperTrend, Bollinger Bands Bounce. Backtest on real history. Telegram alerts on every trade.') }}{% endblock %}
 
 {% block content %}
 
@@ -20,7 +20,7 @@
   <div class="row justify-content-center">
     <div class="col-lg-9">
       <span class="badge bg-success bg-opacity-25 text-success border border-success fs-6 mb-3 px-3 py-2">
-        <i class="bi bi-lightning-charge-fill me-1"></i>{{ _('Binance Spot · No Leverage · No Liquidations') }}
+        <i class="bi bi-lightning-charge-fill me-1"></i>{{ _('Binance Spot · 5 Strategies · No Leverage · No Liquidations') }}
       </span>
       <h1 class="display-3 fw-bold mt-2">
         <span class="text-success">BOTTEU</span> — {{ _('Your Automated') }}<br>
@@ -95,7 +95,7 @@
           <i class="bi bi-sliders display-5 text-info my-2"></i>
           <h5>{{ _('Configure Your Bot') }}</h5>
           <p class="text-muted small">
-            {{ _('Choose trading pair, algorithm (MA Crossover, RSI, Volatility Filter), timeframe, Stop-Loss, Take-Profit and deploy.') }}
+            {{ _('Choose trading pair, algorithm (MA Crossover, RSI, MACD, SuperTrend, BB Bounce or combine them all), timeframe, Stop-Loss, Take-Profit and deploy.') }}
           </p>
         </div>
       </div>
@@ -137,7 +137,7 @@
         <div class="card-body">
           <i class="bi bi-cpu display-4 text-success"></i>
           <h5 class="mt-3">{{ _('Trading Algorithms') }}</h5>
-          <p class="text-muted small">{{ _('MA7/MA25 Crossover and RSI with fully configurable parameters, Stop-Loss, Take-Profit and Trailing TP.') }}</p>
+          <p class="text-muted small">{{ _('5 built-in strategies: MA Crossover, RSI, MACD, SuperTrend, Bollinger Bands Bounce — plus a Modular mode to combine them with AND/OR logic.') }}</p>
         </div>
       </div>
     </div>
@@ -182,9 +182,10 @@
 
 {# ── Built-in Algorithms ── #}
 <section class="py-5 border-bottom border-secondary mb-4">
-  <h2 class="text-center fw-bold mb-5">
+  <h2 class="text-center fw-bold mb-2">
     <i class="bi bi-diagram-3 text-success me-2"></i>{{ _('Built-in Algorithms') }}
   </h2>
+  <p class="text-center text-muted mb-5">{{ _('5 strategies + a Modular mode to combine any of them') }}</p>
   <div class="row g-4">
 
     <div class="col-md-4">
@@ -225,6 +226,63 @@
 
     <div class="col-md-4">
       <div class="card bg-dark border-secondary h-100">
+        <div class="card-header border-secondary fw-semibold" style="color:#ab8bff;">
+          <i class="bi bi-bar-chart-line me-2"></i>MACD
+          <span class="badge bg-primary ms-1 fw-normal small">{{ _('new') }}</span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('Buys on MACD line bullish crossover above signal line. Sells on bearish cross. EMA(12,26,9) by default.') }}
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary">EMA 12/26/9</span>
+            <span class="badge bg-secondary">{{ _('Configurable') }}</span>
+            <span class="badge bg-success bg-opacity-25 text-success">{{ _('Trend following') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-header border-secondary text-warning fw-semibold">
+          <i class="bi bi-lightning-charge me-2"></i>SuperTrend
+          <span class="badge bg-primary ms-1 fw-normal small">{{ _('new') }}</span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('ATR-based adaptive band that flips direction when price crosses it. Acts as a built-in trailing stop — no separate SL needed.') }}
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary">ATR(10) × 3</span>
+            <span class="badge bg-secondary">{{ _('Configurable') }}</span>
+            <span class="badge bg-warning bg-opacity-25 text-warning">{{ _('Trend + adaptive stop') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
+        <div class="card-header border-secondary text-success fw-semibold">
+          <i class="bi bi-bezier2 me-2"></i>{{ _('BB Bounce') }}
+          <span class="badge bg-primary ms-1 fw-normal small">{{ _('new') }}</span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('Buys when price bounces back up from the lower Bollinger Band. Sells at the middle or upper band. Counter-trend mean-reversion strategy.') }}
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary">BB(20, 2)</span>
+            <span class="badge bg-secondary">{{ _('Configurable') }}</span>
+            <span class="badge bg-info bg-opacity-25 text-info">{{ _('Mean reversion') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100">
         <div class="card-header border-secondary text-warning fw-semibold">
           <i class="bi bi-funnel me-2"></i>{{ _('Volatility Filter') }}
         </div>
@@ -242,6 +300,37 @@
     </div>
 
   </div>
+
+  {# Modular strategy highlight #}
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-success h-100" style="background:#0a1f0a;">
+        <div class="card-body d-flex flex-wrap align-items-center gap-4 py-4">
+          <div class="flex-shrink-0 text-center" style="min-width:80px;">
+            <i class="bi bi-puzzle-fill display-4 text-success"></i>
+          </div>
+          <div class="flex-grow-1">
+            <h5 class="text-success fw-bold mb-1">{{ _('Modular Strategy') }} <span class="badge bg-primary fw-normal">{{ _('new') }}</span></h5>
+            <p class="text-muted small mb-2">{{ _('Activate any combination of MA, RSI, MACD, SuperTrend and BB Bounce in a single bot. Choose AND logic (all signals must agree — more conservative) or OR logic (first signal wins — more active). The Volatility Filter stacks on top.') }}</p>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-dark border border-success text-success">MA</span>
+              <span class="badge bg-dark border border-info text-info">RSI</span>
+              <span class="badge bg-dark border border-primary" style="color:#ab8bff;">MACD</span>
+              <span class="badge bg-dark border border-warning text-warning">SuperTrend</span>
+              <span class="badge bg-dark border border-success text-success">BB Bounce</span>
+              <span class="badge bg-dark border border-secondary text-muted">+ {{ _('Volatility Filter') }}</span>
+            </div>
+          </div>
+          <div class="flex-shrink-0">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-success px-4">
+              <i class="bi bi-rocket-takeoff me-1"></i>{{ _('Try it free') }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 {# ── Pricing ── #}
