@@ -198,7 +198,6 @@
 
         </div><!-- /row -->
 
-        <!-- Volatility Filter card — full width below MA + RSI -->
         <div class="row g-3 mt-0">
           <div class="col-12">
             <div class="module-card p-3" id="card-vol">
@@ -244,6 +243,117 @@
                 </div>
                 <div class="form-text mt-2" id="volHelp">
                   {{ _('ATR%%: average candle range divided by price. If ATR(14)%% < 0.5 on 1h chart — market is quiet, entry skipped.') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MACD Card -->
+        <div class="row g-3 mt-0">
+          <div class="col-md-6">
+            <div class="module-card p-3" id="card-macd">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('macd')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-macd" name="modules" value="macd">
+                <label class="form-check-label fw-semibold mb-0" for="mod-macd">
+                  <i class="bi bi-bar-chart-line text-primary me-1"></i>{{ _('MACD') }}
+                  <span class="badge bg-primary ms-2 fw-normal small">{{ _('new') }}</span>
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Buys when MACD line crosses above signal line. Sells on bearish cross.') }}
+                </p>
+                <div class="row g-2">
+                  <div class="col-4">
+                    <label class="form-label small">{{ _('Fast EMA') }}</label>
+                    <input type="number" name="param_macd_fast" class="form-control form-control-sm" value="12" min="2" max="100">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small">{{ _('Slow EMA') }}</label>
+                    <input type="number" name="param_macd_slow" class="form-control form-control-sm" value="26" min="5" max="200">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small">{{ _('Signal') }}</label>
+                    <input type="number" name="param_macd_signal" class="form-control form-control-sm" value="9" min="2" max="50">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SuperTrend Card -->
+          <div class="col-md-6">
+            <div class="module-card p-3" id="card-supertrend">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('supertrend')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-supertrend" name="modules" value="supertrend">
+                <label class="form-check-label fw-semibold mb-0" for="mod-supertrend">
+                  <i class="bi bi-lightning-charge text-warning me-1"></i>{{ _('SuperTrend') }}
+                  <span class="badge bg-primary ms-2 fw-normal small">{{ _('new') }}</span>
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Trend-following indicator with adaptive ATR-based stop. Flips bullish/bearish.') }}
+                </p>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('Period') }}</label>
+                    <input type="number" name="param_st_period" class="form-control form-control-sm" value="10" min="3" max="100">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('Multiplier') }}</label>
+                    <input type="number" name="param_st_multiplier" class="form-control form-control-sm" value="3.0" min="0.5" max="10" step="0.1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BB Bounce Card -->
+        <div class="row g-3 mt-0">
+          <div class="col-12">
+            <div class="module-card p-3" id="card-bb">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('bb')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-bb" name="modules" value="bb_bounce">
+                <label class="form-check-label fw-semibold mb-0" for="mod-bb">
+                  <i class="bi bi-bezier2 text-success me-1"></i>{{ _('Bollinger Bands Bounce') }}
+                  <span class="badge bg-primary ms-2 fw-normal small">{{ _('new') }}</span>
+                  <span class="badge bg-secondary ms-1 fw-normal small">{{ _('mean reversion') }}</span>
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Buys when price bounces up from the lower band. Sells at middle (or upper) band. Opposite strategy to trend-following — diversifies your portfolio.') }}
+                </p>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-3">
+                    <label class="form-label small">{{ _('Period') }}</label>
+                    <input type="number" name="param_bb_period" class="form-control form-control-sm" value="20" min="5" max="200">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small">{{ _('Std Dev') }}</label>
+                    <input type="number" name="param_bb_std" class="form-control form-control-sm" value="2.0" min="0.5" max="5" step="0.1">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">{{ _('Exit at') }}</label>
+                    <select name="param_bb_exit" class="form-select form-select-sm">
+                      <option value="middle" selected>{{ _('Middle band (conservative)') }}</option>
+                      <option value="upper">{{ _('Upper band (aggressive)') }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-text text-warning small">
+                      <i class="bi bi-exclamation-triangle"></i> {{ _('SL recommended') }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -334,12 +444,18 @@
 
 {% block extra_scripts %}
 <script>
-const modMA   = document.getElementById('mod-ma');
-const modRSI  = document.getElementById('mod-rsi');
-const modVOL  = document.getElementById('mod-vol');
-const cardMA  = document.getElementById('card-ma');
-const cardRSI = document.getElementById('card-rsi');
-const cardVOL = document.getElementById('card-vol');
+const modMA          = document.getElementById('mod-ma');
+const modRSI         = document.getElementById('mod-rsi');
+const modVOL         = document.getElementById('mod-vol');
+const modMACD        = document.getElementById('mod-macd');
+const modSupertrend  = document.getElementById('mod-supertrend');
+const modBB          = document.getElementById('mod-bb');
+const cardMA         = document.getElementById('card-ma');
+const cardRSI        = document.getElementById('card-rsi');
+const cardVOL        = document.getElementById('card-vol');
+const cardMACD       = document.getElementById('card-macd');
+const cardSupertrend = document.getElementById('card-supertrend');
+const cardBB         = document.getElementById('card-bb');
 const logicRow    = document.getElementById('logicRow');
 const noModWarn   = document.getElementById('noModuleWarning');
 const slBadge     = document.getElementById('slBadge');
@@ -348,34 +464,36 @@ const slInput     = document.getElementById('slInput');
 
 // Toggle a module card when clicking the card header
 function toggleModule(which) {
-  if (which === 'ma') {
-    modMA.checked = !modMA.checked;
-    cardMA.classList.toggle('enabled', modMA.checked);
-  } else if (which === 'rsi') {
-    modRSI.checked = !modRSI.checked;
-    cardRSI.classList.toggle('enabled', modRSI.checked);
-  } else {
-    modVOL.checked = !modVOL.checked;
-    cardVOL.classList.toggle('enabled', modVOL.checked);
+  const map = {
+    ma:          [modMA,         cardMA],
+    rsi:         [modRSI,        cardRSI],
+    vol:         [modVOL,        cardVOL],
+    macd:        [modMACD,       cardMACD],
+    supertrend:  [modSupertrend, cardSupertrend],
+    bb:          [modBB,         cardBB],
+  };
+  if (map[which]) {
+    const [mod, card] = map[which];
+    mod.checked = !mod.checked;
+    card.classList.toggle('enabled', mod.checked);
   }
   updateUI();
 }
 
 // Let checkboxes also toggle (stop propagation so no double-fire)
-modMA.addEventListener('change', (e) => {
-  e.stopPropagation();
-  cardMA.classList.toggle('enabled', modMA.checked);
-  updateUI();
-});
-modRSI.addEventListener('change', (e) => {
-  e.stopPropagation();
-  cardRSI.classList.toggle('enabled', modRSI.checked);
-  updateUI();
-});
-modVOL.addEventListener('change', (e) => {
-  e.stopPropagation();
-  cardVOL.classList.toggle('enabled', modVOL.checked);
-  updateUI();
+[
+  [modMA,         cardMA],
+  [modRSI,        cardRSI],
+  [modVOL,        cardVOL],
+  [modMACD,       cardMACD],
+  [modSupertrend, cardSupertrend],
+  [modBB,         cardBB],
+].forEach(([mod, card]) => {
+  mod.addEventListener('change', (e) => {
+    e.stopPropagation();
+    card.classList.toggle('enabled', mod.checked);
+    updateUI();
+  });
 });
 
 function setLogic(val) {
@@ -409,21 +527,29 @@ function updateVolHelp() {
 function updateUI() {
   const maOn  = modMA.checked;
   const rsiOn = modRSI.checked;
-  const both  = maOn && rsiOn;
-  const none  = !maOn && !rsiOn;
+  const macdOn = modMACD.checked;
+  const stOn   = modSupertrend.checked;
+  const bbOn   = modBB.checked;
 
-  logicRow.style.display   = both ? '' : 'none';
-  noModWarn.style.display  = none ? '' : 'none';
+  // Count signal-generating modules (not VOL which is only a filter)
+  const signalCount = [maOn, rsiOn, macdOn, stOn, bbOn].filter(Boolean).length;
+  const none = signalCount === 0;
+
+  // Show AND/OR logic row only when 2+ signal modules are active
+  logicRow.style.display  = signalCount >= 2 ? '' : 'none';
+  noModWarn.style.display = none ? '' : 'none';
   document.getElementById('submitBtn').disabled = none;
 
-  // RSI active → SL is required
-  slBadge.style.display    = rsiOn ? ''     : 'none';
-  slOptional.style.display = rsiOn ? 'none' : '';
-  slInput.required = rsiOn;
+  // SL required when RSI or BB Bounce is active
+  const slRequired = rsiOn || bbOn;
+  slBadge.style.display    = slRequired ? ''     : 'none';
+  slOptional.style.display = slRequired ? 'none' : '';
+  slInput.required = slRequired;
 }
 
 document.getElementById('botForm').addEventListener('submit', (e) => {
-  if (!modMA.checked && !modRSI.checked) {
+  const signalCount = [modMA,modRSI,modMACD,modSupertrend,modBB].filter(m=>m.checked).length;
+  if (signalCount === 0) {
     e.preventDefault();
     noModWarn.style.display = '';
   }

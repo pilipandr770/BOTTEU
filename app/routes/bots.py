@@ -260,9 +260,9 @@ def create():
         else:
             algorithm = "combined"
 
-        # Validate SL required when RSI is active
-        if "rsi" in modules and not params.get("stop_loss_pct"):
-            flash(_("Stop-Loss is required when using the RSI module."), "danger")
+        # Validate SL required when RSI or BB Bounce is active
+        if ("rsi" in modules or "bb_bounce" in modules) and not params.get("stop_loss_pct"):
+            flash(_("Stop-Loss is required when using the RSI or Bollinger Bands Bounce module."), "danger")
             return render_template("bots/create.html",
                                    cached_symbols=get_cached_symbols(current_user.id))
 

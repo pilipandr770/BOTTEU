@@ -50,6 +50,10 @@ def _sma(series: pd.Series, length: int) -> pd.Series:
     return series.rolling(window=length).mean()
 
 
+def _ema(series: pd.Series, length: int) -> pd.Series:
+    return series.ewm(span=length, adjust=False).mean()
+
+
 def _rsi(series: pd.Series, length: int) -> pd.Series:
     """Wilder RSI via EWM."""
     delta = series.diff()
@@ -107,10 +111,81 @@ def _bbw_pct(series: pd.Series, length: int, num_std: float = 2.0) -> float | No
     return (upper_v - lower_v) / mid_v * 100
 
 
+def _macd_signals(close: pd.Series, fast: int, slow: int, signal: int):
+    """Returns (bullish_cross, bearish_cross, macd_val, signal_val)."""
+    ema_fast    = _ema(close, fast)
+    ema_slow    = _ema(close, slow)
+    macd_line   = ema_fast - ema_slow
+    signal_line = _ema(macd_line, signal)
+    if len(macd_line.dropna()) < 2:
+        return False, False, None, None
+    mp, mc = float(macd_line.iloc[-2]), float(macd_line.iloc[-1])
+    sp, sc = float(signal_line.iloc[-2]), float(signal_line.iloc[-1])
+    return (mp <= sp and mc > sc), (mp >= sp and mc < sc), mc, sc
+
+
+def _supertrend_direction(df: pd.DataFrame, period: int, multiplier: float):
+    """Returns (dir_prev, dir_curr, st_val). dir: +1 bullish, -1 bearish."""
+    import numpy as np
+    high  = df["high"].astype(float)
+    low   = df["low"].astype(float)
+    close = df["close"].astype(float)
+    prev_close = close.shift(1)
+    tr = pd.concat([
+        high - low,
+        (high - prev_close).abs(),
+        (low  - prev_close).abs(),
+    ], axis=1).max(axis=1)
+    atr = tr.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    hl2 = (high + low) / 2
+    upper_basic = hl2 + multiplier * atr
+    lower_basic = hl2 - multiplier * atr
+    n = len(close)
+    upper_band = upper_basic.copy()
+    lower_band = lower_basic.copy()
+    direction  = pd.Series(np.ones(n, dtype=int), index=close.index)
+    st_line    = pd.Series(np.zeros(n), index=close.index)
+    for i in range(1, n):
+        if upper_basic.iloc[i] < upper_band.iloc[i - 1] or close.iloc[i - 1] > upper_band.iloc[i - 1]:
+            upper_band.iloc[i] = upper_basic.iloc[i]
+        else:
+            upper_band.iloc[i] = upper_band.iloc[i - 1]
+        if lower_basic.iloc[i] > lower_band.iloc[i - 1] or close.iloc[i - 1] < lower_band.iloc[i - 1]:
+            lower_band.iloc[i] = lower_basic.iloc[i]
+        else:
+            lower_band.iloc[i] = lower_band.iloc[i - 1]
+        if direction.iloc[i - 1] == -1:
+            direction.iloc[i] = 1 if close.iloc[i] > upper_band.iloc[i] else -1
+        else:
+            direction.iloc[i] = -1 if close.iloc[i] < lower_band.iloc[i] else 1
+        st_line.iloc[i] = lower_band.iloc[i] if direction.iloc[i] == 1 else upper_band.iloc[i]
+    if len(direction) < 2:
+        return 0, 0, 0.0
+    return int(direction.iloc[-2]), int(direction.iloc[-1]), float(st_line.iloc[-1])
+
+
+def _bb_signals(close: pd.Series, period: int, num_std: float):
+    """Returns (bounce_entry, upper_exit, mid_v, upper_v, lower_v)."""
+    mid   = close.rolling(window=period).mean()
+    std   = close.rolling(window=period).std()
+    upper = mid + num_std * std
+    lower = mid - num_std * std
+    if mid.dropna().empty or len(close) < 2:
+        return False, False, None, None, None
+    mid_v   = float(mid.iloc[-1])
+    upper_v = float(upper.iloc[-1])
+    lower_v = float(lower.iloc[-1])
+    close_prev = float(close.iloc[-2])
+    lower_prev = float(lower.iloc[-2]) if len(lower.dropna()) >= 2 else lower_v
+    bounce = close_prev < lower_prev and float(close.iloc[-1]) > lower_v
+    upper_exit = float(close.iloc[-1]) >= upper_v
+    return bounce, upper_exit, mid_v, upper_v, lower_v
+
+
 # ── Strategy ──────────────────────────────────────────────────────────────────
 
 class CombinedStrategy(BaseStrategy):
-    display_name = "Modular (MA + RSI)"
+    display_name = "Modular Strategy (MA · RSI · MACD · ST · BB)"
     stop_loss_required = False   # enforced in route based on active modules
     take_profit_available = True
 
@@ -215,6 +290,89 @@ class CombinedStrategy(BaseStrategy):
                 sell_signals.append(False)
                 log_lines.append(("WARN", f"RSI: not enough candles ({len(df)} < {period + 2})"))
 
+        # ── MACD module ───────────────────────────────────────────────────
+        macd_buy = macd_sell = False
+        if "macd" in modules:
+            macd_fast   = int(params.get("macd_fast", 12))
+            macd_slow   = int(params.get("macd_slow", 26))
+            macd_signal = int(params.get("macd_signal", 9))
+            min_c = macd_slow + macd_signal + 3
+            if len(df) >= min_c:
+                macd_buy, macd_sell, mc_val, sc_val = _macd_signals(
+                    close, macd_fast, macd_slow, macd_signal)
+                buy_signals.append(macd_buy)
+                sell_signals.append(macd_sell)
+                if mc_val is not None:
+                    trend = "above" if mc_val > sc_val else "below"
+                    log_lines.append(("INFO",
+                        f"MACD({macd_fast},{macd_slow},{macd_signal})={mc_val:.6f} {trend} signal={sc_val:.6f}"
+                        + (" — 🟢 bullish cross!" if macd_buy else
+                           " — 🔴 bearish cross!" if macd_sell else "")
+                    ))
+            else:
+                buy_signals.append(False)
+                sell_signals.append(False)
+                log_lines.append(("WARN", f"MACD: not enough candles ({len(df)} < {min_c})"))
+
+        # ── SuperTrend module ─────────────────────────────────────────────
+        st_buy = st_sell = False
+        if "supertrend" in modules:
+            st_period = int(params.get("st_period", 10))
+            st_mult   = float(params.get("st_multiplier", 3.0))
+            min_c = st_period * 2 + 3
+            if len(df) >= min_c:
+                try:
+                    dir_prev, dir_curr, st_val = _supertrend_direction(df, st_period, st_mult)
+                    st_buy  = dir_prev == -1 and dir_curr == 1
+                    st_sell = dir_prev ==  1 and dir_curr == -1
+                    buy_signals.append(st_buy)
+                    sell_signals.append(st_sell)
+                    trend = "🟢 Bullish" if dir_curr == 1 else "🔴 Bearish"
+                    log_lines.append(("INFO",
+                        f"SuperTrend({st_period},{st_mult}) {trend}, ST={st_val:.6f}"
+                        + (" — bullish flip!" if st_buy else
+                           " — bearish flip!" if st_sell else "")
+                    ))
+                except Exception as exc:
+                    buy_signals.append(False)
+                    sell_signals.append(False)
+                    log_lines.append(("WARN", f"SuperTrend: error — {exc}"))
+            else:
+                buy_signals.append(False)
+                sell_signals.append(False)
+                log_lines.append(("WARN", f"SuperTrend: not enough candles ({len(df)} < {min_c})"))
+
+        # ── Bollinger Bands Bounce module ─────────────────────────────────
+        bb_buy = bb_sell = False
+        if "bb_bounce" in modules:
+            bb_period = int(params.get("bb_period", 20))
+            bb_std    = float(params.get("bb_std", 2.0))
+            bb_exit   = str(params.get("bb_exit", "middle")).lower()
+            if len(df) >= bb_period + 3:
+                bb_buy, bb_upper_exit, bb_mid, bb_upper, bb_lower = _bb_signals(close, bb_period, bb_std)
+                if bb_mid is not None:
+                    # Sell: price reached middle (or upper if configured)
+                    if bb_exit == "upper":
+                        bb_sell = bb_upper_exit
+                    else:
+                        bb_sell = has_position and float(close.iloc[-1]) >= bb_mid
+                    buy_signals.append(bb_buy)
+                    sell_signals.append(bb_sell)
+                    bbw = (bb_upper - bb_lower) / bb_mid * 100 if bb_mid else 0
+                    log_lines.append(("INFO",
+                        f"BB({bb_period},{bb_std}): lower={bb_lower:.6f} mid={bb_mid:.6f} upper={bb_upper:.6f} BBW={bbw:.2f}%"
+                        + (" — 🟢 bounce!" if bb_buy else
+                           " — 🎯 exit target!" if bb_sell else "")
+                    ))
+                else:
+                    buy_signals.append(False)
+                    sell_signals.append(False)
+                    log_lines.append(("WARN", "BB Bounce: insufficient data"))
+            else:
+                buy_signals.append(False)
+                sell_signals.append(False)
+                log_lines.append(("WARN", f"BB Bounce: not enough candles ({len(df)} < {bb_period + 3})"))
+
         if not buy_signals:
             state["_log"] = [("WARN", "No active modules — check bot settings")]
             return "HOLD", state
@@ -295,9 +453,14 @@ class CombinedStrategy(BaseStrategy):
             # Signal-based exit
             if do_sell:
                 state.update(has_position=False, entry_price=0.0, max_price=0.0, exit_reason="SIGNAL")
-                logic_str = " + ".join(["MA" if "ma_crossover" in modules and ma_sell else "",
-                                        "RSI" if "rsi" in modules and rsi_sell else ""])
-                log_lines.append(("SELL", f"🔴 Exit signal ({logic_str.strip(' +')}) — selling at {current_price:.6f}"))
+                parts = []
+                if "ma_crossover" in modules and ma_sell:   parts.append("MA")
+                if "rsi" in modules and rsi_sell:           parts.append("RSI")
+                if "macd" in modules and macd_sell:         parts.append("MACD")
+                if "supertrend" in modules and st_sell:     parts.append("ST")
+                if "bb_bounce" in modules and bb_sell:      parts.append("BB")
+                logic_str = " + ".join(parts) if parts else "signal"
+                log_lines.append(("SELL", f"🔴 Exit signal ({logic_str}) — selling at {current_price:.6f}"))
                 state["_log"] = log_lines
                 return "SELL", state
 

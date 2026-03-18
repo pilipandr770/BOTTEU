@@ -61,10 +61,16 @@ class BaseStrategy(abc.ABC):
 def _build_registry() -> dict[str, type[BaseStrategy]]:
     from app.algorithms.ma_crossover import MACrossoverStrategy
     from app.algorithms.rsi import RSIStrategy
+    from app.algorithms.macd import MACDStrategy
+    from app.algorithms.supertrend import SuperTrendStrategy
+    from app.algorithms.bb_bounce import BBBounceStrategy
     from app.algorithms.combined import CombinedStrategy
     return {
         "ma_crossover": MACrossoverStrategy,
         "rsi": RSIStrategy,
+        "macd": MACDStrategy,
+        "supertrend": SuperTrendStrategy,
+        "bb_bounce": BBBounceStrategy,
         "combined": CombinedStrategy,
     }
 
