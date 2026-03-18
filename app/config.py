@@ -13,6 +13,12 @@ class Config:
     # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///botteu_dev.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # If DB_SCHEMA is set, apply search_path so all tables go into that schema
+    _db_schema = os.environ.get("DB_SCHEMA")
+    SQLALCHEMY_ENGINE_OPTIONS = (
+        {"connect_args": {"options": f"-csearch_path={_db_schema}"}}
+        if _db_schema else {}
+    )
 
     # Redis / Celery
     REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")

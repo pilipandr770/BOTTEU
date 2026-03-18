@@ -12,7 +12,8 @@ Werkzeug==3.0.3
 gunicorn==22.0.0
 
 # Database
-# psycopg2-binary==2.9.9  # production only (PostgreSQL); not needed for local SQLite
+# psycopg2-binary==2.9.9  # production only — no Python 3.13 wheel; use psycopg3 instead
+psycopg[binary]>=3.1      # PostgreSQL driver for Python 3.13 (psycopg3, Render prod + local)
 SQLAlchemy==2.0.35
 
 # Security
