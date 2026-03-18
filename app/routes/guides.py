@@ -11,10 +11,10 @@ def index():
 
 @guides_bp.route("/status")
 def status():
-    """Diagnostic: check if APScheduler is running."""
-    from app.workers.scheduler import _scheduler
-    sched_running = _scheduler is not None and _scheduler.running
-    jobs = []
-    if sched_running:
-        jobs = [{"id": j.id, "next_run": str(j.next_run_time)} for j in _scheduler.get_jobs()]
-    return jsonify({"scheduler_running": sched_running, "jobs": jobs})
+    """Diagnostic: check if tick thread is running."""
+    import threading
+    tick_thread = next((t for t in threading.enumerate() if t.name == "bot-tick"), None)
+    return jsonify({
+        "tick_thread_running": tick_thread is not None and tick_thread.is_alive(),
+        "all_threads": [t.name for t in threading.enumerate()],
+    })

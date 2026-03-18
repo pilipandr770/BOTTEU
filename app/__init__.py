@@ -72,17 +72,31 @@ def create_app(config_name: str | None = None) -> Flask:
         return jsonify({"status": "ok"}), 200
 
     # ── In-process Bot Scheduler ────────────────────────────────────────────
-    # Started lazily on first request so it always runs inside the worker
-    # process — avoids the gunicorn fork killing background threads.
-    _sched_lock = threading.Lock()
+    # Plain threading.Thread loop — survives gunicorn fork, no APScheduler.
+    _tick_thread_started = threading.Event()
 
     @app.before_request
-    def _ensure_scheduler():
-        import app.workers.scheduler as sm
-        if sm._scheduler is None or not sm._scheduler.running:
-            with _sched_lock:
-                if sm._scheduler is None or not sm._scheduler.running:
-                    sm.start_scheduler(app)
+    def _ensure_tick_thread():
+        if _tick_thread_started.is_set():
+            return
+        _tick_thread_started.set()   # set first to prevent double-start
+        def _loop():
+            import time
+            app.logger.info("Bot tick thread started (interval=60s)")
+            while True:
+                time.sleep(60)
+                try:
+                    with app.app_context():
+                        from app.models.bot import Bot, BotStatus
+                        from app.workers.core.tick import tick_bot
+                        bots = Bot.query.filter_by(status=BotStatus.RUNNING).all()
+                        app.logger.info("Tick: processing %d running bot(s)", len(bots))
+                        for bot in bots:
+                            tick_bot(bot.id)
+                except Exception as exc:
+                    app.logger.exception("Tick loop error: %s", exc)
+        t = threading.Thread(target=_loop, daemon=True, name="bot-tick")
+        t.start()
 
     # ── Telegram webhook auto-registration (production only) ─────────────────
     _tg_webhook = app.config.get("TELEGRAM_WEBHOOK_URL", "")
@@ -113,7 +127,7 @@ def create_app(config_name: str | None = None) -> Flask:
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "img-src 'self' data:; "
             "font-src 'self' https://cdn.jsdelivr.net; "
-            "connect-src 'self'; "
+            "connect-src 'self' https://cdn.jsdelivr.net; "
             "frame-ancestors 'none';"
         )
         response.headers["Content-Security-Policy"] = csp
