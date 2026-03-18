@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: botteu
+    runtime: python
+    region: frankfurt          # same region as the DB
+    plan: free                 # upgrade to starter for always-on
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn.conf.py run:app
+    healthCheckPath: /
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true    # Render generates a random value on first deploy
+      - key: DATABASE_URL
+        value: ***REMOVED_DATABASE_URL***
+      - key: DB_SCHEMA
+        value: botteu
+      - key: FERNET_KEY
+        value: ***REMOVED_FERNET_KEY***
+      - key: TELEGRAM_BOT_TOKEN
+        value: ***REMOVED_TELEGRAM_TOKEN***
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USE_TLS
+        value: "True"
+      - key: MAIL_USERNAME
+        value: ""
+      - key: MAIL_PASSWORD
+        value: ""
+      - key: MAIL_DEFAULT_SENDER
+        value: "BOTTEU <andrii.it.info@gmail.com>"
+      - key: APP_URL
+        value: https://botteu.onrender.com   # replace with your actual URL
+      - key: STRIPE_PUBLIC_KEY
+        value: ""
+      - key: STRIPE_SECRET_KEY
+        value: ""
+      - key: STRIPE_WEBHOOK_SECRET
+        value: ""
+      - key: STRIPE_PRICE_ID_PRO
+        value: ""
