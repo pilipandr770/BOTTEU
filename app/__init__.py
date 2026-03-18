@@ -18,7 +18,10 @@ def create_app(config_name: str | None = None) -> Flask:
         template_folder="templates",
         static_folder="static",
     )
-    app.config.from_object(config_map.get(config_name, config_map["development"]))
+    cfg = config_map.get(config_name, config_map["development"])
+    if hasattr(cfg, "_validate"):
+        cfg._validate()
+    app.config.from_object(cfg)
 
     # ── Extensions ────────────────────────────────────────────
     db.init_app(app)
@@ -104,9 +107,10 @@ def create_app(config_name: str | None = None) -> Flask:
     if _tg_webhook and _tg_token and "yourdomain.com" not in _tg_webhook:
         try:
             import requests as _req
+            from app.routes.telegram_webhook import _webhook_secret
             _resp = _req.post(
                 f"https://api.telegram.org/bot{_tg_token}/setWebhook",
-                json={"url": _tg_webhook},
+                json={"url": _tg_webhook, "secret_token": _webhook_secret(_tg_token)},
                 timeout=10,
             )
             app.logger.info("Telegram webhook registered: %s", _resp.json())

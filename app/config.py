@@ -84,6 +84,18 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
 
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+    @classmethod
+    def _validate(cls):
+        import os
+        if os.environ.get("SECRET_KEY", "") in ("", "dev-secret-key-change-in-production"):
+            raise RuntimeError(
+                "SECRET_KEY env var is not set or still uses the default dev value. "
+                "Set a strong random SECRET_KEY before running in production."
+            )
+
 
 class TestingConfig(Config):
     TESTING = True
