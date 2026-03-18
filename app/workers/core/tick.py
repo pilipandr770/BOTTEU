@@ -347,9 +347,19 @@ def tick_bot(bot_id: int) -> None:
     except Exception as exc:
         logger.exception("Tick error for bot %d: %s", bot_id, exc)
         try:
-            bot.status        = BotStatus.ERROR
-            bot.error_message = str(exc)[:500]
-            db.session.commit()
+            from app.extensions import db
+            from app.models.bot import Bot, BotStatus
+            from app.models.bot_log import BotLog
+            bot = db.session.get(Bot, bot_id)
+            if bot:
+                bot.status        = BotStatus.ERROR
+                bot.error_message = str(exc)[:500]
+                db.session.add(BotLog(
+                    bot_id=bot_id,
+                    level="ERROR",
+                    message=f"❌ Tick error: {str(exc)[:400]}",
+                ))
+                db.session.commit()
             if _chat_id:
                 from app.services.telegram_notifier import notify_error
                 notify_error(_chat_id, bot.name, str(exc))
