@@ -2,6 +2,7 @@
 Flask Application Factory
 """
 import os
+import threading
 from flask import Flask, request, session
 
 from app.config import config_map
@@ -70,9 +71,18 @@ def create_app(config_name: str | None = None) -> Flask:
     def health():
         return jsonify({"status": "ok"}), 200
 
-    # ── In-process Bot Scheduler (replaces Celery for simple deployments) ────
-    from app.workers.scheduler import start_scheduler
-    start_scheduler(app)
+    # ── In-process Bot Scheduler ────────────────────────────────────────────
+    # Started lazily on first request so it always runs inside the worker
+    # process — avoids the gunicorn fork killing background threads.
+    _sched_lock = threading.Lock()
+
+    @app.before_request
+    def _ensure_scheduler():
+        import app.workers.scheduler as sm
+        if sm._scheduler is None or not sm._scheduler.running:
+            with _sched_lock:
+                if sm._scheduler is None or not sm._scheduler.running:
+                    sm.start_scheduler(app)
 
     # ── Telegram webhook auto-registration (production only) ─────────────────
     _tg_webhook = app.config.get("TELEGRAM_WEBHOOK_URL", "")
