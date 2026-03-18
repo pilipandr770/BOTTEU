@@ -85,6 +85,114 @@
     </div>
   </div>
 
+  <!-- New Indicators -->
+  <div class="col-12">
+    <div class="card bg-dark border-primary">
+      <div class="card-header text-primary fw-semibold">
+        <i class="bi bi-stars me-2"></i>{{ _('New Indicators') }}
+        <span class="badge bg-primary ms-2">{{ _('Added') }}</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+
+          <!-- MACD -->
+          <div class="col-lg-4">
+            <div class="border border-secondary rounded p-3 h-100">
+              <h6 class="text-primary"><i class="bi bi-bar-chart-line me-2"></i>MACD
+                <span class="badge bg-secondary fw-normal ms-1 small">{{ _('trend') }}</span>
+              </h6>
+              <p class="text-muted small mb-2">
+                {{ _('MACD (Moving Average Convergence Divergence) uses three EMAs: fast (12), slow (26), and signal (9).') }}
+              </p>
+              <ul class="text-muted small ps-3 mb-2">
+                <li>🟢 <strong>BUY</strong>: {{ _('MACD line crosses ABOVE signal line') }}</li>
+                <li>🔴 <strong>SELL</strong>: {{ _('MACD line crosses BELOW signal line') }}</li>
+              </ul>
+              <div class="p-2 rounded small" style="background:#0d1117;border-left:3px solid #0d6efd;">
+                💡 {{ _('Best for trending markets. Combine with Volatility Filter to avoid whipsaws in sideways markets.') }}
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-dark border border-secondary text-light me-1">Fast EMA: 12</span>
+                <span class="badge bg-dark border border-secondary text-light me-1">Slow EMA: 26</span>
+                <span class="badge bg-dark border border-secondary text-light">Signal: 9</span>
+              </div>
+              <a href="https://www.investopedia.com/terms/m/macd.asp" target="_blank" rel="noopener"
+                 class="btn btn-sm btn-outline-primary mt-2">
+                <i class="bi bi-link-45deg me-1"></i>Investopedia ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- SuperTrend -->
+          <div class="col-lg-4">
+            <div class="border border-secondary rounded p-3 h-100">
+              <h6 class="text-warning"><i class="bi bi-lightning-charge me-2"></i>SuperTrend
+                <span class="badge bg-secondary fw-normal ms-1 small">{{ _('trend + stop') }}</span>
+              </h6>
+              <p class="text-muted small mb-2">
+                {{ _('SuperTrend uses ATR (Average True Range) to build an adaptive band around price. It flips direction when price crosses the band.') }}
+              </p>
+              <ul class="text-muted small ps-3 mb-2">
+                <li>🟢 <strong>BUY</strong>: {{ _('Price crosses above the band (bullish flip)') }}</li>
+                <li>🔴 <strong>SELL</strong>: {{ _('Price crosses below the band (bearish flip)') }}</li>
+              </ul>
+              <div class="p-2 rounded small" style="background:#0d1117;border-left:3px solid #ffc107;">
+                💡 {{ _('The SuperTrend line itself acts as an adaptive stop-loss — no separate SL needed. Higher Multiplier = wider band = fewer but more reliable signals.') }}
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-dark border border-secondary text-light me-1">ATR Period: 10</span>
+                <span class="badge bg-dark border border-secondary text-light">Multiplier: 3.0</span>
+              </div>
+              <a href="https://www.investopedia.com/supertrend-indicator-7976167" target="_blank" rel="noopener"
+                 class="btn btn-sm btn-outline-warning mt-2">
+                <i class="bi bi-link-45deg me-1"></i>Investopedia ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- BB Bounce -->
+          <div class="col-lg-4">
+            <div class="border border-secondary rounded p-3 h-100">
+              <h6 class="text-success"><i class="bi bi-bezier2 me-2"></i>{{ _('Bollinger Bands Bounce') }}
+                <span class="badge bg-secondary fw-normal ms-1 small">{{ _('mean reversion') }}</span>
+              </h6>
+              <p class="text-muted small mb-2">
+                {{ _('Bollinger Bands surround price with a middle SMA and upper/lower bands at ±2 standard deviations. The Bounce strategy is mean-reversion: it buys oversold dips and sells recoveries.') }}
+              </p>
+              <ul class="text-muted small ps-3 mb-2">
+                <li>🟢 <strong>BUY</strong>: {{ _('Price drops below lower band then bounces back above it') }}</li>
+                <li>🔴 <strong>SELL</strong>: {{ _('Price reaches middle band (conservative) or upper band (aggressive)') }}</li>
+              </ul>
+              <div class="p-2 rounded small" style="background:#0d1117;border-left:3px solid #198754;">
+                ⚠️ {{ _('Stop-Loss is REQUIRED. This is a counter-trend strategy — opposite to MA/MACD/SuperTrend. Using it alongside trend-following modules in a Combined bot diversifies your signals.') }}
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-dark border border-secondary text-light me-1">Period: 20</span>
+                <span class="badge bg-dark border border-secondary text-light me-1">Std Dev: 2.0</span>
+                <span class="badge bg-dark border border-secondary text-light">Exit: middle</span>
+              </div>
+              <a href="https://www.investopedia.com/terms/b/bollingerbands.asp" target="_blank" rel="noopener"
+                 class="btn btn-sm btn-outline-success mt-2">
+                <i class="bi bi-link-45deg me-1"></i>Investopedia ↗
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modular Strategy tip -->
+        <div class="alert alert-info small p-3 mt-4 mb-0">
+          <i class="bi bi-puzzle-fill me-2"></i>
+          <strong>{{ _('Modular Strategy tip:') }}</strong>
+          {{ _('You can combine any of the 5 modules (MA, RSI, MACD, SuperTrend, BB Bounce) in a single Combined bot.') }}
+          {{ _('Enable AND logic to require all signals to agree (more conservative) or OR logic for first-signal-wins (more active).') }}
+          {{ _('The Volatility Filter applies on top — it blocks ALL entries during quiet markets regardless of which modules are active.') }}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Backtest Guide -->
   <div class="col-lg-6">
     <div class="card bg-dark border-secondary">
