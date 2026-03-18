@@ -37,6 +37,7 @@ Exit   : SELL when any module signals exit  (always OR — safer)
 """
 import logging
 
+import numpy as np
 import pandas as pd
 
 from app.algorithms.base import BaseStrategy, Signal
@@ -125,43 +126,50 @@ def _macd_signals(close: pd.Series, fast: int, slow: int, signal: int):
 
 
 def _supertrend_direction(df: pd.DataFrame, period: int, multiplier: float):
-    """Returns (dir_prev, dir_curr, st_val). dir: +1 bullish, -1 bearish."""
-    import numpy as np
-    high  = df["high"].astype(float)
-    low   = df["low"].astype(float)
-    close = df["close"].astype(float)
-    prev_close = close.shift(1)
-    tr = pd.concat([
-        high - low,
-        (high - prev_close).abs(),
-        (low  - prev_close).abs(),
-    ], axis=1).max(axis=1)
-    atr = tr.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
-    hl2 = (high + low) / 2
+    """Returns (dir_prev, dir_curr, st_val). dir: +1 bullish, -1 bearish.
+    Uses numpy arrays to avoid pandas CoW O(n²) slowdown."""
+    high  = df["high"].to_numpy(dtype=float)
+    low   = df["low"].to_numpy(dtype=float)
+    close = df["close"].to_numpy(dtype=float)
+    n = len(close)
+    if n < 2:
+        return 0, 0, 0.0
+    prev_close = np.empty(n)
+    prev_close[0] = close[0]
+    prev_close[1:] = close[:-1]
+    tr = np.maximum(high - low,
+                    np.maximum(np.abs(high - prev_close), np.abs(low - prev_close)))
+    alpha = 1.0 / period
+    atr = np.empty(n)
+    atr[0] = tr[0]
+    for i in range(1, n):
+        atr[i] = alpha * tr[i] + (1.0 - alpha) * atr[i - 1]
+    hl2 = (high + low) / 2.0
     upper_basic = hl2 + multiplier * atr
     lower_basic = hl2 - multiplier * atr
-    n = len(close)
     upper_band = upper_basic.copy()
     lower_band = lower_basic.copy()
-    direction  = pd.Series(np.ones(n, dtype=int), index=close.index)
-    st_line    = pd.Series(np.zeros(n), index=close.index)
+    direction  = np.ones(n, dtype=np.int8)
+    st_line    = np.zeros(n)
     for i in range(1, n):
-        if upper_basic.iloc[i] < upper_band.iloc[i - 1] or close.iloc[i - 1] > upper_band.iloc[i - 1]:
-            upper_band.iloc[i] = upper_basic.iloc[i]
+        upper_band[i] = (
+            upper_basic[i]
+            if upper_basic[i] < upper_band[i - 1] or close[i - 1] > upper_band[i - 1]
+            else upper_band[i - 1]
+        )
+        lower_band[i] = (
+            lower_basic[i]
+            if lower_basic[i] > lower_band[i - 1] or close[i - 1] < lower_band[i - 1]
+            else lower_band[i - 1]
+        )
+        if direction[i - 1] == -1:
+            direction[i] = 1 if close[i] > upper_band[i] else -1
         else:
-            upper_band.iloc[i] = upper_band.iloc[i - 1]
-        if lower_basic.iloc[i] > lower_band.iloc[i - 1] or close.iloc[i - 1] < lower_band.iloc[i - 1]:
-            lower_band.iloc[i] = lower_basic.iloc[i]
-        else:
-            lower_band.iloc[i] = lower_band.iloc[i - 1]
-        if direction.iloc[i - 1] == -1:
-            direction.iloc[i] = 1 if close.iloc[i] > upper_band.iloc[i] else -1
-        else:
-            direction.iloc[i] = -1 if close.iloc[i] < lower_band.iloc[i] else 1
-        st_line.iloc[i] = lower_band.iloc[i] if direction.iloc[i] == 1 else upper_band.iloc[i]
-    if len(direction) < 2:
+            direction[i] = -1 if close[i] < lower_band[i] else 1
+        st_line[i] = lower_band[i] if direction[i] == 1 else upper_band[i]
+    if n < 2:
         return 0, 0, 0.0
-    return int(direction.iloc[-2]), int(direction.iloc[-1]), float(st_line.iloc[-1])
+    return int(direction[-2]), int(direction[-1]), float(st_line[-1])
 
 
 def _bb_signals(close: pd.Series, period: int, num_std: float):

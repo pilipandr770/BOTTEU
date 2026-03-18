@@ -25,62 +25,60 @@ logger = logging.getLogger(__name__)
 
 def _supertrend(df: pd.DataFrame, period: int, multiplier: float):
     """
-    Returns a Series of SuperTrend direction: +1 = bullish, -1 = bearish.
-    Also returns the SuperTrend line (support/resistance level).
+    Returns (direction Series, st_line Series).
+    direction: +1 = bullish, -1 = bearish.
+    Uses numpy arrays internally to avoid pandas CoW O(n²) slowdown.
     """
-    high  = df["high"].astype(float)
-    low   = df["low"].astype(float)
-    close = df["close"].astype(float)
+    high  = df["high"].to_numpy(dtype=float)
+    low   = df["low"].to_numpy(dtype=float)
+    close = df["close"].to_numpy(dtype=float)
+    n = len(close)
 
-    # ATR via Wilder smoothing
-    prev_close = close.shift(1)
-    tr = pd.concat([
-        high - low,
-        (high - prev_close).abs(),
-        (low  - prev_close).abs(),
-    ], axis=1).max(axis=1)
-    atr = tr.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    # True Range (numpy)
+    prev_close = np.empty(n)
+    prev_close[0] = close[0]
+    prev_close[1:] = close[:-1]
+    tr = np.maximum(high - low,
+                    np.maximum(np.abs(high - prev_close), np.abs(low - prev_close)))
 
-    hl2 = (high + low) / 2
+    # Wilder ATR (EMA with alpha=1/period)
+    alpha = 1.0 / period
+    atr = np.empty(n)
+    atr[0] = tr[0]
+    for i in range(1, n):
+        atr[i] = alpha * tr[i] + (1.0 - alpha) * atr[i - 1]
+
+    hl2 = (high + low) / 2.0
     upper_basic = hl2 + multiplier * atr
     lower_basic = hl2 - multiplier * atr
 
-    n = len(close)
     upper_band = upper_basic.copy()
     lower_band = lower_basic.copy()
-    direction  = pd.Series(np.ones(n, dtype=int), index=close.index)
-    st_line    = pd.Series(np.zeros(n), index=close.index)
+    direction  = np.ones(n, dtype=np.int8)
+    st_line    = np.zeros(n)
 
     for i in range(1, n):
-        # Upper band: only tighten downward (prevent widening)
-        if upper_basic.iloc[i] < upper_band.iloc[i - 1] or close.iloc[i - 1] > upper_band.iloc[i - 1]:
-            upper_band.iloc[i] = upper_basic.iloc[i]
-        else:
-            upper_band.iloc[i] = upper_band.iloc[i - 1]
-
-        # Lower band: only tighten upward (prevent narrowing)
-        if lower_basic.iloc[i] > lower_band.iloc[i - 1] or close.iloc[i - 1] < lower_band.iloc[i - 1]:
-            lower_band.iloc[i] = lower_basic.iloc[i]
-        else:
-            lower_band.iloc[i] = lower_band.iloc[i - 1]
-
+        # Upper band: only tighten downward
+        upper_band[i] = (
+            upper_basic[i]
+            if upper_basic[i] < upper_band[i - 1] or close[i - 1] > upper_band[i - 1]
+            else upper_band[i - 1]
+        )
+        # Lower band: only tighten upward
+        lower_band[i] = (
+            lower_basic[i]
+            if lower_basic[i] > lower_band[i - 1] or close[i - 1] < lower_band[i - 1]
+            else lower_band[i - 1]
+        )
         # Direction
-        if direction.iloc[i - 1] == -1:
-            # Was bearish — flip if close rises above upper band
-            if close.iloc[i] > upper_band.iloc[i]:
-                direction.iloc[i] = 1
-            else:
-                direction.iloc[i] = -1
+        if direction[i - 1] == -1:
+            direction[i] = 1 if close[i] > upper_band[i] else -1
         else:
-            # Was bullish — flip if close falls below lower band
-            if close.iloc[i] < lower_band.iloc[i]:
-                direction.iloc[i] = -1
-            else:
-                direction.iloc[i] = 1
+            direction[i] = -1 if close[i] < lower_band[i] else 1
+        st_line[i] = lower_band[i] if direction[i] == 1 else upper_band[i]
 
-        st_line.iloc[i] = lower_band.iloc[i] if direction.iloc[i] == 1 else upper_band.iloc[i]
-
-    return direction, st_line
+    idx = df.index
+    return pd.Series(direction.astype(int), index=idx), pd.Series(st_line, index=idx)
 
 
 class SuperTrendStrategy(BaseStrategy):

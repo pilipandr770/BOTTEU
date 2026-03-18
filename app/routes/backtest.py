@@ -52,6 +52,18 @@ def run():
     algorithm_key = data.get("algorithm", "ma_crossover")
     params = data.get("params", {})
     interval = data.get("interval", "1d")
+    try:
+        initial_capital = float(data.get("initial_capital", 1000))
+        if initial_capital <= 0:
+            initial_capital = 1000.0
+    except (TypeError, ValueError):
+        initial_capital = 1000.0
+    try:
+        fee_rate = float(data.get("fee_rate", 0.001))
+        if fee_rate < 0 or fee_rate > 0.1:
+            fee_rate = 0.001
+    except (TypeError, ValueError):
+        fee_rate = 0.001
 
     # ── Fetch historical data ─────────────────────────────────────────────
     yahoo_ticker = _to_yahoo_ticker(symbol)
@@ -95,7 +107,8 @@ def run():
 
     state: dict = {}
     trades = []
-    equity = 1000.0  # virtual starting capital in USDT
+    equity = initial_capital
+    total_fees_usdt = 0.0
     equity_curve = []
     has_position = False
     entry_price = 0.0
@@ -123,9 +136,12 @@ def run():
             has_position = False
             exit_price = current_close
             pnl_pct = (exit_price - entry_price) / entry_price * 100
-            # Deduct round-trip fees: 0.1% buy + 0.1% sell = 0.2% per trade (Bug 3)
-            fee_pct = FEE_RATE * 2 * 100
+            # Round-trip fee: fee_rate% buy + fee_rate% sell
+            fee_pct = fee_rate * 2 * 100
             pnl_pct_net = pnl_pct - fee_pct
+            trade_value = equity  # full position value before this trade
+            fee_usdt = trade_value * fee_rate * 2
+            total_fees_usdt += fee_usdt
             equity *= 1 + pnl_pct_net / 100
             reason = state.get("exit_reason", "SIGNAL")
             trades.append({
@@ -135,6 +151,7 @@ def run():
                 "idx": i,
                 "pnl_pct": round(pnl_pct_net, 2),
                 "pnl_pct_gross": round(pnl_pct, 2),
+                "fee_usdt": round(fee_usdt, 4),
                 "reason": reason,
             })
 
@@ -196,7 +213,8 @@ def run():
     win_rate = (len(wins) / len(sell_trades) * 100) if sell_trades else 0
 
     # Compound total return from equity curve
-    total_return = (equity - 1000.0) / 1000.0 * 100
+    total_return = (equity - initial_capital) / initial_capital * 100
+    profit_usdt = equity - initial_capital
 
     # Exit reason breakdown
     exit_reasons: dict = {}
@@ -228,8 +246,12 @@ def run():
         "total_trades": len(sell_trades),
         "win_rate": round(win_rate, 1),
         "total_return_pct": round(total_return, 2),
+        "profit_usdt": round(profit_usdt, 2),
         "max_drawdown_pct": round(max_dd, 2),
+        "initial_capital": round(initial_capital, 2),
         "final_equity": round(equity, 2),
+        "total_fees_usdt": round(total_fees_usdt, 2),
+        "fee_rate_pct": round(fee_rate * 100, 4),
         "exit_reasons": exit_reasons,
         "sharpe_ratio": round(sharpe, 3),
         "sortino_ratio": round(sortino, 3),

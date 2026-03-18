@@ -50,6 +50,26 @@
           </select>
         </div>
 
+        <hr class="border-secondary">
+
+        <div class="row g-2 mb-3">
+          <div class="col-12">
+            <label class="form-label small">{{ _('Starting Capital') }}</label>
+            <div class="input-group input-group-sm">
+              <input type="number" id="btCapital" class="form-control form-control-sm" value="1000" min="10" step="100">
+              <span class="input-group-text">USDT</span>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label small">{{ _('Binance Fee') }}</label>
+            <div class="input-group input-group-sm">
+              <input type="number" id="btFee" class="form-control form-control-sm" value="0.1" min="0" max="1" step="0.025">
+              <span class="input-group-text">%</span>
+            </div>
+            <div class="form-text">{{ _('Taker: 0.1%. With BNB: 0.075%') }}</div>
+          </div>
+        </div>
+
         <!-- MA params -->
         <div id="bt-params-ma_crossover" class="bt-params">
           <div class="row g-2">
@@ -73,6 +93,45 @@
           </div>
         </div>
 
+        <!-- MACD params -->
+        <div id="bt-params-macd" class="bt-params" style="display:none;">
+          <div class="row g-2">
+            <div class="col-4"><label class="form-label small">Fast EMA</label><input type="number" id="p_macd_fast" class="form-control form-control-sm" value="12" min="2"></div>
+            <div class="col-4"><label class="form-label small">Slow EMA</label><input type="number" id="p_macd_slow" class="form-control form-control-sm" value="26" min="5"></div>
+            <div class="col-4"><label class="form-label small">Signal</label><input type="number" id="p_macd_signal" class="form-control form-control-sm" value="9" min="2"></div>
+            <div class="col-6"><label class="form-label small">SL %</label><input type="number" id="p_sl_macd" class="form-control form-control-sm" placeholder="opt." step="0.1" min="0.1"></div>
+            <div class="col-6"><label class="form-label small">TP %</label><input type="number" id="p_tp_macd" class="form-control form-control-sm" placeholder="opt." step="0.1" min="0.1"></div>
+            <div class="col-12"><label class="form-label small">Trailing TP %</label><input type="number" id="p_trailing_macd" class="form-control form-control-sm" placeholder="opt." step="0.1" min="0.1"></div>
+          </div>
+        </div>
+
+        <!-- SuperTrend params -->
+        <div id="bt-params-supertrend" class="bt-params" style="display:none;">
+          <div class="row g-2">
+            <div class="col-6"><label class="form-label small">ATR Period</label><input type="number" id="p_st_period" class="form-control form-control-sm" value="10" min="3"></div>
+            <div class="col-6"><label class="form-label small">Multiplier</label><input type="number" id="p_st_mult" class="form-control form-control-sm" value="3.0" min="0.5" step="0.1"></div>
+            <div class="col-6"><label class="form-label small">TP %</label><input type="number" id="p_tp_st" class="form-control form-control-sm" placeholder="opt." step="0.1" min="0.1"></div>
+            <div class="col-6"><label class="form-label small">Trailing TP %</label><input type="number" id="p_trailing_st" class="form-control form-control-sm" placeholder="opt." step="0.1" min="0.1"></div>
+          </div>
+        </div>
+
+        <!-- BB Bounce params -->
+        <div id="bt-params-bb_bounce" class="bt-params" style="display:none;">
+          <div class="row g-2">
+            <div class="col-6"><label class="form-label small">Period</label><input type="number" id="p_bb_period" class="form-control form-control-sm" value="20" min="5"></div>
+            <div class="col-6"><label class="form-label small">Std Dev</label><input type="number" id="p_bb_std" class="form-control form-control-sm" value="2.0" min="0.5" step="0.1"></div>
+            <div class="col-6"><label class="form-label small">SL %</label><input type="number" id="p_sl_bb" class="form-control form-control-sm" value="3" step="0.1" min="0.1"></div>
+            <div class="col-6"><label class="form-label small">TP %</label><input type="number" id="p_tp_bb" class="form-control form-control-sm" placeholder="opt." step="0.1" min="0.1"></div>
+            <div class="col-12">
+              <label class="form-label small">{{ _('Exit at') }}</label>
+              <select id="p_bb_exit" class="form-select form-select-sm">
+                <option value="middle" selected>{{ _('Middle band') }}</option>
+                <option value="upper">{{ _('Upper band') }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <button id="btnRun" class="btn btn-success w-100 mt-3">
           <i class="bi bi-play-fill me-1"></i>{{ _('Run Backtest') }}
         </button>
@@ -90,28 +149,40 @@
 
     <!-- Stats Cards -->
     <div id="btStats" class="row g-3 mb-4" style="display:none;">
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card bg-dark border-secondary text-center py-2">
           <div id="st_trades" class="fs-4 fw-bold text-info">—</div>
           <div class="text-muted small">{{ _('Trades') }}</div>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card bg-dark border-secondary text-center py-2">
           <div id="st_winrate" class="fs-4 fw-bold text-success">—</div>
           <div class="text-muted small">{{ _('Win Rate') }}</div>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card bg-dark border-secondary text-center py-2">
           <div id="st_return" class="fs-4 fw-bold">—</div>
           <div class="text-muted small">{{ _('Total Return') }}</div>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
+        <div class="card bg-dark border-secondary text-center py-2">
+          <div id="st_profit_usdt" class="fs-4 fw-bold">—</div>
+          <div class="text-muted small">{{ _('Profit USDT') }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
         <div class="card bg-dark border-danger text-center py-2">
           <div id="st_dd" class="fs-4 fw-bold text-danger">—</div>
           <div class="text-muted small">{{ _('Max Drawdown') }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card bg-dark border-secondary text-center py-2">
+          <div id="st_fees" class="fs-5 fw-bold text-warning">—</div>
+          <div class="text-muted small">{{ _('Fees Paid') }}</div>
         </div>
       </div>
     </div>
@@ -188,6 +259,30 @@ function getParams() {
       take_profit_pct: numOrNull('p_tp_rsi'),
       trailing_tp_pct: numOrNull('p_trailing_rsi'),
     };
+  } else if (algo === 'macd') {
+    return {
+      macd_fast: parseInt(document.getElementById('p_macd_fast').value) || 12,
+      macd_slow: parseInt(document.getElementById('p_macd_slow').value) || 26,
+      macd_signal: parseInt(document.getElementById('p_macd_signal').value) || 9,
+      stop_loss_pct: numOrNull('p_sl_macd'),
+      take_profit_pct: numOrNull('p_tp_macd'),
+      trailing_tp_pct: numOrNull('p_trailing_macd'),
+    };
+  } else if (algo === 'supertrend') {
+    return {
+      st_period: parseInt(document.getElementById('p_st_period').value) || 10,
+      st_multiplier: parseFloat(document.getElementById('p_st_mult').value) || 3.0,
+      take_profit_pct: numOrNull('p_tp_st'),
+      trailing_tp_pct: numOrNull('p_trailing_st'),
+    };
+  } else if (algo === 'bb_bounce') {
+    return {
+      bb_period: parseInt(document.getElementById('p_bb_period').value) || 20,
+      bb_std: parseFloat(document.getElementById('p_bb_std').value) || 2.0,
+      bb_exit: document.getElementById('p_bb_exit').value,
+      stop_loss_pct: numOrNull('p_sl_bb') ?? 3,
+      take_profit_pct: numOrNull('p_tp_bb'),
+    };
   }
   return {};
 }
@@ -209,6 +304,8 @@ document.getElementById('btnRun').addEventListener('click', async () => {
     interval: document.getElementById('btInterval').value,
     algorithm: algoSel.value,
     params: getParams(),
+    initial_capital: parseFloat(document.getElementById('btCapital').value) || 1000,
+    fee_rate: (parseFloat(document.getElementById('btFee').value) || 0.1) / 100,
   };
 
   try {
@@ -231,7 +328,11 @@ document.getElementById('btnRun').addEventListener('click', async () => {
     const retEl = document.getElementById('st_return');
     retEl.textContent = (s.total_return_pct >= 0 ? '+' : '') + s.total_return_pct + '%';
     retEl.className = 'fs-4 fw-bold ' + (s.total_return_pct >= 0 ? 'text-success' : 'text-danger');
+    const profEl = document.getElementById('st_profit_usdt');
+    profEl.textContent = (s.profit_usdt >= 0 ? '+' : '') + s.profit_usdt.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + ' $';
+    profEl.className = 'fs-4 fw-bold ' + (s.profit_usdt >= 0 ? 'text-success' : 'text-danger');
     document.getElementById('st_dd').textContent = '-' + s.max_drawdown_pct + '%';
+    document.getElementById('st_fees').textContent = s.total_fees_usdt.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + ' $';
     document.getElementById('btStats').style.display = '';
 
     // Exit reasons + final equity
@@ -241,7 +342,9 @@ document.getElementById('btnRun').addEventListener('click', async () => {
     document.getElementById('st_reasons').innerHTML = Object.entries(reasons)
       .map(([k,v]) => `<span class="badge bg-${reasonColors[k]||'secondary'} me-1">${reasonLabels[k]||k}: ${v}</span>`)
       .join('');
-    document.getElementById('st_equity').textContent = '$' + s.final_equity.toLocaleString();
+    document.getElementById('st_equity').textContent =
+      '$' + s.initial_capital.toLocaleString() + ' → $' + s.final_equity.toLocaleString() +
+      (s.sharpe_ratio ? `  ·  Sharpe: ${s.sharpe_ratio}` : '');
     document.getElementById('btReasons').style.display = Object.keys(reasons).length ? '' : 'none';
 
     // Chart
