@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Widerrufsbelehrung{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h2 class="fw-bold mb-1">Widerrufsbelehrung</h2>
+    <p class="text-muted small mb-4">Stand: März 2026 · gemäß §355 BGB i.V.m. EU-Richtlinie 2011/83/EU</p>
+
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-body">
+
+        <h5 class="text-success">Widerrufsrecht</h5>
+        <p class="text-muted small">
+          Sie haben das Recht, binnen <strong class="text-white">vierzehn Tagen</strong> ohne Angabe von Gründen diesen Vertrag zu widerrufen.
+        </p>
+        <p class="text-muted small">
+          Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses (Buchung des Abonnements).
+        </p>
+        <p class="text-muted small">
+          Um Ihr Widerrufsrecht auszuüben, müssen Sie uns
+          (<strong class="text-white">BOTTEU, Andrii Pylypchuk, E-Mail: andrii.it.info@gmail.com</strong>)
+          mittels einer eindeutigen Erklärung (z.&nbsp;B. Brief, Telefax oder E-Mail) über Ihren Entschluss,
+          diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden,
+          das jedoch nicht vorgeschrieben ist.
+        </p>
+        <p class="text-muted small">
+          Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des
+          Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.
+        </p>
+
+        <hr class="border-secondary">
+
+        <h5 class="text-success">Folgen des Widerrufs</h5>
+        <p class="text-muted small">
+          Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben,
+          unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung
+          über Ihren Widerruf dieses Vertrags bei uns eingegangen ist. Für diese Rückzahlung verwenden wir
+          dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn,
+          mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser
+          Rückzahlung Entgelte berechnet.
+        </p>
+
+        <hr class="border-secondary">
+
+        <div class="alert alert-warning small">
+          <strong>Hinweis zum vorzeitigen Erlöschen des Widerrufsrechts bei digitalen Dienstleistungen:</strong><br>
+          Wenn Sie ausdrücklich zugestimmt haben, dass wir mit der Ausführung des Vertrags vor Ablauf der
+          Widerrufsfrist beginnen, und Sie Ihre Kenntnis davon bestätigt haben, dass Sie Ihr Widerrufsrecht
+          mit Beginn der Ausführung des Vertrags verlieren, erlischt das Widerrufsrecht mit vollständiger
+          Vertragserfüllung durch uns. Dies gilt gemäß §356 Abs.&nbsp;5 BGB (§312g Abs.&nbsp;2 Nr.&nbsp;1 BGB) und
+          Art.&nbsp;16 lit.&nbsp;m der EU-Richtlinie 2011/83/EU.
+          <br><br>
+          BOTTEU beginnt mit der Erbringung der digitalen Dienstleistung (Aktivierung des Pro-Abonnements)
+          erst nach ausdrücklicher Zustimmung des Nutzers zur sofortigen Ausführung und Bestätigung des
+          damit verbundenen Verlusts des Widerrufsrechts.
+        </div>
+
+        <hr class="border-secondary">
+
+        <h5 class="text-success">Muster-Widerrufsformular</h5>
+        <p class="text-muted small">
+          (Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte dieses Formular aus und senden Sie
+          es zurück.)
+        </p>
+
+        <div class="border border-secondary rounded p-3 small text-muted font-monospace">
+          An:<br>
+          BOTTEU · Andrii Pylypchuk<br>
+          E-Mail: andrii.it.info@gmail.com<br><br>
+
+          Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über den Kauf der
+          folgenden Waren (*) / die Erbringung der folgenden Dienstleistung (*):<br><br>
+
+          Bestellt am (*) / erhalten am (*):<br>
+          ____________________________________________<br><br>
+
+          Name des/der Verbraucher(s):<br>
+          ____________________________________________<br><br>
+
+          Anschrift des/der Verbraucher(s):<br>
+          ____________________________________________<br><br>
+
+          E-Mail-Adresse des/der Verbraucher(s):<br>
+          ____________________________________________<br><br>
+
+          Datum:<br>
+          ____________________________________________<br><br>
+
+          (*) Unzutreffendes streichen.
+        </div>
+
+        <p class="text-muted small mt-3">
+          Sie können das Formular auch per E-Mail an
+          <a href="mailto:andrii.it.info@gmail.com" class="text-success">andrii.it.info@gmail.com</a>
+          senden. Wir bestätigen den Eingang per E-Mail.
+        </p>
+
+        <hr class="border-secondary">
+
+        <h5 class="text-success">Rechtsgrundlagen</h5>
+        <ul class="text-muted small">
+          <li>§355 BGB – Widerrufsrecht bei Verbraucherverträgen</li>
+          <li>§356 BGB – Widerrufsrecht bei Verträgen im elektronischen Geschäftsverkehr</li>
+          <li>§312g BGB – Verträge im elektronischen Geschäftsverkehr</li>
+          <li>Richtlinie 2011/83/EU des Europäischen Parlaments und des Rates (Verbraucherrechterichtlinie)</li>
+          <li>Anlage 2 EGBGB – Muster für die Widerrufsbelehrung</li>
+        </ul>
+
+      </div>
+    </div>
+
+    <div class="text-center mb-4">
+      <a href="{{ url_for('legal.impressum') }}" class="btn btn-outline-secondary btn-sm me-2">Impressum</a>
+      <a href="{{ url_for('legal.privacy') }}" class="btn btn-outline-secondary btn-sm me-2">{{ _('Privacy Policy') }}</a>
+      <a href="{{ url_for('legal.terms') }}" class="btn btn-outline-secondary btn-sm">{{ _('Terms of Service') }}</a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

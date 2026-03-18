@@ -1,4 +1,4 @@
-"""Legal pages blueprint — Terms, Privacy, Disclaimer, Impressum."""
+"""Legal pages blueprint — Terms, Privacy, Disclaimer, Impressum, Widerruf."""
 from flask import Blueprint, render_template
 
 legal_bp = Blueprint("legal", __name__, url_prefix="/legal")
@@ -22,3 +22,8 @@ def disclaimer():
 @legal_bp.route("/impressum")
 def impressum():
     return render_template("legal/impressum.html")
+
+
+@legal_bp.route("/widerruf")
+def widerruf():
+    return render_template("legal/widerruf.html")
