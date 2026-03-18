@@ -33,7 +33,9 @@ services:
       - key: MAIL_DEFAULT_SENDER
         value: "BOTTEU <andrii.it.info@gmail.com>"
       - key: APP_URL
-        value: https://botteu.onrender.com   # replace with your actual URL
+        value: https://botteu.onrender.com
+      - key: TELEGRAM_WEBHOOK_URL
+        value: https://botteu.onrender.com/telegram/webhook
       - key: STRIPE_PUBLIC_KEY
         value: ""
       - key: STRIPE_SECRET_KEY
