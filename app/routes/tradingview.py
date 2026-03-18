@@ -21,6 +21,7 @@ Security:
 import logging
 import secrets
 import threading
+from collections import defaultdict
 
 from flask import Blueprint, request, jsonify, abort
 from flask_login import login_required, current_user
@@ -31,6 +32,9 @@ from app.models.bot import Bot, BotStatus
 logger = logging.getLogger(__name__)
 
 tv_bp = Blueprint("tradingview", __name__, url_prefix="/webhook/tv")
+
+# Per-bot lock: prevents concurrent ticks when TV floods alerts
+_bot_locks: dict[int, threading.Lock] = defaultdict(threading.Lock)
 
 
 # ── Webhook receiver ──────────────────────────────────────────────────────────
@@ -91,12 +95,19 @@ def webhook(bot_id: int, token: str):
 
 
 def _fire_tick(app, bot_id: int) -> None:
-    with app.app_context():
-        try:
-            from app.workers.core.tick import tick_bot
-            tick_bot(bot_id)
-        except Exception as exc:
-            logger.exception("Background tick failed for bot %d: %s", bot_id, exc)
+    lock = _bot_locks[bot_id]
+    if not lock.acquire(blocking=False):
+        logger.info("TV tick skipped for bot %d — another tick already running", bot_id)
+        return
+    try:
+        with app.app_context():
+            try:
+                from app.workers.core.tick import tick_bot
+                tick_bot(bot_id)
+            except Exception as exc:
+                logger.exception("Background tick failed for bot %d: %s", bot_id, exc)
+    finally:
+        lock.release()
 
 
 # ── Token management ──────────────────────────────────────────────────────────

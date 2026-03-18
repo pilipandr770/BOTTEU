@@ -69,6 +69,32 @@ def check_before_buy(user_id: int, bot_id: int) -> tuple[bool, str]:
                     f"(current: {daily_loss_pct:.2f}%)",
                 )
 
+    # ── Max drawdown (peak equity → current equity) ──────────────────────
+    if rc.max_drawdown_pct is not None:
+        from app.models.order import Order, OrderSide
+        orders = (
+            Order.query
+            .filter(Order.bot_id.in_(bot_ids), Order.side == OrderSide.SELL)
+            .order_by(Order.created_at)
+            .with_entities(Order.pnl_usdt)
+            .all()
+        )
+        equity = 1000.0
+        peak   = 1000.0
+        max_dd = 0.0
+        for (pnl,) in orders:
+            equity += float(pnl or 0)
+            peak    = max(peak, equity)
+            if peak > 0:
+                dd = (peak - equity) / peak * 100
+                max_dd = max(max_dd, dd)
+        if max_dd >= float(rc.max_drawdown_pct):
+            return (
+                False,
+                f"Max drawdown ({float(rc.max_drawdown_pct):.1f}%) reached "
+                f"(current drawdown: {max_dd:.2f}%)",
+            )
+
     return True, ""
 
 

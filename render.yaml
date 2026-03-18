@@ -13,13 +13,13 @@ services:
       - key: SECRET_KEY
         generateValue: true    # Render generates a random value on first deploy
       - key: DATABASE_URL
-        value: ***REMOVED_DATABASE_URL***
+        sync: false            # set in Render dashboard → Environment
       - key: DB_SCHEMA
         value: botteu
       - key: FERNET_KEY
-        value: ***REMOVED_FERNET_KEY***
+        sync: false            # set in Render dashboard → Environment
       - key: TELEGRAM_BOT_TOKEN
-        value: ***REMOVED_TELEGRAM_TOKEN***
+        sync: false            # set in Render dashboard → Environment
       - key: MAIL_SERVER
         value: smtp.gmail.com
       - key: MAIL_PORT
@@ -27,9 +27,9 @@ services:
       - key: MAIL_USE_TLS
         value: "True"
       - key: MAIL_USERNAME
-        value: ""
+        sync: false
       - key: MAIL_PASSWORD
-        value: ""
+        sync: false
       - key: MAIL_DEFAULT_SENDER
         value: "BOTTEU <andrii.it.info@gmail.com>"
       - key: APP_URL
@@ -37,10 +37,10 @@ services:
       - key: TELEGRAM_WEBHOOK_URL
         value: https://botteu.onrender.com/telegram/webhook
       - key: STRIPE_PUBLIC_KEY
-        value: ""
+        sync: false
       - key: STRIPE_SECRET_KEY
-        value: ""
+        sync: false
       - key: STRIPE_WEBHOOK_SECRET
-        value: ""
+        sync: false
       - key: STRIPE_PRICE_ID_PRO
-        value: ""
+        sync: false
