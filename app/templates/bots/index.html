@@ -154,7 +154,7 @@
             <span class="badge {{ 'bg-success' if o.side == 'BUY' else 'bg-danger' }}">{{ o.side }}</span>
           </td>
           <td>{{ '%.4f'|format(o.price) }}</td>
-          <td>{{ '%.6f'|format(o.quantity) }}</td>
+          <td>{{ '%.6f'|format(o.qty) }}</td>
           <td class="{{ 'text-success' if o.pnl_usdt and o.pnl_usdt >= 0 else 'text-danger' if o.pnl_usdt else 'text-muted' }}">
             {% if o.pnl_usdt is not none %}{{ '{:+.4f}'.format(o.pnl_usdt) }}{% else %}—{% endif %}
           </td>
