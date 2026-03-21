@@ -160,7 +160,8 @@ def run():
                 "reason": reason,
             })
 
-        equity_curve.append({"date": date_val, "equity": round(equity, 2)})    except Exception as exc:
+        equity_curve.append({"date": date_val, "equity": round(equity, 2)})
+    except Exception as exc:
         logger.exception("Backtest loop error at candle %d: %s", i, exc)
         return jsonify({"error": f"Backtest calculation error: {exc}"}), 500
     # ── Build Plotly chart ────────────────────────────────────────────────
