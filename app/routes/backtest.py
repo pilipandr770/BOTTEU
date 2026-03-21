@@ -105,6 +105,10 @@ def run():
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
+    # Pre-compute indicators once (O(n)) to avoid O(n²) per-candle recalculation
+    if hasattr(strategy, "precompute"):
+        df = strategy.precompute(df, params)
+
     state: dict = {}
     trades = []
     equity = initial_capital
@@ -114,7 +118,8 @@ def run():
     entry_price = 0.0
     entry_idx = 0
 
-    for i in range(len(df)):
+    try:
+      for i in range(len(df)):
         window = df.iloc[: i + 1]
         signal, state = strategy.generate_signal(window.copy(), state, params)
 
@@ -155,8 +160,9 @@ def run():
                 "reason": reason,
             })
 
-        equity_curve.append({"date": date_val, "equity": round(equity, 2)})
-
+        equity_curve.append({"date": date_val, "equity": round(equity, 2)})    except Exception as exc:
+        logger.exception("Backtest loop error at candle %d: %s", i, exc)
+        return jsonify({"error": f"Backtest calculation error: {exc}"}), 500
     # ── Build Plotly chart ────────────────────────────────────────────────
     buy_dates = [t["date"] for t in trades if t["type"] == "BUY"]
     buy_prices = [t["price"] for t in trades if t["type"] == "BUY"]

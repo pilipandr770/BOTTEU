@@ -86,6 +86,25 @@ class SuperTrendStrategy(BaseStrategy):
     stop_loss_required = False   # SuperTrend itself is an adaptive stop
     take_profit_available = True
 
+    # ── Precomputation (backtest optimisation) ────────────────────────────
+    def precompute(self, df: pd.DataFrame, params: dict) -> pd.DataFrame:
+        """
+        Pre-compute SuperTrend on the *entire* dataset once (O(n)).
+        The backtest route calls this before the loop so that generate_signal
+        can do an O(1) column look-up instead of an O(n) recalculation per
+        candle, reducing overall complexity from O(n²) to O(n).
+        """
+        period     = int(params.get("st_period", 10))
+        multiplier = float(params.get("st_multiplier", 3.0))
+        try:
+            direction, st_line = _supertrend(df, period, multiplier)
+            df = df.copy()
+            df["__st_direction"] = direction.values
+            df["__st_line"]      = st_line.values
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("SuperTrend precompute failed, will fall back to per-candle: %s", exc)
+        return df
+
     def generate_signal(
         self,
         df: pd.DataFrame,
@@ -114,14 +133,19 @@ class SuperTrendStrategy(BaseStrategy):
         entry_price  = state.get("entry_price") or 0.0
         max_price    = state.get("max_price") or current_price
 
-        try:
-            direction, st_line = _supertrend(df_closed, period, multiplier)
-        except Exception as exc:
-            logger.exception("SuperTrend calculation error: %s", exc)
-            state["_log"] = [("WARN", f"SuperTrend: calculation error — {exc}")]
-            return "HOLD", state
+        # Use precomputed columns when available (backtest O(n²) → O(n))
+        if "__st_direction" in df_closed.columns:
+            direction = df_closed["__st_direction"]
+            st_line   = df_closed["__st_line"]
+        else:
+            try:
+                direction, st_line = _supertrend(df_closed, period, multiplier)
+            except Exception as exc:
+                logger.exception("SuperTrend calculation error: %s", exc)
+                state["_log"] = [("WARN", f"SuperTrend: calculation error — {exc}")]
+                return "HOLD", state
 
-        if direction.dropna().empty:
+        if len(direction) == 0 or (hasattr(direction, 'dropna') and direction.dropna().empty):
             state["_log"] = [("WARN", "SuperTrend: insufficient data after calculation")]
             return "HOLD", state
 
