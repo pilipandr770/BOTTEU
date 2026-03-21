@@ -249,6 +249,45 @@
           </div>
         </div>
 
+        <!-- ADX Filter Card -->
+        <div class="row g-3 mt-0">
+          <div class="col-12">
+            <div class="module-card p-3" id="card-adx">
+              <div class="module-header d-flex align-items-center gap-2 mb-2"
+                   onclick="toggleModule('adx')">
+                <input class="form-check-input mt-0" type="checkbox"
+                       id="mod-adx" name="modules" value="adx_filter">
+                <label class="form-check-label fw-semibold mb-0" for="mod-adx">
+                  <i class="bi bi-speedometer text-warning me-1"></i>{{ _('ADX Filter') }}
+                  <span class="badge bg-warning text-dark ms-2 fw-normal small">{{ _('new') }}</span>
+                </label>
+              </div>
+              <div class="module-body">
+                <p class="text-muted small mb-3">
+                  {{ _('Blocks trend entries (MA/MACD/SuperTrend) in ranging markets and reversion entries (RSI/BB) in trending markets. ADX < threshold = ranging; ADX >= threshold = trending.') }}
+                </p>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label small">{{ _('ADX Period') }}</label>
+                    <input type="number" name="param_adx_period"
+                           class="form-control form-control-sm" value="14" min="5" max="50">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">{{ _('ADX Threshold') }}</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" name="param_adx_threshold"
+                             class="form-control form-control-sm" value="25" min="10" max="50">
+                    </div>
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                    <span class="badge bg-secondary small">ADX &lt; 25 = ranging / ADX &gt; 25 = trending</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- MACD Card -->
         <div class="row g-3 mt-0">
           <div class="col-md-6">
@@ -429,6 +468,21 @@
       </div>
     </div>
 
+    <!-- ── ORDER EXECUTION ─────────────────────────────────────────────── -->
+    <div class="card bg-dark border-secondary mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-arrow-left-right me-2 text-info"></i>{{ _('Order Execution') }}
+      </div>
+      <div class="card-body">
+        <label class="form-label">{{ _('Order Type') }}</label>
+        <select name="param_order_type" class="form-select form-select-sm" style="max-width:300px;">
+          <option value="smart" selected>{{ _('Smart LIMIT → Market fallback') }}</option>
+          <option value="market">{{ _('Market only') }}</option>
+        </select>
+        <div class="form-text">{{ _('Smart: places a LIMIT order at best price, falls back to Market after 30 s. Lower fees, no partial-fill multiplication.') }}</div>
+      </div>
+    </div>
+
     <!-- ── SUBMIT ──────────────────────────────────────────────────────── -->
     <div class="d-flex gap-2 mb-5">
       <button type="submit" class="btn btn-success px-4" id="submitBtn">
@@ -450,12 +504,14 @@ const modVOL         = document.getElementById('mod-vol');
 const modMACD        = document.getElementById('mod-macd');
 const modSupertrend  = document.getElementById('mod-supertrend');
 const modBB          = document.getElementById('mod-bb');
+const modADX         = document.getElementById('mod-adx');
 const cardMA         = document.getElementById('card-ma');
 const cardRSI        = document.getElementById('card-rsi');
 const cardVOL        = document.getElementById('card-vol');
 const cardMACD       = document.getElementById('card-macd');
 const cardSupertrend = document.getElementById('card-supertrend');
 const cardBB         = document.getElementById('card-bb');
+const cardADX        = document.getElementById('card-adx');
 const logicRow    = document.getElementById('logicRow');
 const noModWarn   = document.getElementById('noModuleWarning');
 const slBadge     = document.getElementById('slBadge');
@@ -471,6 +527,7 @@ function toggleModule(which) {
     macd:        [modMACD,       cardMACD],
     supertrend:  [modSupertrend, cardSupertrend],
     bb:          [modBB,         cardBB],
+    adx:         [modADX,        cardADX],
   };
   if (map[which]) {
     const [mod, card] = map[which];
@@ -488,6 +545,7 @@ function toggleModule(which) {
   [modMACD,       cardMACD],
   [modSupertrend, cardSupertrend],
   [modBB,         cardBB],
+  [modADX,        cardADX],
 ].forEach(([mod, card]) => {
   mod.addEventListener('change', (e) => {
     e.stopPropagation();

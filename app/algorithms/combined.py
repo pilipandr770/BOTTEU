@@ -112,6 +112,49 @@ def _bbw_pct(series: pd.Series, length: int, num_std: float = 2.0) -> float | No
     return (upper_v - lower_v) / mid_v * 100
 
 
+def _adx(df: pd.DataFrame, length: int = 14) -> float | None:
+    """
+    Average Directional Index — measures trend strength (0-100).
+    ADX > 25 = trending market (good for MA/MACD/SuperTrend).
+    ADX < 20 = ranging/choppy market (good for RSI/BB Bounce).
+    """
+    if len(df) < length * 2 + 1:
+        return None
+    high  = df["high"].astype(float)
+    low   = df["low"].astype(float)
+    close = df["close"].astype(float)
+
+    prev_high  = high.shift(1)
+    prev_low   = low.shift(1)
+    prev_close = close.shift(1)
+
+    # Directional Movement
+    up_move   = high - prev_high
+    down_move = prev_low - low
+    plus_dm   = up_move.where((up_move > down_move) & (up_move > 0), 0.0)
+    minus_dm  = down_move.where((down_move > up_move) & (down_move > 0), 0.0)
+
+    # True Range
+    tr = pd.concat([
+        high - low,
+        (high - prev_close).abs(),
+        (low  - prev_close).abs(),
+    ], axis=1).max(axis=1)
+
+    # Wilder smoothing (EWM with alpha=1/length)
+    alpha = 1.0 / length
+    atr14    = tr.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
+    plus_di  = 100 * plus_dm.ewm(alpha=alpha, min_periods=length, adjust=False).mean() / atr14
+    minus_di = 100 * minus_dm.ewm(alpha=alpha, min_periods=length, adjust=False).mean() / atr14
+
+    # DX → ADX
+    dx  = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, 1)
+    adx = dx.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
+
+    val = float(adx.iloc[-1])
+    return val if not pd.isna(val) else None
+
+
 def _macd_signals(close: pd.Series, fast: int, slow: int, signal: int):
     """Returns (bullish_cross, bearish_cross, macd_val, signal_val)."""
     ema_fast    = _ema(close, fast)
@@ -415,8 +458,53 @@ class CombinedStrategy(BaseStrategy):
                     f"✅ Volatility filter: {label}={vol_value:.3f}% ≥ min {vol_min_pct:.2f}% — OK"
                 ))
         # vol_blocked is False when volatility module is disabled or already in position (exits not blocked)
-        do_buy  = (all(buy_signals) if entry_logic == "AND" else any(buy_signals)) and not vol_blocked
-        do_sell = any(sell_signals)   # exit logic is always OR — vol filter never blocks exits
+
+        # ── ADX Trend Strength Filter ──────────────────────────────────────
+        # When enabled, blocks trend-following entries (MA/MACD/ST) in ranging
+        # market and blocks mean-reversion entries (RSI/BB) in trending market.
+        adx_blocked = False
+        if "adx_filter" in modules and not has_position:
+            adx_period = int(params.get("adx_period", 14))
+            adx_thresh = float(params.get("adx_threshold", 25))
+            adx_val = _adx(df, adx_period)
+            if adx_val is None:
+                log_lines.append(("WARN", f"⏸ ADX filter: not enough data for ADX({adx_period})"))
+                adx_blocked = True
+            else:
+                # Determine which type of strategies are active
+                trend_modules = {"ma_crossover", "macd", "supertrend"} & set(modules)
+                reversion_modules = {"rsi", "bb_bounce"} & set(modules)
+                is_trending = adx_val >= adx_thresh
+
+                if trend_modules and not reversion_modules:
+                    # Only trend strategies → block in ranging market
+                    if not is_trending:
+                        adx_blocked = True
+                        log_lines.append(("INFO",
+                            f"⏸ ADX({adx_period})={adx_val:.1f} < {adx_thresh:.0f} — "
+                            f"ranging market, trend entries blocked"))
+                    else:
+                        log_lines.append(("INFO",
+                            f"✅ ADX({adx_period})={adx_val:.1f} ≥ {adx_thresh:.0f} — trending, OK"))
+                elif reversion_modules and not trend_modules:
+                    # Only reversion strategies → block in trending market
+                    if is_trending:
+                        adx_blocked = True
+                        log_lines.append(("INFO",
+                            f"⏸ ADX({adx_period})={adx_val:.1f} ≥ {adx_thresh:.0f} — "
+                            f"trending market, mean-reversion entries blocked"))
+                    else:
+                        log_lines.append(("INFO",
+                            f"✅ ADX({adx_period})={adx_val:.1f} < {adx_thresh:.0f} — ranging, OK"))
+                else:
+                    # Mixed → just log, don't block (user chose both)
+                    label = "trending" if is_trending else "ranging"
+                    log_lines.append(("INFO",
+                        f"📊 ADX({adx_period})={adx_val:.1f} — {label} "
+                        f"(threshold {adx_thresh:.0f}), mixed modules active"))
+
+        do_buy  = (all(buy_signals) if entry_logic == "AND" else any(buy_signals)) and not vol_blocked and not adx_blocked
+        do_sell = any(sell_signals)   # exit logic is always OR — filters never block exits
 
         # ── Exit checks (evaluated before entry) ──────────────────────────
         if has_position:

@@ -64,6 +64,12 @@ def run():
             fee_rate = 0.001
     except (TypeError, ValueError):
         fee_rate = 0.001
+    try:
+        slippage_pct = float(data.get("slippage_pct", 0.05))
+        if slippage_pct < 0 or slippage_pct > 5:
+            slippage_pct = 0.05
+    except (TypeError, ValueError):
+        slippage_pct = 0.05
 
     # ── Fetch historical data ─────────────────────────────────────────────
     yahoo_ticker = _to_yahoo_ticker(symbol)
@@ -128,7 +134,7 @@ def run():
 
         if signal == "BUY" and not has_position:
             has_position = True
-            entry_price = current_close
+            entry_price = current_close * (1 + slippage_pct / 100)  # slippage: buy slightly higher
             entry_idx = i
             trades.append({
                 "type": "BUY",
@@ -139,7 +145,7 @@ def run():
 
         elif signal == "SELL" and has_position:
             has_position = False
-            exit_price = current_close
+            exit_price = current_close * (1 - slippage_pct / 100)  # slippage: sell slightly lower
             pnl_pct = (exit_price - entry_price) / entry_price * 100
             # Round-trip fee: fee_rate% buy + fee_rate% sell
             fee_pct = fee_rate * 2 * 100
@@ -259,6 +265,7 @@ def run():
         "final_equity": round(equity, 2),
         "total_fees_usdt": round(total_fees_usdt, 2),
         "fee_rate_pct": round(fee_rate * 100, 4),
+        "slippage_pct": round(slippage_pct, 4),
         "exit_reasons": exit_reasons,
         "sharpe_ratio": round(sharpe, 3),
         "sortino_ratio": round(sortino, 3),

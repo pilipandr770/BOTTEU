@@ -68,7 +68,8 @@ def tick_bot(bot_id: int) -> None:
     from app.algorithms.base import get_algorithm
     from app.services.binance_client import get_client_for_user, get_quote_free_balance
     from app.services.order_manager import (
-        place_market_order, place_stop_loss_order,
+        place_market_order, place_smart_order,
+        place_stop_loss_order,
         place_oco_sell_order, cancel_open_orders,
     )
     from app.services.telegram_notifier import notify_buy, notify_sell, notify_error
@@ -201,7 +202,11 @@ def tick_bot(bot_id: int) -> None:
                     notify_buy(_chat_id, bot.symbol, float(current_price),
                                float(exec_qty), f"🧪 {bot.name} [DEMO]")
             else:
-                resp      = place_market_order(client, bot.symbol, "BUY", quote_amount=quote_amount)
+                use_limit = bot.params.get("order_type", "smart") != "market"
+                resp      = place_smart_order(
+                    client, bot.symbol, "BUY",
+                    quote_amount=quote_amount, use_limit=use_limit,
+                )
                 exec_qty  = Decimal(resp.get("executedQty", "0"))
                 exec_price = (
                     Decimal(resp.get("cummulativeQuoteQty", "0")) / exec_qty
@@ -309,7 +314,11 @@ def tick_bot(bot_id: int) -> None:
                     if state_current.get("oco_order_list_id") or state_current.get("sl_order_id"):
                         cancel_open_orders(client, bot.symbol)
 
-                    resp       = place_market_order(client, bot.symbol, "SELL", quantity=sell_qty)
+                    use_limit = bot.params.get("order_type", "smart") != "market"
+                    resp       = place_smart_order(
+                        client, bot.symbol, "SELL",
+                        quantity=sell_qty, use_limit=use_limit,
+                    )
                     exec_qty   = Decimal(resp.get("executedQty", "0"))
                     exec_price = (
                         Decimal(resp.get("cummulativeQuoteQty", "0")) / exec_qty
