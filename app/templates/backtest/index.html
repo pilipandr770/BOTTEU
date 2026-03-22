@@ -362,12 +362,31 @@ document.getElementById('btnRun').addEventListener('click', async () => {
   try {
     const resp = await fetch('/backtest/run', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
       body: JSON.stringify(payload),
     });
-    const data = await resp.json();
+    const contentType = (resp.headers.get('content-type') || '').toLowerCase();
+    let data = null;
+
+    if (contentType.includes('application/json')) {
+      data = await resp.json();
+    } else {
+      const rawText = await resp.text();
+      if (resp.redirected && resp.url.includes('/login')) {
+        window.location.href = resp.url;
+        return;
+      }
+      const compact = rawText.trim();
+      const htmlLike = compact.startsWith('<!doctype') || compact.startsWith('<html');
+      throw new Error(htmlLike ? 'Session expired or server returned HTML. Please refresh page and login again.' : (compact || `HTTP ${resp.status}`));
+    }
+
     if (!resp.ok || data.error) {
-      document.getElementById('btError').textContent = data.error || 'Server error';
+      document.getElementById('btError').textContent = (data && data.error) ? data.error : `Server error (${resp.status})`;
       document.getElementById('btError').style.display = 'block';
       return;
     }

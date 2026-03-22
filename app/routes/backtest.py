@@ -15,7 +15,7 @@ from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 
 from app.algorithms.base import list_algorithms, get_algorithm
-from app.extensions import limiter
+from app.extensions import limiter, csrf
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def index():
 
 @backtest_bp.route("/run", methods=["POST"])
 @login_required
+@csrf.exempt
 @limiter.limit("20 per hour")
 def run():
     data = request.get_json(silent=True) or {}
