@@ -62,7 +62,8 @@ class Config:
 
     # Flask-Limiter
     RATELIMIT_DEFAULT = "200 per day;50 per hour"
-    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", "memory://")
+    RATELIMIT_STORAGE_URI = os.environ.get("REDIS_URL", "memory://")
+    RATELIMIT_STORAGE_URL = RATELIMIT_STORAGE_URI
 
     # ── Session / Cookie security ──────────────────────────────────────────
     SESSION_COOKIE_HTTPONLY = True      # JS cannot read the session cookie
