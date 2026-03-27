@@ -45,6 +45,9 @@ stripe==11.1.0
 # In-process bot scheduler (replaces Celery for single-container deployments)
 APScheduler==3.10.4
 
+# AI Advisor (Anthropic Claude)
+anthropic>=0.39.0
+
 # Utils
 python-dotenv==1.0.1
 requests==2.32.3

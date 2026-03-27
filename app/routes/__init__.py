@@ -6,8 +6,9 @@ from app.routes.subscriptions import subscriptions_bp
 from app.routes.legal import legal_bp
 from app.routes.guides import guides_bp
 from app.routes.telegram_webhook import telegram_bp
+from app.routes.ai_advisor import ai_bp
 
 __all__ = [
     "auth_bp", "dashboard_bp", "bots_bp", "backtest_bp",
-    "subscriptions_bp", "legal_bp", "guides_bp", "telegram_bp",
+    "subscriptions_bp", "legal_bp", "guides_bp", "telegram_bp", "ai_bp",
 ]

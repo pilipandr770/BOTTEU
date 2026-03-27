@@ -55,6 +55,9 @@ class Config:
     # App
     APP_URL = os.environ.get("APP_URL", "http://localhost:5000")
 
+    # Anthropic AI Advisor
+    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
     # Flask-Babel
     LANGUAGES = ["en", "de"]
     BABEL_DEFAULT_LOCALE = "en"

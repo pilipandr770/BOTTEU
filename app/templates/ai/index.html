@@ -1,0 +1,580 @@
+{% extends "base.html" %}
+{% block title %}{{ _('AI Advisor') }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .regime-badge { font-size: 1rem; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+  .regime-trending_up { background: #1b5e20; color: #69f0ae; }
+  .regime-trending_down { background: #b71c1c; color: #ff8a80; }
+  .regime-ranging { background: #e65100; color: #ffcc80; }
+  .regime-high_volatility { background: #4a148c; color: #ea80fc; }
+  .regime-breakout { background: #0d47a1; color: #82b1ff; }
+
+  .signal-BUY { color: #00e676; font-weight: bold; }
+  .signal-SELL { color: #ff1744; font-weight: bold; }
+  .signal-HOLD { color: #ffd740; }
+  .signal-ERROR { color: #757575; }
+
+  .confidence-high { color: #00e676; }
+  .confidence-medium { color: #ffd740; }
+  .confidence-low { color: #ff1744; }
+
+  .matrix-table th, .matrix-table td { text-align: center; padding: 0.4rem 0.6rem; font-size: 0.85rem; }
+  .matrix-table th { background: rgba(255,255,255,0.05); }
+
+  .scan-spinner { display: none; }
+  .scan-spinner.active { display: inline-block; }
+
+  .card-ai { border: 1px solid rgba(255,255,255,0.1); }
+  .card-ai .card-header { border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  .combo-rank { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: rgba(0,230,118,0.15); color: #00e676; font-weight: bold; font-size: 0.8rem; }
+
+  .history-item { border-left: 3px solid transparent; padding: 0.75rem; margin-bottom: 0.5rem;
+    background: rgba(255,255,255,0.03); border-radius: 0.25rem; }
+  .history-item.applied { border-left-color: #00e676; }
+  .history-item.pending { border-left-color: #ffd740; }
+
+  #ai-results { display: none; }
+  #scan-only-results { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <h2 class="mb-0"><i class="bi bi-stars text-warning"></i> {{ _('AI Advisor') }}</h2>
+  <span class="badge bg-warning text-dark ms-2">BETA</span>
+</div>
+
+<!-- ── Analysis Form ── -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card card-ai">
+      <div class="card-header d-flex align-items-center">
+        <i class="bi bi-search me-2"></i>
+        <strong>{{ _('Market Analysis') }}</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">{{ _('Symbol') }}</label>
+            <input type="text" id="ai-symbol" class="form-control" value="BTCUSDT"
+                   placeholder="BTCUSDT, ETHUSDT...">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">{{ _('Apply to Bot') }} <small class="text-muted">({{ _('optional') }})</small></label>
+            <select id="ai-bot-id" class="form-select">
+              <option value="">— {{ _('No bot') }} —</option>
+              {% for bot in bots %}
+              <option value="{{ bot.id }}">{{ bot.name }} ({{ bot.symbol }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5 d-flex gap-2">
+            <button id="btn-scan" class="btn btn-outline-info flex-fill" onclick="runScan()">
+              <span class="scan-spinner spinner-border spinner-border-sm me-1" role="status"></span>
+              <i class="bi bi-radar"></i> {{ _('Scan Only') }}
+            </button>
+            <button id="btn-analyze" class="btn btn-success flex-fill" onclick="runAnalysis()">
+              <span class="scan-spinner spinner-border spinner-border-sm me-1" role="status"></span>
+              <i class="bi bi-stars"></i> {{ _('AI Analysis') }}
+            </button>
+          </div>
+        </div>
+        <div class="mt-2">
+          <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            {{ _('Scan Only — free, no AI. AI Analysis — uses Claude to interpret data and give recommendations.') }}
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card card-ai h-100">
+      <div class="card-header">
+        <i class="bi bi-lightbulb me-2"></i>
+        <strong>{{ _('How it works') }}</strong>
+      </div>
+      <div class="card-body small">
+        <ol class="mb-0 ps-3">
+          <li class="mb-1">{{ _('Scanner runs all 5 strategies on 5 timeframes (5m → 1d)') }}</li>
+          <li class="mb-1">{{ _('Quick backtests with 3 param variants per strategy') }}</li>
+          <li class="mb-1">{{ _('AI analyzes the matrix and detects market regime') }}</li>
+          <li class="mb-1">{{ _('Recommends best strategy + settings with confidence score') }}</li>
+          <li>{{ _('One click to apply recommendation to any bot') }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Error Alert ── -->
+<div id="ai-error" class="alert alert-danger d-none" role="alert"></div>
+
+<!-- ── Scan-Only Results ── -->
+<div id="scan-only-results">
+  <div class="row g-4 mb-4">
+    <!-- Signal Matrix -->
+    <div class="col-12">
+      <div class="card card-ai">
+        <div class="card-header">
+          <i class="bi bi-grid-3x3 me-2"></i>
+          <strong>{{ _('Signal Matrix') }}</strong>
+          <small class="text-muted ms-2" id="scan-symbol-display"></small>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-sm matrix-table mb-0" id="signal-matrix">
+              <thead><tr id="matrix-header"></tr></thead>
+              <tbody id="matrix-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Market Indicators per TF -->
+    <div class="col-12">
+      <div class="card card-ai">
+        <div class="card-header">
+          <i class="bi bi-bar-chart me-2"></i>
+          <strong>{{ _('Market Indicators') }}</strong>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-sm mb-0" id="market-indicators-table">
+              <thead>
+                <tr>
+                  <th>TF</th><th>{{ _('Price') }}</th><th>RSI</th><th>ATR%</th>
+                  <th>BBW%</th><th>>SMA20</th><th>>SMA50</th><th>1d%</th><th>7d%</th>
+                </tr>
+              </thead>
+              <tbody id="market-indicators-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Combinations -->
+    <div class="col-12">
+      <div class="card card-ai">
+        <div class="card-header">
+          <i class="bi bi-trophy me-2"></i>
+          <strong>{{ _('Top Strategy Combinations') }}</strong>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>#</th><th>{{ _('Algorithm') }}</th><th>TF</th><th>{{ _('Variant') }}</th>
+                  <th>{{ _('Trades') }}</th><th>{{ _('Win Rate') }}</th><th>{{ _('Return') }}</th>
+                  <th>{{ _('Max DD') }}</th><th>{{ _('Score') }}</th>
+                </tr>
+              </thead>
+              <tbody id="combos-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI Analysis Results ── -->
+<div id="ai-results">
+  <div class="row g-4 mb-4">
+    <!-- Market Regime + Confidence -->
+    <div class="col-md-6">
+      <div class="card card-ai h-100">
+        <div class="card-header">
+          <i class="bi bi-activity me-2"></i>
+          <strong>{{ _('Market Regime') }}</strong>
+        </div>
+        <div class="card-body text-center">
+          <span id="regime-badge" class="regime-badge mb-3 d-inline-block"></span>
+          <p id="regime-explanation" class="text-muted mt-2 mb-0"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card card-ai h-100">
+        <div class="card-header">
+          <i class="bi bi-speedometer2 me-2"></i>
+          <strong>{{ _('Confidence') }}</strong>
+        </div>
+        <div class="card-body text-center">
+          <div class="display-3 fw-bold" id="confidence-value">—</div>
+          <div class="progress mt-2" style="height: 8px;">
+            <div id="confidence-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+          </div>
+          <small class="text-muted mt-1 d-block" id="confidence-label"></small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="col-12">
+      <div class="card card-ai border-success">
+        <div class="card-header bg-success bg-opacity-10">
+          <i class="bi bi-lightning-charge me-2 text-success"></i>
+          <strong class="text-success">{{ _('AI Recommendation') }}</strong>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <h6>{{ _('Strategy') }}</h6>
+              <p class="fs-5 text-success fw-bold" id="rec-algorithm">—</p>
+            </div>
+            <div class="col-md-4">
+              <h6>{{ _('Timeframe') }}</h6>
+              <p class="fs-5 text-info fw-bold" id="rec-timeframe">—</p>
+            </div>
+            <div class="col-md-4">
+              <h6>{{ _('Parameters') }}</h6>
+              <pre class="text-light small mb-0" id="rec-params" style="max-height:120px;overflow:auto;"></pre>
+            </div>
+          </div>
+          <hr class="border-secondary">
+          <h6>{{ _('Reasoning') }}</h6>
+          <p id="rec-reasoning" class="text-muted"></p>
+
+          <h6>{{ _('Risks') }}</h6>
+          <ul id="rec-risks" class="text-warning small"></ul>
+
+          <h6>{{ _('Market Summary') }}</h6>
+          <p id="rec-summary" class="text-muted small"></p>
+
+          <!-- Apply Button -->
+          <div class="d-flex gap-2 mt-3" id="apply-section" style="display:none!important;">
+            <button id="btn-apply" class="btn btn-success" onclick="applyRecommendation()">
+              <i class="bi bi-check-circle me-1"></i> {{ _('Apply to Bot') }}
+            </button>
+            <span class="text-muted small align-self-center" id="apply-bot-name"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 3 Strategies from AI -->
+    <div class="col-12">
+      <div class="card card-ai">
+        <div class="card-header">
+          <i class="bi bi-list-ol me-2"></i>
+          <strong>{{ _('AI Top 3 Strategies') }}</strong>
+        </div>
+        <div class="card-body" id="ai-top3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Consultation History ── -->
+<div class="card card-ai mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <i class="bi bi-clock-history me-2"></i>
+      <strong>{{ _('Analysis History') }}</strong>
+    </div>
+    <small class="text-muted">{{ _('Last 20 consultations') }}</small>
+  </div>
+  <div class="card-body">
+    {% if consultations %}
+    {% for c in consultations %}
+    <div class="history-item {{ 'applied' if c.applied else 'pending' }}">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <strong>{{ c.symbol }}</strong>
+          <span class="regime-badge regime-{{ c.market_regime or 'ranging' }} ms-2" style="font-size:0.75rem; padding:0.2rem 0.5rem;">
+            {{ c.market_regime or '?' }}
+          </span>
+          {% if c.applied %}
+          <span class="badge bg-success ms-1">{{ _('Applied') }}</span>
+          {% endif %}
+        </div>
+        <small class="text-muted">{{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at }}</small>
+      </div>
+      <div class="mt-1 small">
+        <span class="text-info">{{ c.recommended_algorithm or '—' }}</span> on
+        <span class="text-info">{{ c.recommended_timeframe or '—' }}</span>,
+        {{ _('confidence') }}: <strong>{{ c.confidence_score or 0 }}%</strong>
+      </div>
+      {% if c.reasoning %}
+      <div class="mt-1 text-muted small">{{ c.reasoning[:200] }}{{ '...' if c.reasoning|length > 200 }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-muted mb-0">{{ _('No analyses yet. Run your first AI analysis above!') }}</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const ALGO_LABELS = {
+  ma_crossover: 'MA Crossover', rsi: 'RSI', macd: 'MACD',
+  supertrend: 'SuperTrend', bb_bounce: 'BB Bounce', combined: 'Combined'
+};
+
+let lastConsultationId = null;
+let lastScanData = null;
+
+function showError(msg) {
+  const el = document.getElementById('ai-error');
+  el.textContent = msg;
+  el.classList.remove('d-none');
+}
+function hideError() {
+  document.getElementById('ai-error').classList.add('d-none');
+}
+
+function setSpinners(active) {
+  document.querySelectorAll('.scan-spinner').forEach(s => {
+    s.classList.toggle('active', active);
+  });
+  document.getElementById('btn-scan').disabled = active;
+  document.getElementById('btn-analyze').disabled = active;
+}
+
+function renderSignalMatrix(scanData) {
+  const tfs = Object.keys(scanData.timeframes || {});
+  const algos = ['ma_crossover', 'rsi', 'macd', 'supertrend', 'bb_bounce'];
+
+  // Header
+  let hdr = '<th>{{ _("Algorithm") }}</th>';
+  tfs.forEach(tf => { hdr += `<th>${tf}</th>`; });
+  document.getElementById('matrix-header').innerHTML = hdr;
+
+  // Body
+  let body = '';
+  algos.forEach(algo => {
+    body += `<tr><td class="text-start fw-bold">${ALGO_LABELS[algo] || algo}</td>`;
+    tfs.forEach(tf => {
+      const tfData = scanData.timeframes[tf];
+      if (!tfData || tfData.error) {
+        body += '<td class="text-muted">—</td>';
+      } else {
+        const sig = (tfData.signals || {})[algo] || 'HOLD';
+        body += `<td class="signal-${sig}">${sig}</td>`;
+      }
+    });
+    body += '</tr>';
+  });
+  document.getElementById('matrix-body').innerHTML = body;
+  document.getElementById('scan-symbol-display').textContent = scanData.symbol;
+}
+
+function renderMarketIndicators(scanData) {
+  let body = '';
+  for (const [tf, data] of Object.entries(scanData.timeframes || {})) {
+    if (data.error) {
+      body += `<tr><td>${tf}</td><td colspan="8" class="text-muted">${data.error}</td></tr>`;
+      continue;
+    }
+    const m = data.market || {};
+    const rsiClass = m.rsi < 30 ? 'signal-BUY' : m.rsi > 70 ? 'signal-SELL' : '';
+    body += `<tr>
+      <td class="fw-bold">${tf}</td>
+      <td>$${m.price || '—'}</td>
+      <td class="${rsiClass}">${m.rsi ?? '—'}</td>
+      <td>${m.atr_pct ?? '—'}%</td>
+      <td>${m.bbw_pct ?? '—'}%</td>
+      <td>${m.price_above_sma20 ? '✅' : '❌'}</td>
+      <td>${m.price_above_sma50 ? '✅' : '❌'}</td>
+      <td class="${(m.pct_change_1d||0) >= 0 ? 'text-success' : 'text-danger'}">${m.pct_change_1d ?? '—'}%</td>
+      <td class="${(m.pct_change_7d||0) >= 0 ? 'text-success' : 'text-danger'}">${m.pct_change_7d ?? '—'}%</td>
+    </tr>`;
+  }
+  document.getElementById('market-indicators-body').innerHTML = body;
+}
+
+function renderTopCombos(combos) {
+  let body = '';
+  (combos || []).forEach((c, i) => {
+    if (c.score === -999) return;
+    const retClass = (c.return_pct || 0) >= 0 ? 'text-success' : 'text-danger';
+    body += `<tr>
+      <td><span class="combo-rank">${i + 1}</span></td>
+      <td>${ALGO_LABELS[c.algorithm] || c.algorithm}</td>
+      <td>${c.timeframe}</td>
+      <td><small>${c.variant}</small></td>
+      <td>${c.trades}</td>
+      <td>${c.win_rate}%</td>
+      <td class="${retClass}">${c.return_pct}%</td>
+      <td class="text-warning">${c.max_drawdown_pct}%</td>
+      <td class="fw-bold">${(c.score || 0).toFixed(1)}</td>
+    </tr>`;
+  });
+  document.getElementById('combos-body').innerHTML = body || '<tr><td colspan="9" class="text-muted">{{ _("No data") }}</td></tr>';
+}
+
+function renderScanResults(scanData) {
+  renderSignalMatrix(scanData);
+  renderMarketIndicators(scanData);
+  renderTopCombos(scanData.best_combinations);
+  document.getElementById('scan-only-results').style.display = 'block';
+}
+
+function renderAIResults(advice) {
+  // Market Regime
+  const regime = advice.market_regime || 'ranging';
+  const regimeBadge = document.getElementById('regime-badge');
+  regimeBadge.className = `regime-badge regime-${regime}`;
+  regimeBadge.textContent = regime.replace('_', ' ').toUpperCase();
+  document.getElementById('regime-explanation').textContent = advice.regime_explanation || '';
+
+  // Confidence
+  const conf = advice.confidence || 0;
+  document.getElementById('confidence-value').textContent = conf + '%';
+  const bar = document.getElementById('confidence-bar');
+  bar.style.width = conf + '%';
+  bar.className = 'progress-bar ' + (conf >= 70 ? 'bg-success' : conf >= 40 ? 'bg-warning' : 'bg-danger');
+  document.getElementById('confidence-value').className =
+    'display-3 fw-bold ' + (conf >= 70 ? 'confidence-high' : conf >= 40 ? 'confidence-medium' : 'confidence-low');
+  document.getElementById('confidence-label').textContent =
+    conf >= 70 ? '{{ _("High confidence") }}' : conf >= 40 ? '{{ _("Medium confidence") }}' : '{{ _("Low confidence") }}';
+
+  // Recommendation
+  document.getElementById('rec-algorithm').textContent = ALGO_LABELS[advice.recommended_algorithm] || advice.recommended_algorithm || '—';
+  document.getElementById('rec-timeframe').textContent = advice.recommended_timeframe || '—';
+  document.getElementById('rec-params').textContent = JSON.stringify(advice.recommended_params || {}, null, 2);
+  document.getElementById('rec-reasoning').textContent = advice.reasoning || '';
+
+  // Risks
+  const risksEl = document.getElementById('rec-risks');
+  risksEl.innerHTML = '';
+  (advice.risks || []).forEach(r => {
+    const li = document.createElement('li');
+    li.textContent = r;
+    risksEl.appendChild(li);
+  });
+
+  // Summary
+  document.getElementById('rec-summary').textContent = advice.market_summary || '';
+
+  // Top 3
+  const top3El = document.getElementById('ai-top3');
+  top3El.innerHTML = '';
+  (advice.top_3_strategies || []).forEach((s, i) => {
+    top3El.innerHTML += `
+      <div class="d-flex align-items-center mb-2 p-2" style="background:rgba(255,255,255,0.03);border-radius:0.25rem;">
+        <span class="combo-rank me-3">${i + 1}</span>
+        <div>
+          <strong>${ALGO_LABELS[s.algorithm] || s.algorithm}</strong> on <span class="text-info">${s.timeframe}</span>
+          <span class="text-muted ms-2">(score: ${s.score})</span>
+          <div class="text-muted small">${s.note || ''}</div>
+        </div>
+      </div>`;
+  });
+
+  // Apply button
+  const botId = document.getElementById('ai-bot-id').value;
+  const applySection = document.getElementById('apply-section');
+  if (botId && advice.consultation_id) {
+    applySection.style.display = 'flex !important';
+    applySection.classList.remove('d-none');
+    applySection.style.cssText = 'display: flex !important;';
+    const selectedBot = document.getElementById('ai-bot-id').selectedOptions[0];
+    document.getElementById('apply-bot-name').textContent = selectedBot ? selectedBot.textContent : '';
+    lastConsultationId = advice.consultation_id;
+  } else {
+    applySection.style.cssText = 'display: none !important;';
+  }
+
+  // Show scan results too
+  if (advice.scan_data) {
+    renderScanResults(advice.scan_data);
+  }
+
+  document.getElementById('ai-results').style.display = 'block';
+}
+
+async function runScan() {
+  hideError();
+  setSpinners(true);
+  document.getElementById('ai-results').style.display = 'none';
+  document.getElementById('scan-only-results').style.display = 'none';
+
+  const symbol = document.getElementById('ai-symbol').value.trim().toUpperCase();
+  if (!symbol) { showError('{{ _("Enter a symbol") }}'); setSpinners(false); return; }
+
+  try {
+    const resp = await fetch('/ai/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol })
+    });
+    const data = await resp.json();
+    if (data.error) { showError(data.error); setSpinners(false); return; }
+    lastScanData = data;
+    renderScanResults(data);
+  } catch (e) {
+    showError('{{ _("Network error") }}: ' + e.message);
+  }
+  setSpinners(false);
+}
+
+async function runAnalysis() {
+  hideError();
+  setSpinners(true);
+  document.getElementById('ai-results').style.display = 'none';
+  document.getElementById('scan-only-results').style.display = 'none';
+
+  const symbol = document.getElementById('ai-symbol').value.trim().toUpperCase();
+  const botId = document.getElementById('ai-bot-id').value;
+  if (!symbol) { showError('{{ _("Enter a symbol") }}'); setSpinners(false); return; }
+
+  try {
+    const resp = await fetch('/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, bot_id: botId || null })
+    });
+    const data = await resp.json();
+    if (data.error) { showError(data.error); setSpinners(false); return; }
+    renderAIResults(data);
+  } catch (e) {
+    showError('{{ _("Network error") }}: ' + e.message);
+  }
+  setSpinners(false);
+}
+
+async function applyRecommendation() {
+  const botId = document.getElementById('ai-bot-id').value;
+  if (!botId || !lastConsultationId) return;
+
+  if (!confirm('{{ _("Apply this AI recommendation to the selected bot? The bot strategy and parameters will be changed.") }}')) return;
+
+  try {
+    const resp = await fetch('/ai/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bot_id: botId, consultation_id: lastConsultationId })
+    });
+    const data = await resp.json();
+    if (data.error) { showError(data.error); return; }
+    alert(data.message || '{{ _("Recommendation applied!") }}');
+    location.reload();
+  } catch (e) {
+    showError('{{ _("Network error") }}: ' + e.message);
+  }
+}
+
+// Auto-fill symbol when bot is selected
+document.getElementById('ai-bot-id').addEventListener('change', function() {
+  const opt = this.selectedOptions[0];
+  if (opt && opt.value) {
+    const match = opt.textContent.match(/\((\w+)\)/);
+    if (match) document.getElementById('ai-symbol').value = match[1];
+  }
+});
+</script>
+{% endblock %}
