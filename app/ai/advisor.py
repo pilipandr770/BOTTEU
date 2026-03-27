@@ -35,26 +35,40 @@ You will receive structured data containing:
 
 Your job:
 1. Determine the current MARKET REGIME (one of: trending_up, trending_down, ranging, high_volatility, breakout)
-2. Identify which strategy + timeframe + parameters work best RIGHT NOW
+2. Identify which strategy + timeframe + parameters work best RIGHT NOW based on the backtest data
 3. Explain WHY in simple terms (2-3 sentences)
-4. Give a CONFIDENCE score (0-100)
+4. Give a CONFIDENCE score (0-100) — use low values (10-30) if data is sparse or unavailable
 5. List top 3 RISKS
 6. Provide a SUMMARY recommendation
+
+███ CRITICAL — ALGORITHM KEYS ███
+The "recommended_algorithm" field and all "algorithm" fields in "top_3_strategies"
+MUST be EXACTLY one of these values (case-sensitive):
+  "ma_crossover"  — Moving Average Crossover
+  "rsi"           — RSI Oscillator
+  "macd"          — MACD
+  "supertrend"    — SuperTrend
+  "bb_bounce"     — Bollinger Band Bounce
+
+Do NOT invent algorithm names like "mean_reversion", "trend_following", "momentum",
+"breakout_strategy" or anything else. Use ONLY the exact keys listed above.
+Any other value is a system error.
+██████████████████████████████████
 
 RESPOND ONLY in valid JSON with this exact structure:
 {
   "market_regime": "trending_up|trending_down|ranging|high_volatility|breakout",
   "regime_explanation": "Brief description of current market conditions",
-  "recommended_algorithm": "algorithm_key",
-  "recommended_timeframe": "timeframe",
+  "recommended_algorithm": "<one of the 5 keys above>",
+  "recommended_timeframe": "5m|15m|1h|4h|1d",
   "recommended_params": {},
   "confidence": 0-100,
   "reasoning": "2-3 sentence explanation of why this strategy fits current conditions",
   "risks": ["risk1", "risk2", "risk3"],
   "top_3_strategies": [
-    {"algorithm": "key", "timeframe": "tf", "score": 0, "note": "brief note"},
-    {"algorithm": "key", "timeframe": "tf", "score": 0, "note": "brief note"},
-    {"algorithm": "key", "timeframe": "tf", "score": 0, "note": "brief note"}
+    {"algorithm": "<one of the 5 keys>", "timeframe": "tf", "score": 0, "note": "brief note"},
+    {"algorithm": "<one of the 5 keys>", "timeframe": "tf", "score": 0, "note": "brief note"},
+    {"algorithm": "<one of the 5 keys>", "timeframe": "tf", "score": 0, "note": "brief note"}
   ],
   "market_summary": "1-2 paragraph overall market analysis"
 }
@@ -127,6 +141,68 @@ def _build_user_prompt(scan_data: dict, lang: str = "en") -> str:
     return "\n".join(lines)
 
 
+# ── Algorithm key validation ───────────────────────────────────────────────
+
+VALID_ALGOS = {"ma_crossover", "rsi", "macd", "supertrend", "bb_bounce"}
+
+_DEFAULT_PARAMS_FALLBACK: dict[str, dict] = {
+    "ma_crossover": {"fast_ma": 7,  "slow_ma": 25, "stop_loss_pct": 2.0, "take_profit_pct": 4.0},
+    "rsi":          {"rsi_period": 14, "oversold": 30, "overbought": 70, "stop_loss_pct": 2.0, "take_profit_pct": 4.0},
+    "macd":         {"macd_fast": 12, "macd_slow": 26, "macd_signal": 9, "stop_loss_pct": 2.0, "take_profit_pct": 4.0},
+    "supertrend":   {"st_period": 10, "st_multiplier": 3.0, "stop_loss_pct": 2.0, "take_profit_pct": 4.0},
+    "bb_bounce":    {"bb_period": 20, "bb_std": 2.0, "bb_exit": "middle", "stop_loss_pct": 2.0, "take_profit_pct": 4.0},
+}
+
+
+def _validate_and_fix_algorithms(result: dict, scan_data: dict) -> None:
+    """
+    Ensure Claude used only valid algorithm keys.
+    If not, replace with the best combo from scanner data or a safe default.
+    Mutates result in place.
+    """
+    best_combos = scan_data.get("best_combinations", [])
+
+    def _best_valid_algo() -> tuple[str, str, dict]:
+        """Return (algorithm, timeframe, params) from top scanner combos."""
+        for combo in best_combos:
+            if combo.get("algorithm") in VALID_ALGOS:
+                return (
+                    combo["algorithm"],
+                    combo.get("timeframe", "1h"),
+                    combo.get("params", _DEFAULT_PARAMS_FALLBACK.get(combo["algorithm"], {})),
+                )
+        return "ma_crossover", "1h", _DEFAULT_PARAMS_FALLBACK["ma_crossover"]
+
+    # Fix recommended_algorithm
+    if result.get("recommended_algorithm") not in VALID_ALGOS:
+        bad_name = result.get("recommended_algorithm", "?")
+        algo, tf, params = _best_valid_algo()
+        logger.warning(
+            "Claude hallucinated algorithm '%s' — corrected to '%s'", bad_name, algo
+        )
+        result["recommended_algorithm"] = algo
+        if not result.get("recommended_timeframe") or result["recommended_timeframe"] not in ("5m", "15m", "1h", "4h", "1d"):
+            result["recommended_timeframe"] = tf
+        if not result.get("recommended_params"):
+            result["recommended_params"] = params
+
+    # Fix top_3_strategies
+    valid_top3 = [s for s in result.get("top_3_strategies", []) if s.get("algorithm") in VALID_ALGOS]
+    if not valid_top3:
+        for combo in best_combos[:3]:
+            if combo.get("algorithm") in VALID_ALGOS:
+                valid_top3.append({
+                    "algorithm": combo["algorithm"],
+                    "timeframe": combo.get("timeframe", "1h"),
+                    "score": round(combo.get("score", 0), 1),
+                    "note": (
+                        f"Backtest: win_rate={combo.get('win_rate', 0)}%, "
+                        f"return={combo.get('return_pct', 0)}%"
+                    ),
+                })
+    result["top_3_strategies"] = valid_top3[:3]
+
+
 def analyze(scan_data: dict, lang: str = "en") -> dict[str, Any]:
     """
     Send scanner data to Claude and get structured analysis.
@@ -159,6 +235,9 @@ def analyze(scan_data: dict, lang: str = "en") -> dict[str, Any]:
             text = text.strip()
 
         result = json.loads(text)
+
+        # ── Validate algorithm keys to prevent Claude hallucination ──────────
+        _validate_and_fix_algorithms(result, scan_data)
 
         # Add token usage info
         result["_usage"] = {

@@ -3,23 +3,41 @@ Level 1 — Multi-Timeframe Scanner.
 
 Collects OHLCV data on multiple timeframes, runs every algorithm on each,
 and performs quick backtests. Produces a structured dict for the AI Advisor.
+
+Key notes:
+- yfinance does NOT support "4h" interval → we fetch "1h" and resample.
+- Ticker fallback: BTC-USDT → BTC-USD if Yahoo Finance lacks the USDT pair.
+- Uses explicit start/end dates (more reliable than period= in yfinance 2.x).
 """
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field, asdict
+from datetime import datetime, timedelta
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from app.algorithms.base import get_algorithm, list_algorithms
+from app.algorithms.base import get_algorithm
 
 logger = logging.getLogger(__name__)
 
 TIMEFRAMES = ["5m", "15m", "1h", "4h", "1d"]
 ALGORITHM_KEYS = ["ma_crossover", "rsi", "macd", "supertrend", "bb_bounce"]
+
+# yfinance config per display-timeframe.
+# yfinance does NOT support "4h" natively → fetch "1h" + resample.
+# days_back: history window (balance between backtest quality and speed).
+_TF_CONFIG: dict[str, dict] = {
+    "5m":  {"yf_interval": "5m",  "days_back": 7,   "resample": None},
+    "15m": {"yf_interval": "15m", "days_back": 30,  "resample": None},
+    "1h":  {"yf_interval": "1h",  "days_back": 180, "resample": None},
+    "4h":  {"yf_interval": "1h",  "days_back": 365, "resample": "4h"},
+    "1d":  {"yf_interval": "1d",  "days_back": 730, "resample": None},
+}
+
+MIN_CANDLES = 20
 
 # Default params per algorithm (sensible defaults)
 DEFAULT_PARAMS: dict[str, dict] = {
@@ -63,6 +81,7 @@ FEE_RATE = 0.001  # 0.1%
 
 
 def _to_yahoo_ticker(symbol: str) -> str:
+    """Convert Binance symbol to Yahoo Finance ticker (e.g. BTCUSDT → BTC-USDT)."""
     symbol = symbol.upper()
     for quote in ("USDT", "BTC", "ETH", "BNB", "BUSD"):
         if symbol.endswith(quote):
@@ -71,14 +90,8 @@ def _to_yahoo_ticker(symbol: str) -> str:
     return symbol
 
 
-def _fetch_ohlcv(symbol: str, interval: str, period: str = "60d") -> pd.DataFrame | None:
-    """Fetch OHLCV data via yfinance."""
-    yahoo = _to_yahoo_ticker(symbol)
-    try:
-        df = yf.download(yahoo, interval=interval, period=period, progress=False, auto_adjust=True)
-    except Exception as exc:
-        logger.warning("yfinance download failed for %s %s: %s", yahoo, interval, exc)
-        return None
+def _normalize_df(df: pd.DataFrame) -> pd.DataFrame | None:
+    """Normalize yfinance output to standard lowercase OHLCV DataFrame."""
     if df is None or df.empty:
         return None
     if isinstance(df.columns, pd.MultiIndex):
@@ -88,10 +101,81 @@ def _fetch_ohlcv(symbol: str, interval: str, period: str = "60d") -> pd.DataFram
     if "adj close" in df.columns:
         df = df.rename(columns={"adj close": "close"})
     required = [c for c in ["open", "high", "low", "close", "volume"] if c in df.columns]
+    if "close" not in required:
+        return None
     df = df[required].dropna().reset_index()
     date_col = df.columns[0]
     df = df.rename(columns={date_col: "date"})
-    return df
+    return df if not df.empty else None
+
+
+def _download_yf(ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame | None:
+    """Single yfinance download attempt — returns normalized df or None."""
+    try:
+        raw = yf.download(
+            ticker,
+            start=start.strftime("%Y-%m-%d"),
+            end=end.strftime("%Y-%m-%d"),
+            interval=interval,
+            progress=False,
+            auto_adjust=True,
+        )
+        return _normalize_df(raw)
+    except Exception as exc:
+        logger.debug("yfinance error %s %s: %s", ticker, interval, exc)
+        return None
+
+
+def _resample_ohlcv(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+    """Resample an OHLCV DataFrame to a higher timeframe (e.g. 1h → 4h)."""
+    tmp = df.copy()
+    tmp["date"] = pd.to_datetime(tmp["date"])
+    tmp = tmp.set_index("date")
+    agg: dict = {"open": "first", "high": "max", "low": "min", "close": "last"}
+    if "volume" in tmp.columns:
+        agg["volume"] = "sum"
+    return tmp.resample(rule).agg(agg).dropna().reset_index()
+
+
+def _fetch_ohlcv(symbol: str, tf: str) -> pd.DataFrame | None:
+    """
+    Fetch OHLCV for a display timeframe.
+    Handles 4h via 1h resample and USDT→USD ticker fallback.
+    """
+    cfg = _TF_CONFIG[tf]
+    yf_interval = cfg["yf_interval"]
+    days_back = cfg["days_back"]
+    resample = cfg.get("resample")
+
+    end = datetime.utcnow()
+    start = end - timedelta(days=days_back)
+
+    primary = _to_yahoo_ticker(symbol)
+    df = _download_yf(primary, yf_interval, start, end)
+
+    # Fallback: -USDT → -USD (Yahoo Finance has BTC-USD more reliably than BTC-USDT)
+    if df is None or len(df) < MIN_CANDLES:
+        alt = primary.replace("-USDT", "-USD").replace("-BUSD", "-USD")
+        if alt != primary:
+            logger.info("Ticker fallback: %s → %s (%s %s)", primary, alt, symbol, tf)
+            df2 = _download_yf(alt, yf_interval, start, end)
+            if df2 is not None and len(df2) > (len(df) if df is not None else 0):
+                df = df2
+
+    if df is None or len(df) < MIN_CANDLES:
+        got = len(df) if df is not None else 0
+        logger.warning("Insufficient data: %s %s — got %d candles (need %d)", symbol, tf, got, MIN_CANDLES)
+        return None
+
+    # Resample if needed (e.g. 1h → 4h)
+    if resample:
+        try:
+            df = _resample_ohlcv(df, resample)
+        except Exception as exc:
+            logger.warning("Resample failed %s %s→%s: %s", symbol, yf_interval, resample, exc)
+            return None
+
+    return df if len(df) >= MIN_CANDLES else None
 
 
 def _quick_backtest(df: pd.DataFrame, algorithm_key: str, params: dict) -> dict:
@@ -105,7 +189,7 @@ def _quick_backtest(df: pd.DataFrame, algorithm_key: str, params: dict) -> dict:
         return {"error": f"Unknown algorithm: {algorithm_key}"}
 
     if hasattr(strategy, "precompute"):
-        df = strategy.precompute(df, params)
+        df = strategy.precompute(df.copy(), params)
 
     state: dict = {}
     equity = 1000.0
@@ -163,12 +247,12 @@ def _current_signal(df: pd.DataFrame, algorithm_key: str, params: dict) -> str:
     try:
         strategy = get_algorithm(algorithm_key)
         if hasattr(strategy, "precompute"):
-            df = strategy.precompute(df, params)
+            df = strategy.precompute(df.copy(), params)
         signal, _ = strategy.generate_signal(df.copy(), {}, params)
         return signal
     except Exception as exc:
-        logger.warning("Signal generation failed for %s: %s", algorithm_key, exc)
-        return "ERROR"
+        logger.debug("Signal generation failed for %s: %s", algorithm_key, exc)
+        return "HOLD"
 
 
 def _compute_market_indicators(df: pd.DataFrame) -> dict:
@@ -239,22 +323,12 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
         "best_combinations": [],
     }
 
-    # Period mapping for yfinance (max available per interval)
-    period_map = {
-        "5m":  "60d",
-        "15m": "60d",
-        "1h":  "730d",
-        "4h":  "730d",
-        "1d":  "730d",
-    }
-
     all_combos: list[dict] = []
 
     for tf in TIMEFRAMES:
-        period = period_map.get(tf, "60d")
-        df = _fetch_ohlcv(symbol, interval=tf, period=period)
-        if df is None or len(df) < 30:
-            result["timeframes"][tf] = {"error": "Insufficient data"}
+        df = _fetch_ohlcv(symbol, tf)
+        if df is None:
+            result["timeframes"][tf] = {"error": f"No data available for {tf}"}
             continue
 
         tf_result: dict[str, Any] = {
@@ -302,7 +376,7 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
 
     # Rank combinations by a composite score
     for combo in all_combos:
-        if "error" in combo or combo.get("trades", 0) < 3:
+        if "error" in combo or combo.get("trades", 0) < 2:
             combo["score"] = -999
             continue
         # Score: weighted mix of return, win_rate, drawdown, sharpe
@@ -314,6 +388,6 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
         )
 
     all_combos.sort(key=lambda x: x.get("score", -999), reverse=True)
-    result["best_combinations"] = all_combos[:10]
+    result["best_combinations"] = [c for c in all_combos if c.get("score", -999) > -999][:10]
 
     return result
