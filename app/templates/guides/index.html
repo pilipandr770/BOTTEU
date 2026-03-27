@@ -237,5 +237,53 @@
     </div>
   </div>
 
+  <!-- AI Advisor Guide -->
+  <div class="col-12">
+    <div class="card bg-dark border-warning">
+      <div class="card-header text-warning fw-semibold">
+        <i class="bi bi-stars me-2"></i>{{ _('How to Use AI Advisor') }}
+        <span class="badge bg-warning text-dark ms-2">{{ _('New') }}</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <ol class="text-muted small">
+              <li class="mb-2">{{ _('Go to the AI Advisor page via the top navigation.') }}</li>
+              <li class="mb-2">{{ _('Choose your trading style: Intraday (5m/15m/1h, high frequency, min. 500 USDT) or Swing (4h/1d, low frequency, min. 100 USDT).') }}</li>
+              <li class="mb-2">{{ _('Enter a symbol (e.g. BTCUSDT) and click Scan Only to see the signal matrix.') }}</li>
+              <li class="mb-2">{{ _('Click AI Analysis to send data to Claude — it returns market regime, confidence score, and recommended algorithm + parameters.') }}</li>
+              <li class="mb-2">{{ _('Apply the recommendation to any running bot with one click.') }}</li>
+            </ol>
+          </div>
+          <div class="col-lg-6">
+            <div class="alert alert-warning small p-2 mb-3">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              {{ _('"Intraday" mode has limited history — 5m: 7 days, 15m: 59 days. Use for signal direction only. Swing mode has years of daily data for reliable backtests.') }}
+            </div>
+            <table class="table table-dark table-sm small text-muted">
+              <thead>
+                <tr><th>{{ _('Mode') }}</th><th>TF</th><th>{{ _('Min. Capital') }}</th><th>{{ _('Trades/week') }}</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-warning">Intraday</td>
+                  <td>5m / 15m / 1h</td>
+                  <td class="text-warning">500 USDT</td>
+                  <td>10–50+</td>
+                </tr>
+                <tr>
+                  <td class="text-success">Swing</td>
+                  <td>4h / 1d</td>
+                  <td class="text-success">100 USDT</td>
+                  <td>1–5</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

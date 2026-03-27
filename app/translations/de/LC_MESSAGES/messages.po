@@ -1,4 +1,4 @@
-# German translations — BOTTEU
+﻿# German translations — BOTTEU
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
@@ -2527,3 +2527,93 @@ msgstr ""
 #~ msgid "Guides &amp; Tutorials"
 #~ msgstr "Anleitungen &amp; Tutorials"
 
+
+msgid "AI-Powered"
+msgstr "KI-gestützt"
+
+msgid "AI Market Advisor"
+msgstr "KI-Marktberater"
+
+msgid "Claude AI scans 5 algorithms across Intraday or Swing timeframes, detects market regime, and recommends the best strategy with confidence score."
+msgstr "Claude KI scannt 5 Algorithmen über Intraday- oder Swing-Zeitrahmen, erkennt das Marktregime und empfiehlt mit Konfidenzwert die beste Strategie."
+
+msgid "Market regime detection"
+msgstr "Marktregime-Erkennung"
+
+msgid "Confidence score (0–100) with reasoning"
+msgstr "Konfidenzwert (0–100) mit Begründung"
+
+msgid "Apply AI recommendation to any bot with one click"
+msgstr "KI-Empfehlung mit einem Klick auf jeden Bot anwenden"
+
+msgid "Try AI Advisor Free"
+msgstr "KI-Berater kostenlos testen"
+
+msgid "Intraday (5m / 15m / 1h)"
+msgstr "Intraday (5m / 15m / 1h)"
+
+msgid "Frequent trades, min. 500 USDT recommended"
+msgstr "Häufige Trades, min. 500 USDT empfohlen"
+
+msgid "trades/week"
+msgstr "Trades/Woche"
+
+msgid "Higher fee impact"
+msgstr "Höhere Gebührenbelastung"
+
+msgid "of history"
+msgstr "Verlaufsdaten"
+
+msgid "Swing / Position (4h / 1d)"
+msgstr "Swing / Position (4h / 1d)"
+
+msgid "Few trades per week, min. 100 USDT"
+msgstr "Wenige Trades pro Woche, min. 100 USDT"
+
+msgid "Low fee impact"
+msgstr "Geringe Gebührenbelastung"
+
+msgid "Years of historical data"
+msgstr "Jahre Verlaufsdaten"
+
+msgid "Scan"
+msgstr "Scannen"
+
+msgid "AI Analyze"
+msgstr "KI-Analyse"
+
+msgid "Apply"
+msgstr "Anwenden"
+
+msgid "How to Use AI Advisor"
+msgstr "So nutzt du den KI-Berater"
+
+msgid "New"
+msgstr "Neu"
+
+msgid "Go to the AI Advisor page via the top navigation."
+msgstr "Gehe über die obere Navigation zur KI-Berater-Seite."
+
+msgid "Choose your trading style: Intraday (5m/15m/1h, high frequency, min. 500 USDT) or Swing (4h/1d, low frequency, min. 100 USDT)."
+msgstr "Wähle deinen Handelsstil: Intraday (5m/15m/1h, hohe Frequenz, min. 500 USDT) oder Swing (4h/1d, niedrige Frequenz, min. 100 USDT)."
+
+msgid "Enter a symbol (e.g. BTCUSDT) and click Scan Only to see the signal matrix."
+msgstr "Gib ein Symbol ein (z.B. BTCUSDT) und klicke auf Nur Scannen, um die Signalmatrix zu sehen."
+
+msgid "Click AI Analysis to send data to Claude -- it returns market regime, confidence score, and recommended algorithm + parameters."
+msgstr "Klicke auf KI-Analyse, um die Daten an Claude zu senden -- gibt Marktregime, Konfidenzwert und empfohlenen Algorithmus mit Parametern zurück."
+
+msgid "Apply the recommendation to any running bot with one click."
+msgstr "Die Empfehlung mit einem Klick auf jeden laufenden Bot anwenden."
+
+msgid "\"Intraday\" mode has limited history -- 5m: 7 days, 15m: 59 days. Use for signal direction only. Swing mode has years of daily data for reliable backtests."
+msgstr "\"Intraday\"-Modus hat begrenzte Historie -- 5m: 7 Tage, 15m: 59 Tage. Nur zur Trendrichtungsbestimmung nutzen. Swing-Modus: jahrelange Tagesdaten."
+
+msgid "Mode"
+msgstr "Modus"
+
+msgid "Min. Capital"
+msgstr "Mind. Kapital"
+
+msgid "Trades/week"
+msgstr "Trades/Woche"

@@ -177,6 +177,15 @@
         </div>
       </div>
     </div>
+    <div class="col-md-4">
+      <div class="card h-100" style="background:#0d1117;border:1px solid #ffc107;">
+        <div class="card-body">
+          <i class="bi bi-stars display-4 text-warning"></i>
+          <h5 class="mt-3">{{ _('AI Market Advisor') }}</h5>
+          <p class="text-muted small">{{ _('Claude AI scans 5 algorithms across Intraday or Swing timeframes, detects market regime, and recommends the best strategy with confidence score.') }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -331,6 +340,89 @@
     </div>
   </div>
 
+</section>
+
+{# ── AI Advisor ── #}
+<section class="py-5 border-bottom border-secondary mb-4">
+  <div class="row align-items-center g-5">
+    <div class="col-lg-5">
+      <span class="badge bg-warning text-dark mb-3 px-3 py-2">
+        <i class="bi bi-stars me-1"></i>{{ _('AI-Powered') }}
+      </span>
+      <h2 class="fw-bold mb-3">
+        <i class="bi bi-stars text-warning me-2"></i>{{ _('AI Market Advisor') }}
+      </h2>
+      <p class="text-secondary mb-4">
+        {{ _('Claude AI scans 5 algorithms across Intraday or Swing timeframes, detects market regime, and recommends the best strategy with confidence score.') }}
+      </p>
+      <ul class="list-unstyled text-muted mb-4">
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>{{ _('Market regime detection') }} — trending, ranging, breakout</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>{{ _('Confidence score (0–100) with reasoning') }}</li>
+        <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>{{ _('Apply AI recommendation to any bot with one click') }}</li>
+      </ul>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-warning px-4">
+        <i class="bi bi-stars me-2"></i>{{ _('Try AI Advisor Free') }}
+      </a>
+    </div>
+    <div class="col-lg-7">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card bg-dark h-100" style="border:1px solid #ffc107;">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-lightning-fill text-warning me-2 fs-5"></i>
+                <strong class="text-warning">{{ _('Intraday (5m / 15m / 1h)') }}</strong>
+              </div>
+              <p class="text-muted small mb-2">{{ _('Frequent trades, min. 500 USDT recommended') }}</p>
+              <ul class="text-muted small ps-3 mb-0">
+                <li>10–50+ {{ _('trades/week') }}</li>
+                <li>{{ _('Higher fee impact') }}</li>
+                <li>5m: 7d / 15m: 59d {{ _('of history') }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card bg-dark h-100" style="border:1px solid #69f0ae;">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-graph-up text-success me-2 fs-5"></i>
+                <strong class="text-success">{{ _('Swing / Position (4h / 1d)') }}</strong>
+              </div>
+              <p class="text-muted small mb-2">{{ _('Few trades per week, min. 100 USDT') }}</p>
+              <ul class="text-muted small ps-3 mb-0">
+                <li>1–5 {{ _('trades/week') }}</li>
+                <li>{{ _('Low fee impact') }}</li>
+                <li>{{ _('Years of historical data') }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card bg-dark border-secondary">
+            <div class="card-body py-2">
+              <div class="d-flex justify-content-around align-items-center text-center">
+                <div>
+                  <i class="bi bi-radar text-info fs-3"></i>
+                  <div class="small text-muted mt-1">{{ _('Scan') }}</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted fs-4"></i>
+                <div>
+                  <i class="bi bi-cpu text-warning fs-3"></i>
+                  <div class="small text-muted mt-1">{{ _('AI Analyze') }}</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted fs-4"></i>
+                <div>
+                  <i class="bi bi-check-circle text-success fs-3"></i>
+                  <div class="small text-muted mt-1">{{ _('Apply') }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 {# ── Pricing ── #}
