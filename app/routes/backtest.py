@@ -53,6 +53,8 @@ def run():
     algorithm_key = data.get("algorithm", "ma_crossover")
     params = data.get("params", {})
     interval = data.get("interval", "1d")
+    if interval == "4h":
+        return jsonify({"error": "4h is not supported by Yahoo Finance. Please use 1h or 1d instead."}), 400
     try:
         initial_capital = float(data.get("initial_capital", 1000))
         if initial_capital <= 0:
