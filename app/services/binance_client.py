@@ -3,6 +3,7 @@ Binance client factory — decrypts API credentials on-the-fly,
 never stores plaintext in memory beyond the scope of a single task.
 """
 import logging
+import time
 from datetime import datetime, timezone
 
 from binance.client import Client
@@ -16,6 +17,24 @@ logger = logging.getLogger(__name__)
 
 # Quote currencies we support (order = priority in UI)
 SUPPORTED_QUOTES = ("USDT", "USDC", "BTC", "ETH", "BNB")
+
+
+def _sync_time(client: Client) -> None:
+    """
+    Calculate the offset between local clock and Binance server time and apply
+    it to the client so every signed request uses the corrected timestamp.
+    This prevents -1021 'Timestamp outside recvWindow' errors when the local
+    system clock drifts.
+    """
+    try:
+        server_time = client.get_server_time()["serverTime"]
+        local_time = int(time.time() * 1000)
+        offset = server_time - local_time
+        client.timestamp_offset = offset
+        if abs(offset) > 1000:
+            logger.info("Binance time offset applied: %+d ms", offset)
+    except Exception as exc:
+        logger.warning("Could not sync Binance server time: %s", exc)
 
 
 def get_client_for_user(user_id: int) -> Client:
@@ -33,6 +52,7 @@ def get_client_for_user(user_id: int) -> Client:
 
     client = Client(api_key, api_secret)
     api_key = api_secret = None  # noqa: F841
+    _sync_time(client)
     return client
 
 
