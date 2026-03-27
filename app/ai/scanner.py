@@ -78,6 +78,9 @@ PARAM_VARIANTS: dict[str, list[dict]] = {
 }
 
 FEE_RATE = 0.001  # 0.1%
+# Cap candles used for backtesting to keep the scan fast.
+# 100 candles is sufficient for relative strategy comparison.
+MAX_BT_CANDLES = 100
 
 
 def _to_yahoo_ticker(symbol: str) -> str:
@@ -178,19 +181,11 @@ def _fetch_ohlcv(symbol: str, tf: str) -> pd.DataFrame | None:
     return df if len(df) >= MIN_CANDLES else None
 
 
-def _quick_backtest(df: pd.DataFrame, algorithm_key: str, params: dict) -> dict:
+def _run_backtest_loop(df: pd.DataFrame, strategy: Any, params: dict) -> dict:
     """
-    Run a fast backtest over the given DataFrame.
-    Returns stats dict with trades, win_rate, return_pct, max_drawdown_pct, sharpe.
+    Run the candle-by-candle backtest loop on an already-precomputed DataFrame.
+    df must already be sliced to MAX_BT_CANDLES and have indicator columns added.
     """
-    try:
-        strategy = get_algorithm(algorithm_key)
-    except ValueError:
-        return {"error": f"Unknown algorithm: {algorithm_key}"}
-
-    if hasattr(strategy, "precompute"):
-        df = strategy.precompute(df.copy(), params)
-
     state: dict = {}
     equity = 1000.0
     initial = equity
@@ -202,9 +197,9 @@ def _quick_backtest(df: pd.DataFrame, algorithm_key: str, params: dict) -> dict:
     max_dd = 0.0
 
     for i in range(len(df)):
-        window = df.iloc[: i + 1]
+        window = df.iloc[: i + 1]  # view — no copy needed
         try:
-            signal, state = strategy.generate_signal(window.copy(), state, params)
+            signal, state = strategy.generate_signal(window, state, params)
         except Exception:
             continue
 
@@ -226,12 +221,9 @@ def _quick_backtest(df: pd.DataFrame, algorithm_key: str, params: dict) -> dict:
 
     total_return = (equity - initial) / initial * 100
     win_rate = (wins / trades_count * 100) if trades_count > 0 else 0
-
-    # Sharpe approximation (simple)
     sharpe = 0.0
     if trades_count >= 2 and total_return != 0:
-        avg_return = total_return / trades_count
-        sharpe = avg_return / max(max_dd, 1.0)
+        sharpe = (total_return / trades_count) / max(max_dd, 1.0)
 
     return {
         "trades": trades_count,
@@ -240,19 +232,6 @@ def _quick_backtest(df: pd.DataFrame, algorithm_key: str, params: dict) -> dict:
         "max_drawdown_pct": round(max_dd, 2),
         "sharpe": round(sharpe, 3),
     }
-
-
-def _current_signal(df: pd.DataFrame, algorithm_key: str, params: dict) -> str:
-    """Get current signal from algorithm on full dataframe."""
-    try:
-        strategy = get_algorithm(algorithm_key)
-        if hasattr(strategy, "precompute"):
-            df = strategy.precompute(df.copy(), params)
-        signal, _ = strategy.generate_signal(df.copy(), {}, params)
-        return signal
-    except Exception as exc:
-        logger.debug("Signal generation failed for %s: %s", algorithm_key, exc)
-        return "HOLD"
 
 
 def _compute_market_indicators(df: pd.DataFrame) -> dict:
@@ -340,37 +319,40 @@ def scan_symbol(symbol: str) -> dict[str, Any]:
 
         for algo_key in ALGORITHM_KEYS:
             params = DEFAULT_PARAMS[algo_key]
+            strategy_obj = get_algorithm(algo_key)
 
-            # Current signal
-            sig = _current_signal(df, algo_key, params)
+            # Precompute indicators once with default params (reused for signal + default BT)
+            if hasattr(strategy_obj, "precompute"):
+                df_pre = strategy_obj.precompute(df.copy(), params)
+            else:
+                df_pre = df
+
+            # Current signal from the full precomputed df
+            try:
+                sig, _ = strategy_obj.generate_signal(df_pre, {}, params)
+            except Exception:
+                sig = "HOLD"
             tf_result["signals"][algo_key] = sig
 
-            # Quick backtest with default params
-            bt = _quick_backtest(df, algo_key, params)
+            # Quick backtest — reuse precomputed df (slice for speed)
+            bt_slice = df_pre.tail(MAX_BT_CANDLES).reset_index(drop=True)
+            bt = _run_backtest_loop(bt_slice, strategy_obj, params)
             tf_result["backtests"][algo_key] = {"default": bt}
+            all_combos.append({"algorithm": algo_key, "timeframe": tf,
+                                "params": params, "variant": "default", **bt})
 
-            # Test param variants
+            # Test param variants (each needs its own precompute since indicators may differ)
             variants = PARAM_VARIANTS.get(algo_key, [])
             for idx, var_params in enumerate(variants):
-                var_bt = _quick_backtest(df, algo_key, var_params)
+                if hasattr(strategy_obj, "precompute"):
+                    df_var = strategy_obj.precompute(df.copy(), var_params)
+                else:
+                    df_var = df
+                var_slice = df_var.tail(MAX_BT_CANDLES).reset_index(drop=True)
+                var_bt = _run_backtest_loop(var_slice, strategy_obj, var_params)
                 tf_result["backtests"][algo_key][f"variant_{idx}"] = var_bt
-
-                all_combos.append({
-                    "algorithm": algo_key,
-                    "timeframe": tf,
-                    "params": var_params,
-                    "variant": f"variant_{idx}",
-                    **var_bt,
-                })
-
-            # Add default to combos too
-            all_combos.append({
-                "algorithm": algo_key,
-                "timeframe": tf,
-                "params": params,
-                "variant": "default",
-                **bt,
-            })
+                all_combos.append({"algorithm": algo_key, "timeframe": tf,
+                                    "params": var_params, "variant": f"variant_{idx}", **var_bt})
 
         result["timeframes"][tf] = tf_result
 
