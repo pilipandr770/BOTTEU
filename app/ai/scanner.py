@@ -6,7 +6,7 @@ and performs quick backtests. Produces a structured dict for the AI Advisor.
 
 Key notes:
 - yfinance does NOT support "4h" interval → we fetch "1h" and resample.
-- Ticker fallback: BTC-USDT → BTC-USD if Yahoo Finance lacks the USDT pair.
+- Ticker fallback: BTC-USDT / BTC-USDC / BTC-BUSD → BTC-USD for Yahoo Finance.
 - Uses explicit start/end dates (more reliable than period= in yfinance 2.x).
 """
 from __future__ import annotations
@@ -116,7 +116,7 @@ MAX_BT_CANDLES = 100
 def _to_yahoo_ticker(symbol: str) -> str:
     """Convert Binance symbol to Yahoo Finance ticker (e.g. BTCUSDT → BTC-USDT)."""
     symbol = symbol.upper()
-    for quote in ("USDT", "BTC", "ETH", "BNB", "BUSD"):
+    for quote in ("USDT", "USDC", "BTC", "ETH", "BNB", "BUSD"):
         if symbol.endswith(quote):
             base = symbol[: -len(quote)]
             return f"{base}-{quote}"
@@ -186,9 +186,15 @@ def _fetch_ohlcv(symbol: str, tf: str) -> pd.DataFrame | None:
     primary = _to_yahoo_ticker(symbol)
     df = _download_yf(primary, yf_interval, start, end)
 
-    # Fallback: -USDT → -USD (Yahoo Finance has BTC-USD more reliably than BTC-USDT)
+    # Fallback: -USDT / -USDC / -BUSD → -USD
+    # Yahoo Finance uses BTC-USD; USDT/USDC/BUSD pairs often 404.
     if df is None or len(df) < MIN_CANDLES:
-        alt = primary.replace("-USDT", "-USD").replace("-BUSD", "-USD")
+        alt = (
+            primary
+            .replace("-USDT", "-USD")
+            .replace("-USDC", "-USD")
+            .replace("-BUSD", "-USD")
+        )
         if alt != primary:
             logger.info("Ticker fallback: %s → %s (%s %s)", primary, alt, symbol, tf)
             df2 = _download_yf(alt, yf_interval, start, end)

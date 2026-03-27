@@ -223,52 +223,70 @@ def analyze(scan_data: dict, lang: str = "en", mode: str = "swing") -> dict[str,
     """
     Send scanner data to Claude and get structured analysis.
     Returns parsed JSON dict with recommendations.
+    Retries up to 3 times on Anthropic 529 overload errors.
     """
+    import time
     client = _get_client()
     user_prompt = _build_user_prompt(scan_data, lang, mode)
 
     logger.info("AI Advisor: sending %d chars to Claude for %s", len(user_prompt), scan_data.get("symbol"))
 
-    try:
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ],
-            system=SYSTEM_PROMPT,
-        )
+    last_exc: Exception | None = None
+    for attempt in range(3):
+        try:
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=2000,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ],
+                system=SYSTEM_PROMPT,
+            )
 
-        response_text = message.content[0].text
+            response_text = message.content[0].text
 
-        # Parse JSON from response
-        # Claude may wrap in ```json ... ```, strip that
-        text = response_text.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-            text = text.strip()
+            # Parse JSON from response
+            # Claude may wrap in ```json ... ```, strip that
+            text = response_text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                if text.endswith("```"):
+                    text = text[:-3]
+                text = text.strip()
 
-        result = json.loads(text)
+            result = json.loads(text)
 
-        # ── Validate algorithm keys to prevent Claude hallucination ──────────
-        _validate_and_fix_algorithms(result, scan_data)
+            # ── Validate algorithm keys to prevent Claude hallucination ──────────
+            _validate_and_fix_algorithms(result, scan_data)
 
-        # Add token usage info
-        result["_usage"] = {
-            "input_tokens": message.usage.input_tokens,
-            "output_tokens": message.usage.output_tokens,
-        }
+            # Add token usage info
+            result["_usage"] = {
+                "input_tokens": message.usage.input_tokens,
+                "output_tokens": message.usage.output_tokens,
+            }
 
-        return result
+            return result
 
-    except json.JSONDecodeError as exc:
-        logger.error("AI Advisor: failed to parse Claude response: %s", exc)
-        return {
-            "error": "Failed to parse AI response",
-            "raw_response": response_text[:500] if 'response_text' in dir() else "",
-        }
-    except Exception as exc:
-        logger.error("AI Advisor: Anthropic API error: %s", exc)
-        return {"error": str(exc)}
+        except json.JSONDecodeError as exc:
+            logger.error("AI Advisor: failed to parse Claude response: %s", exc)
+            return {
+                "error": "Failed to parse AI response",
+                "raw_response": response_text[:500] if 'response_text' in locals() else "",
+            }
+        except Exception as exc:
+            last_exc = exc
+            exc_str = str(exc)
+            # Retry on overload (HTTP 529) or rate-limit (HTTP 529/rate_limit)
+            if "529" in exc_str or "overloaded" in exc_str.lower() or "rate_limit" in exc_str.lower():
+                wait = 5 * (attempt + 1)  # 5s, 10s, 15s
+                logger.warning(
+                    "AI Advisor: Claude overloaded (attempt %d/3) — retrying in %ds...", attempt + 1, wait
+                )
+                time.sleep(wait)
+                continue
+            # Non-retryable error
+            logger.error("AI Advisor: Anthropic API error: %s", exc)
+            return {"error": exc_str}
+
+    logger.error("AI Advisor: Claude overloaded after 3 attempts")
+    return {"error": "Claude API is currently overloaded. Please try again in a minute."}
