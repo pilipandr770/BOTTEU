@@ -75,9 +75,18 @@ RESPOND ONLY in valid JSON with this exact structure:
 """
 
 
-def _build_user_prompt(scan_data: dict, lang: str = "en") -> str:
+def _build_user_prompt(scan_data: dict, lang: str = "en", mode: str = "swing") -> str:
     """Build a compact prompt from scanner results to save tokens."""
-    lines = [f"Symbol: {scan_data['symbol']}\n"]
+    from app.ai.scanner import MODES
+    mode_cfg = MODES.get(mode, MODES["swing"])
+    valid_tfs = "|" .join(mode_cfg["timeframes"])
+
+    lines = [f"Symbol: {scan_data['symbol']}",
+             f"Trading mode: {mode_cfg['label']} ({mode_cfg['description']})",
+             f"Valid timeframes for this mode: {', '.join(mode_cfg['timeframes'])}",
+             f"Min recommended capital: {mode_cfg['min_capital_usdt']} USDT",
+             f"Typical trades/week: {mode_cfg['trades_per_week_estimate']}",
+             ""]
 
     # Signal matrix
     lines.append("=== SIGNAL MATRIX (algorithm × timeframe) ===")
@@ -136,7 +145,14 @@ def _build_user_prompt(scan_data: dict, lang: str = "en") -> str:
     elif lang == "ru":
         lang_instruction = "\n\nIMPORTANT: Write all text fields (regime_explanation, reasoning, risks, market_summary, notes) in Russian."
 
-    lines.append(lang_instruction)
+    mode_instruction = (
+        f"\n\nIMPORTANT: The user is in '{mode}' mode. "
+        f"recommended_timeframe MUST be one of: {valid_tfs}. "
+        f"Consider fee frequency: {mode_cfg['trades_per_week_estimate']} trades/week. "
+        f"Min capital context: {mode_cfg['min_capital_usdt']} USDT."
+    )
+
+    lines.append(lang_instruction + mode_instruction)
 
     return "\n".join(lines)
 
@@ -203,13 +219,13 @@ def _validate_and_fix_algorithms(result: dict, scan_data: dict) -> None:
     result["top_3_strategies"] = valid_top3[:3]
 
 
-def analyze(scan_data: dict, lang: str = "en") -> dict[str, Any]:
+def analyze(scan_data: dict, lang: str = "en", mode: str = "swing") -> dict[str, Any]:
     """
     Send scanner data to Claude and get structured analysis.
     Returns parsed JSON dict with recommendations.
     """
     client = _get_client()
-    user_prompt = _build_user_prompt(scan_data, lang)
+    user_prompt = _build_user_prompt(scan_data, lang, mode)
 
     logger.info("AI Advisor: sending %d chars to Claude for %s", len(user_prompt), scan_data.get("symbol"))
 

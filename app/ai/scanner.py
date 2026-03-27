@@ -26,12 +26,42 @@ logger = logging.getLogger(__name__)
 TIMEFRAMES = ["5m", "15m", "1h", "4h", "1d"]
 ALGORITHM_KEYS = ["ma_crossover", "rsi", "macd", "supertrend", "bb_bounce"]
 
+# ── Trading modes ─────────────────────────────────────────────────────────
+# Intraday: high-frequency signals, limited yfinance history, higher fee drag
+# Swing: low-frequency signals, years of history, low fee drag
+MODES: dict[str, dict] = {
+    "intraday": {
+        "timeframes": ["5m", "15m", "1h"],
+        "label": "Intraday",
+        "description": (
+            "Frequent trades on short timeframes. "
+            "5m/15m data limited to ~60 days by Yahoo Finance, 1h up to 2 years. "
+            "Multiple trades per day — fees accumulate fast."
+        ),
+        "min_capital_usdt": 500,
+        "trades_per_week_estimate": "10–50+",
+        "data_warning": "Short history (5m: 7d, 15m: 59d) — backtest sample is small.",
+    },
+    "swing": {
+        "timeframes": ["4h", "1d"],
+        "label": "Swing / Position",
+        "description": (
+            "Few trades per week on higher timeframes. "
+            "Years of daily data available — statistically robust backtests. "
+            "4h fetched as 1h resampled. Low fee impact per trade."
+        ),
+        "min_capital_usdt": 100,
+        "trades_per_week_estimate": "1–5",
+        "data_warning": None,
+    },
+}
+
 # yfinance config per display-timeframe.
 # yfinance does NOT support "4h" natively → fetch "1h" + resample.
 # days_back: history window (balance between backtest quality and speed).
 _TF_CONFIG: dict[str, dict] = {
     "5m":  {"yf_interval": "5m",  "days_back": 7,   "resample": None},
-    "15m": {"yf_interval": "15m", "days_back": 30,  "resample": None},
+    "15m": {"yf_interval": "15m", "days_back": 59,  "resample": None},  # yfinance max for 15m
     "1h":  {"yf_interval": "1h",  "days_back": 180, "resample": None},
     "4h":  {"yf_interval": "1h",  "days_back": 365, "resample": "4h"},
     "1d":  {"yf_interval": "1d",  "days_back": 730, "resample": None},
@@ -290,21 +320,41 @@ def _compute_market_indicators(df: pd.DataFrame) -> dict:
     }
 
 
-def scan_symbol(symbol: str) -> dict[str, Any]:
+def scan_symbol(symbol: str, mode: str = "swing") -> dict[str, Any]:
     """
     Main scanner entry point.
-    Returns a comprehensive dict with signals, backtests, and market indicators
-    across all timeframes and algorithms.
+
+    Args:
+        symbol: Binance-style symbol, e.g. 'BTCUSDT'.
+        mode:   'intraday' (5m/15m/1h) or 'swing' (4h/1d).
+                Determines which timeframes are scanned and what capital
+                recommendation is shown.
+
+    Returns a comprehensive dict with signals, backtests, market indicators,
+    and mode metadata for the AI Advisor.
     """
+    if mode not in MODES:
+        mode = "swing"
+    mode_cfg = MODES[mode]
+    active_tfs = mode_cfg["timeframes"]
     result: dict[str, Any] = {
         "symbol": symbol.upper(),
+        "mode": mode,
+        "mode_info": {
+            "label": mode_cfg["label"],
+            "description": mode_cfg["description"],
+            "min_capital_usdt": mode_cfg["min_capital_usdt"],
+            "trades_per_week_estimate": mode_cfg["trades_per_week_estimate"],
+            "data_warning": mode_cfg["data_warning"],
+            "timeframes": active_tfs,
+        },
         "timeframes": {},
         "best_combinations": [],
     }
 
     all_combos: list[dict] = []
 
-    for tf in TIMEFRAMES:
+    for tf in active_tfs:
         df = _fetch_ohlcv(symbol, tf)
         if df is None:
             result["timeframes"][tf] = {"error": f"No data available for {tf}"}

@@ -28,6 +28,13 @@
   .card-ai { border: 1px solid rgba(255,255,255,0.1); }
   .card-ai .card-header { border-bottom: 1px solid rgba(255,255,255,0.1); }
 
+  .mode-intraday-active .mode-label { color: #ffc107; }
+  .mode-swing-active   .mode-label { color: #0d6efd; }
+
+  .capital-badge { font-size: 1.1rem; font-weight: bold; }
+  .capital-intraday { color: #ffc107; }
+  .capital-swing { color: #69f0ae; }
+
   .combo-rank { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
     border-radius: 50%; background: rgba(0,230,118,0.15); color: #00e676; font-weight: bold; font-size: 0.8rem; }
 
@@ -57,12 +64,26 @@
       </div>
       <div class="card-body">
         <div class="row g-3 align-items-end">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">{{ _('Symbol') }}</label>
             <input type="text" id="ai-symbol" class="form-control" value="BTCUSDT"
                    placeholder="BTCUSDT, ETHUSDT...">
           </div>
+          <!-- Mode toggle -->
           <div class="col-md-3">
+            <label class="form-label">{{ _('Trading Style') }}</label>
+            <div class="btn-group w-100" role="group" id="mode-toggle">
+              <input type="radio" class="btn-check" name="trading-mode" id="mode-intraday" value="intraday" autocomplete="off">
+              <label class="btn btn-outline-warning" for="mode-intraday">
+                <i class="bi bi-lightning-fill"></i> {{ _('Intraday') }}
+              </label>
+              <input type="radio" class="btn-check" name="trading-mode" id="mode-swing" value="swing" autocomplete="off" checked>
+              <label class="btn btn-outline-primary" for="mode-swing">
+                <i class="bi bi-graph-up"></i> {{ _('Swing') }}
+              </label>
+            </div>
+          </div>
+          <div class="col-md-2">
             <label class="form-label">{{ _('Apply to Bot') }} <small class="text-muted">({{ _('optional') }})</small></label>
             <select id="ai-bot-id" class="form-select">
               <option value="">— {{ _('No bot') }} —</option>
@@ -71,7 +92,7 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-5 d-flex gap-2">
+          <div class="col-md-4 d-flex gap-2">
             <button id="btn-scan" class="btn btn-outline-info flex-fill" onclick="runScan()">
               <span class="scan-spinner spinner-border spinner-border-sm me-1" role="status"></span>
               <i class="bi bi-radar"></i> {{ _('Scan Only') }}
@@ -82,11 +103,8 @@
             </button>
           </div>
         </div>
-        <div class="mt-2">
-          <small class="text-muted">
-            <i class="bi bi-info-circle"></i>
-            {{ _('Scan Only — free, no AI. AI Analysis — uses Claude to interpret data and give recommendations.') }}
-          </small>
+        <!-- Mode info bar -->
+        <div id="mode-info-bar" class="mt-3 p-2 rounded" style="background:rgba(255,255,255,0.04);font-size:0.85rem;">
         </div>
       </div>
     </div>
@@ -100,7 +118,8 @@
       </div>
       <div class="card-body small">
         <ol class="mb-0 ps-3">
-          <li class="mb-1">{{ _('Scanner runs all 5 strategies on 5 timeframes (5m → 1d)') }}</li>
+          <li class="mb-1">{{ _('Choose mode: Intraday (5m/15m/1h) or Swing (4h/1d)') }}</li>
+          <li class="mb-1">{{ _('Scanner runs all 5 algorithms on mode timeframes') }}</li>
           <li class="mb-1">{{ _('Quick backtests with 3 param variants per strategy') }}</li>
           <li class="mb-1">{{ _('AI analyzes the matrix and detects market regime') }}</li>
           <li class="mb-1">{{ _('Recommends best strategy + settings with confidence score') }}</li>
@@ -109,6 +128,20 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ── Capital Recommendation Card (shown after scan) ── -->
+<div id="capital-card" class="alert d-none mb-4" role="alert" style="border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <i class="bi bi-wallet2 me-1"></i>
+      <strong>{{ _('Min. Recommended Capital') }}:</strong>
+      <span id="capital-value" class="capital-badge ms-1"></span>
+    </div>
+    <div class="text-muted small" id="capital-trades"></div>
+    <div class="text-warning small" id="capital-warning"></div>
+  </div>
+  <div class="text-muted small mt-1" id="capital-description"></div>
 </div>
 
 <!-- ── Error Alert ── -->
@@ -324,6 +357,44 @@ const ALGO_LABELS = {
   supertrend: 'SuperTrend', bb_bounce: 'BB Bounce', combined: 'Combined'
 };
 
+const MODE_INFO = {
+  intraday: {
+    label: '{{ _("Intraday") }}',
+    tfs: '5m / 15m / 1h',
+    color: '#ffc107',
+    desc: '{{ _("Frequent trades on short timeframes. Higher fee drag. yfinance: 5m ≤ 7 days, 15m ≤ 59 days, 1h ≤ 2 years.") }}',
+    warning: '{{ _("Short history for 5m/15m — backtest sample is small. Use results as direction, not exact numbers.") }}',
+  },
+  swing: {
+    label: '{{ _("Swing / Position") }}',
+    tfs: '4h / 1d',
+    color: '#69f0ae',
+    desc: '{{ _("Few trades per week. Low fee impact. Years of daily data available — more statistically reliable.") }}',
+    warning: null,
+  }
+};
+
+function getMode() {
+  return document.querySelector('input[name="trading-mode"]:checked')?.value || 'swing';
+}
+
+function updateModeInfoBar() {
+  const mode = getMode();
+  const info = MODE_INFO[mode];
+  const bar = document.getElementById('mode-info-bar');
+  bar.innerHTML = `
+    <span style="color:${info.color};"><i class="bi bi-${mode === 'intraday' ? 'lightning-fill' : 'graph-up'} me-1"></i><strong>${info.label}</strong></span>
+    <span class="text-muted ms-2">TF: ${info.tfs}</span>
+    <span class="text-muted ms-3">${info.desc}</span>
+    ${info.warning ? `<div class="text-warning mt-1"><i class="bi bi-exclamation-triangle me-1"></i>${info.warning}</div>` : ''}
+  `;
+}
+
+document.querySelectorAll('input[name="trading-mode"]').forEach(r => {
+  r.addEventListener('change', updateModeInfoBar);
+});
+updateModeInfoBar();
+
 let lastConsultationId = null;
 let lastScanData = null;
 
@@ -420,6 +491,29 @@ function renderScanResults(scanData) {
   renderSignalMatrix(scanData);
   renderMarketIndicators(scanData);
   renderTopCombos(scanData.best_combinations);
+
+  // Show capital recommendation card
+  const mi = scanData.mode_info || {};
+  const capCard = document.getElementById('capital-card');
+  if (mi.min_capital_usdt) {
+    const mode = scanData.mode || 'swing';
+    document.getElementById('capital-value').innerHTML =
+      `<span style="color:${mode === 'intraday' ? '#ffc107' : '#69f0ae'};">≥ ${mi.min_capital_usdt} USDT</span>`;
+    document.getElementById('capital-trades').textContent =
+      `~${mi.trades_per_week_estimate} {{ _("trades/week") }}`;
+    document.getElementById('capital-description').textContent = mi.description || '';
+    const warnEl = document.getElementById('capital-warning');
+    if (mi.data_warning) {
+      warnEl.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>${mi.data_warning}`;
+      warnEl.classList.remove('d-none');
+    } else {
+      warnEl.classList.add('d-none');
+    }
+    capCard.classList.remove('d-none');
+  } else {
+    capCard.classList.add('d-none');
+  }
+
   document.getElementById('scan-only-results').style.display = 'block';
 }
 
@@ -502,15 +596,17 @@ async function runScan() {
   setSpinners(true);
   document.getElementById('ai-results').style.display = 'none';
   document.getElementById('scan-only-results').style.display = 'none';
+  document.getElementById('capital-card').classList.add('d-none');
 
   const symbol = document.getElementById('ai-symbol').value.trim().toUpperCase();
+  const mode = getMode();
   if (!symbol) { showError('{{ _("Enter a symbol") }}'); setSpinners(false); return; }
 
   try {
     const resp = await fetch('/ai/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol })
+      body: JSON.stringify({ symbol, mode })
     });
     const data = await resp.json();
     if (data.error) { showError(data.error); setSpinners(false); return; }
@@ -527,16 +623,18 @@ async function runAnalysis() {
   setSpinners(true);
   document.getElementById('ai-results').style.display = 'none';
   document.getElementById('scan-only-results').style.display = 'none';
+  document.getElementById('capital-card').classList.add('d-none');
 
   const symbol = document.getElementById('ai-symbol').value.trim().toUpperCase();
   const botId = document.getElementById('ai-bot-id').value;
+  const mode = getMode();
   if (!symbol) { showError('{{ _("Enter a symbol") }}'); setSpinners(false); return; }
 
   try {
     const resp = await fetch('/ai/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol, bot_id: botId || null })
+      body: JSON.stringify({ symbol, bot_id: botId || null, mode })
     });
     const data = await resp.json();
     if (data.error) { showError(data.error); setSpinners(false); return; }

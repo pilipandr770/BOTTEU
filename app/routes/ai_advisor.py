@@ -45,13 +45,16 @@ def scan():
     """Run multi-timeframe scanner for a symbol."""
     data = request.get_json(silent=True) or {}
     symbol = data.get("symbol", "BTCUSDT").strip().upper()
+    mode = data.get("mode", "swing")
+    if mode not in ("intraday", "swing"):
+        mode = "swing"
 
     if not symbol or len(symbol) > 20:
         return jsonify({"error": "Invalid symbol"}), 400
 
     from app.ai.scanner import scan_symbol
     try:
-        result = scan_symbol(symbol)
+        result = scan_symbol(symbol, mode=mode)
         return jsonify(result)
     except Exception as exc:
         logger.exception("Scanner error for %s: %s", symbol, exc)
@@ -67,6 +70,9 @@ def analyze():
     data = request.get_json(silent=True) or {}
     symbol = data.get("symbol", "BTCUSDT").strip().upper()
     bot_id = data.get("bot_id")
+    mode = data.get("mode", "swing")
+    if mode not in ("intraday", "swing"):
+        mode = "swing"
 
     if not symbol or len(symbol) > 20:
         return jsonify({"error": "Invalid symbol"}), 400
@@ -77,13 +83,13 @@ def analyze():
     from app.ai.advisor import analyze as ai_analyze
 
     try:
-        scan_data = scan_symbol(symbol)
+        scan_data = scan_symbol(symbol, mode=mode)
     except Exception as exc:
         logger.exception("Scanner error: %s", exc)
         return jsonify({"error": f"Scanner failed: {exc}"}), 500
 
     try:
-        advice = ai_analyze(scan_data, lang=lang)
+        advice = ai_analyze(scan_data, lang=lang, mode=mode)
     except Exception as exc:
         logger.exception("Advisor error: %s", exc)
         return jsonify({"error": f"AI analysis failed: {exc}"}), 500
