@@ -31,6 +31,35 @@ FEATURE_NAMES = [
 ]
 N_FEATURES = len(FEATURE_NAMES)
 
+# ── Adaptive label parameters per timeframe ────────────────────────────
+# threshold_pct: minimum price move (%) to be labeled BUY/SELL (else HOLD)
+# forward_n:     how many bars ahead to measure the move
+# Rationale: daily candles move 2-4× more than hourly — fixed 0.5% labels
+# almost everything on 1d as BUY/SELL and hobbles the classifier.
+_TF_LABEL_PARAMS: dict[str, tuple[float, int]] = {
+    # tf       threshold_pct  forward_n
+    "1m":      (0.08,  8),
+    "3m":      (0.12,  6),
+    "5m":      (0.20,  6),
+    "15m":     (0.30,  5),
+    "30m":     (0.45,  4),
+    "1h":      (0.60,  3),
+    "2h":      (0.80,  3),
+    "4h":      (1.20,  3),
+    "6h":      (1.50,  3),
+    "8h":      (1.80,  3),
+    "12h":     (2.00,  3),
+    "1d":      (2.50,  3),
+    "3d":      (4.00,  3),
+    "1w":      (6.00,  2),
+}
+_DEFAULT_LABEL_PARAMS = (0.50, 5)   # fallback for unknown TFs
+
+
+def get_tf_label_params(timeframe: str) -> tuple[float, int]:
+    """Return (threshold_pct, forward_n) for the given timeframe string."""
+    return _TF_LABEL_PARAMS.get(timeframe.lower(), _DEFAULT_LABEL_PARAMS)
+
 
 def extract_features(df: pd.DataFrame) -> np.ndarray:
     """
@@ -127,13 +156,34 @@ def extract_labels(
     df: pd.DataFrame,
     forward_n: int = 5,
     threshold_pct: float = 0.5,
+    timeframe: str | None = None,
 ) -> np.ndarray:
     """
     Create integer labels from future price movement.
     BUY=1, SELL=-1, HOLD=0.
     Last `forward_n` rows will have NaN label (no future data).
+
+    If `timeframe` is provided and forward_n / threshold_pct are at their
+    defaults, the adaptive per-TF parameters are used automatically.
     """
+    if timeframe is not None and forward_n == 5 and threshold_pct == 0.5:
+        threshold_pct, forward_n = get_tf_label_params(timeframe)
+
     close = df["close"].astype(float)
+
+    # ATR-adaptive scaling: normalise threshold by recent ATR%
+    # so BTCUSDT (low vol%) and SOLUSDT (high vol%) get comparable labels
+    if "atr" in df.columns:
+        atr = df["atr"].astype(float).iloc[-1]
+        price = close.iloc[-1]
+        if price > 0 and atr > 0:
+            atr_pct = float(atr / price * 100.0)
+            # scale threshold: if ATR% is 2× the typical level, widen threshold 40%
+            # clamp scale to [0.5, 2.0] to avoid extremes
+            typical_atr = threshold_pct * 1.5   # rough heuristic
+            scale = min(2.0, max(0.5, atr_pct / typical_atr)) if typical_atr > 0 else 1.0
+            threshold_pct = threshold_pct * scale
+
     future_ret = (close.shift(-forward_n) / (close + 1e-9) - 1.0) * 100.0
     y = np.where(
         future_ret > threshold_pct, 1,

@@ -45,12 +45,18 @@ def train(bot_id: int):
     timeframes_to_train = req.get("timeframes", bot_tfs) or [primary_tf]
 
     from app.ml.trainer import train_from_csv, train_from_df, make_key
+    from app.ml.features import get_tf_label_params
     from app.algorithms.consensus.data import COLLECTOR_DATA_DIR
 
     results: dict = {}
 
     for tf in timeframes_to_train:
         key = make_key(bot.symbol, tf)
+        # Use adaptive per-TF params unless the caller explicitly overrides them
+        tf_threshold, tf_forward_n = get_tf_label_params(tf)
+        use_threshold = threshold if threshold != 0.5 else tf_threshold
+        use_forward_n = forward_n  if forward_n  != 5   else tf_forward_n
+
         csv_path = os.path.join(
             COLLECTOR_DATA_DIR, f"{bot.symbol.lower()}_{tf}_clean.csv"
         )
@@ -58,12 +64,12 @@ def train(bot_id: int):
         if os.path.exists(csv_path):
             stats = train_from_csv(
                 csv_path, key=key,
-                forward_n=forward_n, threshold_pct=threshold,
+                forward_n=use_forward_n, threshold_pct=use_threshold,
+                timeframe=tf,
             )
         else:
-            # Fallback: fetch from Binance
             stats = _train_from_binance(bot.symbol, tf, key, current_user.id,
-                                        forward_n, threshold)
+                                        use_forward_n, use_threshold)
         results[tf] = stats
 
     any_ok = any("error" not in v for v in results.values())

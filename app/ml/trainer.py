@@ -51,13 +51,18 @@ def train_from_df(
     key: str,
     forward_n: int = 5,
     threshold_pct: float = 0.5,
+    timeframe: str | None = None,
 ) -> dict:
     """
     Train the ensemble on an in-memory DataFrame.
+    If `timeframe` is provided, adaptive label params are used automatically.
     Returns stats dict (keys: n_samples, label_dist, <tag>_acc, ...).
     """
-    from app.ml.features import extract_features, extract_labels
+    from app.ml.features import extract_features, extract_labels, get_tf_label_params
     from app.ml.ensemble import MLEnsemble
+
+    if timeframe is not None and forward_n == 5 and threshold_pct == 0.5:
+        threshold_pct, forward_n = get_tf_label_params(timeframe)
 
     n_rows = len(df)
     if n_rows < 100:
@@ -90,6 +95,7 @@ def train_from_csv(
     key: str,
     forward_n: int = 5,
     threshold_pct: float = 0.5,
+    timeframe: str | None = None,
 ) -> dict:
     """Load a collector CSV and train. Returns stats dict."""
     if not os.path.exists(csv_path):
@@ -98,7 +104,8 @@ def train_from_csv(
         df = pd.read_csv(csv_path, parse_dates=["timestamp"])
     except Exception as exc:
         return {"error": f"CSV read error: {exc}"}
-    return train_from_df(df, key=key, forward_n=forward_n, threshold_pct=threshold_pct)
+    return train_from_df(df, key=key, forward_n=forward_n,
+                         threshold_pct=threshold_pct, timeframe=timeframe)
 
 
 # ── Vote generation ───────────────────────────────────────────────────────
@@ -166,18 +173,10 @@ def streaming_update(
 ) -> dict:
     """
     Incremental online update called on every tick.
-    Extracts the last `lookback` candles from mtf_data[primary_tf],
-    computes features + forward labels, and calls partial_update() on
-    the ensemble.  Saves models after each update.
-
-    No pre-training or collector CSV required — models start improving
-    from the very first tick and reach MIN_WARM_SAMPLES (~20) within
-    the first few minutes.
-
-    Returns stats dict or {"skipped": reason}.
+    Uses adaptive per-TF label params (threshold + forward_n).
     """
     from app.ml.ensemble import MLEnsemble
-    from app.ml.features import extract_features, extract_labels
+    from app.ml.features import extract_features, extract_labels, get_tf_label_params
 
     df = mtf_data.get(primary_tf)
     if df is None or len(df) < 10:
@@ -185,19 +184,17 @@ def streaming_update(
 
     key = make_key(symbol, primary_tf)
     ensemble = MLEnsemble(store_dir=ML_MODELS_DIR, key=key)
-    ensemble.load()      # load previous weights if they exist (no-op if not found)
+    ensemble.load()
     ensemble._ensure_init()
 
-    # Use last `lookback` candles for the mini-batch
     df_slice = df.iloc[-lookback:]
+    threshold_pct, forward_n = get_tf_label_params(primary_tf)
     X = extract_features(df_slice)
-    # forward_n=3, threshold_pct=0.3 → faster labels for short timeframes
-    y = extract_labels(df_slice, forward_n=3, threshold_pct=0.3)
+    y = extract_labels(df_slice, forward_n=forward_n,
+                       threshold_pct=threshold_pct, timeframe=primary_tf)
 
-    # Drop last 3 rows whose labels are undefined (look-forward NaN)
-    X = X[:-3]
-    y = y[:-3]
-
+    X = X[:-forward_n]
+    y = y[:-forward_n]
     mask = np.isfinite(X).all(axis=1)
     X, y = X[mask], y[mask]
 
