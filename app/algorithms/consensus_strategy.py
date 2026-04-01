@@ -63,14 +63,18 @@ class ConsensusStrategy(BaseStrategy):
         from app.algorithms.consensus.data import load_collector_signals
 
         # ── Configuration ──
-        timeframes = params.get("timeframes", DEFAULT_TIMEFRAMES)
-        entry_threshold = float(params.get("entry_threshold", 60))
-        exit_threshold = float(params.get("exit_threshold", -40))
-        use_collector = params.get("use_collector", False)
-        use_ml_signals = params.get("use_ml_signals", False)
-
-        custom_tf_weights = params.get("tf_weights")
-        custom_indicator_weights = params.get("indicator_weights")
+        # Consensus params may be nested under params["consensus"] (from create form)
+        # or at top level (legacy / direct assignment)
+        _c = params.get("consensus", {})
+        timeframes        = params.get("timeframes") or _c.get("timeframes", DEFAULT_TIMEFRAMES)
+        entry_threshold   = float(params.get("entry_threshold")   or _c.get("entry_threshold", 60))
+        exit_threshold    = float(params.get("exit_threshold")    or _c.get("exit_threshold", -40))
+        use_collector     = params.get("use_collector")     or _c.get("use_collector", False)
+        use_ml_signals    = params.get("use_ml_signals")    or _c.get("use_ml_signals", False)
+        custom_tf_weights = params.get("tf_weights")        or _c.get("tf_weights")
+        custom_indicator_weights = (
+            params.get("indicator_weights") or _c.get("indicator_weights")
+        )
 
         indicator_names = list(VOTER_REGISTRY.keys())
         weight_matrix = build_weight_matrix(
@@ -122,29 +126,33 @@ class ConsensusStrategy(BaseStrategy):
                 except Exception as exc:
                     logger.debug("Voter %s on %s failed: %s", voter_name, tf, exc)
 
-        # ── ML signal votes (from collector) ──
+        # ── ML ensemble votes (3 in-process models) ──
         if use_ml_signals:
             try:
-                ml_signals = load_collector_signals()
-                for ms in ml_signals:
-                    signal_val = float(ms.get("signal", 0))
-                    if signal_val == 0:
-                        continue
-                    # Normalize: collector signals are -1/0/+1
-                    model_name = ms.get("model", "ml")
-                    tf = ms.get("tf", "1m")
-                    # ML models get moderate weight
-                    ml_weight = float(params.get("ml_weight", 1.5))
-                    vote = Vote(
-                        voter=f"ml_{model_name}",
-                        timeframe=tf,
-                        signal=max(-1.0, min(1.0, signal_val)),
-                        weight=ml_weight,
-                        raw_value=signal_val,
-                    )
-                    all_votes.append(vote)
+                from app.ml.trainer import get_ml_votes, auto_train_if_needed
+
+                ml_weight = float(params.get("ml_weight", 3.0))
+                # symbol comes from state (injected by tick.py) or params fallback
+                symbol = state.get("symbol") or params.get("symbol", "BTCUSDT")
+
+                # Auto-train on first tick if models are not yet ready
+                auto_train_if_needed(symbol, primary_tf, mtf_data)
+
+                ml_votes = get_ml_votes(
+                    symbol=symbol,
+                    mtf_data=mtf_data,
+                    primary_tf=primary_tf,
+                    ml_weight=ml_weight,
+                )
+                all_votes.extend(ml_votes)
+                state["ml_votes"] = len(ml_votes)
+                state["ml_individual"] = [
+                    {"voter": v.voter, "signal": int(v.signal)}
+                    for v in ml_votes
+                ]
             except Exception as exc:
-                logger.debug("ML signal loading failed: %s", exc)
+                logger.warning("ML ensemble failed: %s", exc)
+                state["ml_votes"] = 0
 
         # ── Volatility modifier ──
         vol_modifier = None

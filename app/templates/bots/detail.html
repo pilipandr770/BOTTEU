@@ -229,7 +229,24 @@
   </div>
 </div>
 
-{# ── Log Panel ────────────────────────────────────────────────────────────────── #}
+{# ── ML Ensemble (consensus bots only) ──────────────────────────────────────── #}
+{% if bot.algorithm == 'consensus' and bot.params.get('consensus', {}).get('use_ml_signals') %}
+<div class="card bg-dark border-primary mb-4">
+  <div class="card-header fw-semibold d-flex align-items-center gap-2">
+    <i class="bi bi-cpu-fill text-primary"></i>{{ _('ML Ensemble Status') }}
+    <span class="badge bg-primary">BETA</span>
+    <div class="ms-auto">
+      <button type="button" class="btn btn-sm btn-outline-primary" id="btn-train-ml"
+              onclick="trainML()">
+        <i class="bi bi-arrow-repeat me-1"></i>{{ _('Train / Retrain') }}
+      </button>
+    </div>
+  </div>
+  <div class="card-body" id="ml-status-body">
+    <div class="text-muted small">{{ _('Click "Train / Retrain" to train the models or check their status.') }}</div>
+  </div>
+</div>
+{% endif %}
 <div class="card bg-dark border-secondary mb-4">
   <div class="card-header d-flex align-items-center gap-2">
     <i class="bi bi-terminal text-info"></i>
@@ -511,5 +528,92 @@ function generateTVToken(botId) {
   })
   .catch(() => alert('Failed to generate token'));
 }
+
+// ── ML Training ──────────────────────────────────────────────────────────
+{% if bot.algorithm == 'consensus' and bot.params.get('consensus', {}).get('use_ml_signals') %}
+function trainML() {
+  const btn = document.getElementById('btn-train-ml');
+  const body = document.getElementById('ml-status-body');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Training…';
+  body.innerHTML = '<div class="text-muted small">Training models… this may take 10–30 seconds.</div>';
+
+  fetch('/ml/train/{{ bot.id }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || '',
+    },
+    body: JSON.stringify({}),
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>{{ _("Train / Retrain") }}';
+    let html = data.success
+      ? '<div class="text-success mb-2"><i class="bi bi-check-circle me-1"></i><strong>Training complete!</strong></div>'
+      : '<div class="text-danger mb-2"><i class="bi bi-x-circle me-1"></i><strong>Training failed.</strong></div>';
+    for (const [tf, stats] of Object.entries(data.results || {})) {
+      html += `<div class="mb-2">`;
+      html += `<span class="badge bg-secondary me-1">${tf}</span>`;
+      if (stats.error) {
+        html += `<span class="text-danger small">${stats.error}</span>`;
+      } else {
+        html += `<span class="text-muted small">n=${stats.n_samples} `;
+        for (const [k, v] of Object.entries(stats)) {
+          if (k.endsWith('_acc')) html += `· ${k.replace('_acc','')} acc=${v} `;
+        }
+        html += '</span>';
+        if (stats.label_dist) {
+          const d = stats.label_dist;
+          html += `<span class="text-muted small d-block">Labels → BUY:${d[1]||0} HOLD:${d[0]||0} SELL:${d[-1]||0}</span>`;
+        }
+      }
+      html += '</div>';
+    }
+    body.innerHTML = html;
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>{{ _("Train / Retrain") }}';
+    body.innerHTML = `<div class="text-danger small">Request failed: ${err}</div>`;
+  });
+}
+
+// Auto-load ML status on page load
+fetch('/ml/status/{{ bot.id }}')
+  .then(r => r.json())
+  .then(data => {
+    const body = document.getElementById('ml-status-body');
+    const tfs = data.timeframes || {};
+    const trained = Object.values(tfs).some(t => t.trained);
+    if (!trained) {
+      body.innerHTML = '<div class="text-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Models not trained yet. Click "Train / Retrain" to start.</div>';
+      return;
+    }
+    let html = '<div class="row g-2">';
+    for (const [tf, info] of Object.entries(tfs)) {
+      html += `<div class="col-md-3 col-6">`;
+      html += `<div class="p-2 rounded small" style="background:rgba(13,110,253,.06); border:1px solid rgba(13,110,253,.2);">`;
+      html += `<div class="fw-semibold mb-1">${tf}</div>`;
+      if (info.trained) {
+        html += '<span class="badge bg-success mb-1">Trained</span>';
+        const s = info.stats || {};
+        if (s.n_samples) html += `<div class="text-muted" style="font-size:.7rem;">n=${s.n_samples}</div>`;
+        for (const [k, v] of Object.entries(s)) {
+          if (k.endsWith('_acc')) {
+            html += `<div style="font-size:.7rem;">${k.replace('_acc','')}: <strong>${(v*100).toFixed(1)}%</strong></div>`;
+          }
+        }
+      } else {
+        html += '<span class="badge bg-secondary">Not trained</span>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  })
+  .catch(() => {});
+{% endif %}
 </script>
 {% endblock %}

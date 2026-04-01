@@ -285,6 +285,9 @@ def create():
                     except ValueError:
                         params[param_name] = val
 
+            use_ml         = request.form.get("consensus_use_ml") == "1"
+            ml_weight      = float(request.form.get("consensus_ml_weight") or 3.0)
+
             params["consensus"] = {
                 "timeframes": timeframes,
                 "entry_threshold": entry_threshold,
@@ -292,6 +295,8 @@ def create():
                 "tf_weights": {k: float(v) for k, v in tf_weights.items()},
                 "indicator_weights": {k: float(v) for k, v in ind_weights.items()},
                 "use_collector": use_collector,
+                "use_ml_signals": use_ml,
+                "ml_weight": ml_weight,
             }
 
             algorithm = "consensus"

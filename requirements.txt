@@ -48,6 +48,10 @@ APScheduler==3.10.4
 # AI Advisor (Anthropic Claude)
 anthropic>=0.39.0
 
+# ML Ensemble (in-process 3-model voting for consensus strategy)
+scikit-learn>=1.4.0
+joblib>=1.3.0
+
 # Utils
 python-dotenv==1.0.1
 requests==2.32.3
