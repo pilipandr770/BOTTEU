@@ -227,6 +227,8 @@ def create():
         return redirect(url_for("bots.api_key"))
 
     if request.method == "POST":
+        import json as _json
+
         name   = request.form.get("name", "").strip()
         symbol = request.form.get("symbol", "").strip().upper()
 
@@ -234,37 +236,87 @@ def create():
             flash(_("Bot name and trading pair are required."), "danger")
             return render_template("bots/create.html")
 
-        # ── Modules ──────────────────────────────────────────────────────
-        modules = request.form.getlist("modules")   # list of checked values
-        if not modules:
-            flash(_("Enable at least one signal module."), "danger")
-            return render_template("bots/create.html")
+        # ── Consensus mode branch ────────────────────────────────────────
+        is_consensus = request.form.get("consensus_mode") == "1"
 
-        # ── Collect all param_* fields ────────────────────────────────────
-        params: dict = {}
-        for key, val in request.form.items():
-            if key.startswith("param_") and val.strip():
-                param_name = key[len("param_"):]
-                try:
-                    params[param_name] = float(val) if "." in val else int(val)
-                except ValueError:
-                    params[param_name] = val
+        if is_consensus:
+            # Parse consensus-specific fields
+            raw_tfs = request.form.get("consensus_timeframes", "")
+            timeframes = [t.strip() for t in raw_tfs.split(",") if t.strip()]
+            if not timeframes:
+                flash(_("Select at least one timeframe for consensus."), "danger")
+                return render_template("bots/create.html",
+                                       cached_symbols=get_cached_symbols(current_user.id))
 
-        # Store modules list and determine algorithm key
-        params["modules"] = modules
-        params["entry_logic"] = params.get("entry_logic", "OR")
+            entry_threshold = float(request.form.get("consensus_entry_threshold", 30))
+            exit_threshold  = float(request.form.get("consensus_exit_threshold", -15))
 
-        if len(modules) == 1 and modules[0] != "combined":
-            # Single module: use dedicated strategy for clarity
-            algorithm = modules[0]
+            try:
+                tf_weights = _json.loads(request.form.get("consensus_tf_weights", "{}"))
+            except (ValueError, TypeError):
+                tf_weights = {}
+            try:
+                ind_weights = _json.loads(request.form.get("consensus_indicator_weights", "{}"))
+            except (ValueError, TypeError):
+                ind_weights = {}
+
+            use_collector = request.form.get("consensus_use_collector") == "1"
+
+            # Collect indicator params (param_* fields)
+            params: dict = {}
+            for key, val in request.form.items():
+                if key.startswith("param_") and val.strip():
+                    param_name = key[len("param_"):]
+                    try:
+                        params[param_name] = float(val) if "." in val else int(val)
+                    except ValueError:
+                        params[param_name] = val
+
+            params["consensus"] = {
+                "timeframes": timeframes,
+                "entry_threshold": entry_threshold,
+                "exit_threshold": exit_threshold,
+                "tf_weights": {k: float(v) for k, v in tf_weights.items()},
+                "indicator_weights": {k: float(v) for k, v in ind_weights.items()},
+                "use_collector": use_collector,
+            }
+
+            algorithm = "consensus"
+
+            # SL is mandatory for consensus
+            if not params.get("stop_loss_pct"):
+                flash(_("Stop-Loss is required for consensus mode."), "danger")
+                return render_template("bots/create.html",
+                                       cached_symbols=get_cached_symbols(current_user.id))
+
         else:
-            algorithm = "combined"
+            # ── Modular mode (original flow) ─────────────────────────────
+            modules = request.form.getlist("modules")
+            if not modules:
+                flash(_("Enable at least one signal module."), "danger")
+                return render_template("bots/create.html")
 
-        # Validate SL required when RSI or BB Bounce is active
-        if ("rsi" in modules or "bb_bounce" in modules) and not params.get("stop_loss_pct"):
-            flash(_("Stop-Loss is required when using the RSI or Bollinger Bands Bounce module."), "danger")
-            return render_template("bots/create.html",
-                                   cached_symbols=get_cached_symbols(current_user.id))
+            params: dict = {}
+            for key, val in request.form.items():
+                if key.startswith("param_") and val.strip():
+                    param_name = key[len("param_"):]
+                    try:
+                        params[param_name] = float(val) if "." in val else int(val)
+                    except ValueError:
+                        params[param_name] = val
+
+            params["modules"] = modules
+            params["entry_logic"] = params.get("entry_logic", "OR")
+
+            if len(modules) == 1 and modules[0] != "combined":
+                algorithm = modules[0]
+            else:
+                algorithm = "combined"
+
+            if ("rsi" in modules or "bb_bounce" in modules) and not params.get("stop_loss_pct"):
+                flash(_("Stop-Loss is required when using the RSI or Bollinger Bands Bounce module."), "danger")
+                return render_template("bots/create.html",
+                                       cached_symbols=get_cached_symbols(current_user.id))
 
         position_size_usdt = request.form.get("position_size_usdt", "50")
         try:

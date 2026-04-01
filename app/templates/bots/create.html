@@ -88,8 +88,31 @@
       </div>
     </div>
 
-    <!-- ── TIMEFRAME ──────────────────────────────────────────────────── -->
+    <!-- ── STRATEGY MODE SELECTOR ───────────────────────────────────── -->
     <div class="card bg-dark border-secondary mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-toggles me-2 text-primary"></i>{{ _('Strategy Mode') }}
+      </div>
+      <div class="card-body">
+        <input type="hidden" name="strategy_mode" id="strategyMode" value="modular">
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-outline-success strategy-mode-btn active" id="btn-mode-modular"
+                  onclick="setStrategyMode('modular')">
+            <i class="bi bi-layers me-1"></i>{{ _('Modular Constructor') }}
+            <div class="small text-muted fw-normal">{{ _('Pick individual modules · classic') }}</div>
+          </button>
+          <button type="button" class="btn btn-outline-warning strategy-mode-btn" id="btn-mode-consensus"
+                  onclick="setStrategyMode('consensus')">
+            <i class="bi bi-people-fill me-1"></i>{{ _('Consensus (Multi-TF)') }}
+            <span class="badge bg-warning text-dark ms-1 small">SUPER</span>
+            <div class="small text-muted fw-normal">{{ _('6 indicators × 6 timeframes vote with weights') }}</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TIMEFRAME (modular mode only) ──────────────────────────────── -->
+    <div class="card bg-dark border-secondary mb-3" id="section-timeframe">
       <div class="card-header fw-semibold">
         <i class="bi bi-clock me-2 text-warning"></i>{{ _('Timeframe') }}
       </div>
@@ -118,7 +141,8 @@
       </div>
     </div>
 
-    <!-- ── SIGNAL MODULES ─────────────────────────────────────────────── -->
+    <!-- ── SIGNAL MODULES (modular mode) ─────────────────────────────── -->
+    <div id="section-modules">
     <div class="card bg-dark border-secondary mb-3">
       <div class="card-header fw-semibold">
         <i class="bi bi-layers me-2 text-success"></i>{{ _('Signal Modules') }}
@@ -422,6 +446,192 @@
         </div>
       </div>
     </div>
+    </div><!-- /section-modules -->
+
+    <!-- ── CONSENSUS CONSTRUCTOR (Multi-TF mode) ─────────────────────── -->
+    <div id="section-consensus" style="display:none;">
+      <div class="card bg-dark border-warning mb-3">
+        <div class="card-header fw-semibold bg-warning bg-opacity-10">
+          <i class="bi bi-people-fill me-2 text-warning"></i>{{ _('Consensus Engine') }}
+          <span class="badge bg-warning text-dark ms-2">{{ _('6 indicators × 6 timeframes = 36 votes') }}</span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            {{ _('All 6 indicators run on all selected timeframes simultaneously. Each vote is weighted. The combined score determines BUY / SELL / HOLD.') }}
+          </p>
+
+          <!-- Timeframes -->
+          <div class="section-label">{{ _('Active Timeframes') }}</div>
+          <div class="d-flex gap-2 flex-wrap mb-3">
+            {% for tf in ["5m", "15m", "30m", "1h", "4h", "1d"] %}
+            <div class="form-check form-check-inline">
+              <input class="form-check-input consensus-tf" type="checkbox"
+                     id="ctf-{{ tf }}" value="{{ tf }}"
+                     {{ 'checked' if tf in ['15m', '30m', '1h', '4h', '1d'] else '' }}>
+              <label class="form-check-label small" for="ctf-{{ tf }}">{{ tf }}</label>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Primary TF (for tick alignment) -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label small">{{ _('Primary TF (tick speed)') }}</label>
+              <select id="consensus-primary-tf" class="form-select form-select-sm">
+                <option value="5m">5m</option>
+                <option value="15m" selected>15m</option>
+                <option value="30m">30m</option>
+                <option value="1h">1h</option>
+              </select>
+              <div class="form-text">{{ _('How often the bot evaluates. Shorter = faster reaction, more API calls.') }}</div>
+            </div>
+          </div>
+
+          <!-- Thresholds -->
+          <div class="section-label">{{ _('Decision Thresholds') }}</div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label small">
+                <i class="bi bi-arrow-up-circle text-success me-1"></i>{{ _('Entry Threshold (BUY)') }}
+              </label>
+              <div class="input-group input-group-sm">
+                <input type="number" id="consensus-entry" class="form-control"
+                       value="60" min="10" max="100" step="5">
+                <span class="input-group-text">/ 100</span>
+              </div>
+              <div class="form-text">{{ _('Higher = fewer but more confident entries') }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">
+                <i class="bi bi-arrow-down-circle text-danger me-1"></i>{{ _('Exit Threshold (SELL)') }}
+              </label>
+              <div class="input-group input-group-sm">
+                <input type="number" id="consensus-exit" class="form-control"
+                       value="-40" min="-100" max="-10" step="5">
+                <span class="input-group-text">/ -100</span>
+              </div>
+              <div class="form-text">{{ _('Lower = holds longer, waits for strong sell consensus') }}</div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-2 rounded small" style="background:rgba(255,255,255,.04);">
+                <div class="text-muted mb-1">{{ _('Score range: -100 to +100') }}</div>
+                <div class="text-success">≥ <span id="entry-preview">60</span> → BUY</div>
+                <div class="text-muted">{{ _('between') }} → HOLD</div>
+                <div class="text-danger">≤ <span id="exit-preview">-40</span> → SELL</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weight Matrix -->
+          <div class="section-label">{{ _('Weight Matrix — Timeframes') }}</div>
+          <p class="text-muted small mb-2">
+            {{ _('Higher weight = this timeframe has more influence on the final decision. Longer TF = usually stronger signal.') }}
+          </p>
+          <div class="row g-2 mb-3">
+            {% for tf, default_w in [("5m", 1), ("15m", 2), ("30m", 3), ("1h", 4), ("4h", 5), ("1d", 6)] %}
+            <div class="col-md-2 col-4">
+              <label class="form-label small fw-bold">{{ tf }}</label>
+              <input type="number" class="form-control form-control-sm consensus-tf-weight"
+                     id="cw-tf-{{ tf }}" data-tf="{{ tf }}"
+                     value="{{ default_w }}" min="0" max="20" step="0.5">
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="section-label">{{ _('Weight Matrix — Indicators') }}</div>
+          <p class="text-muted small mb-2">
+            {{ _('Final weight per vote = TF weight × Indicator weight. Zero = disabled.') }}
+          </p>
+          <div class="row g-2 mb-3">
+            {% for ind, label, default_w, icon, desc in [
+              ("ma_cross", "MA Cross", 2.0, "bi-graph-up-arrow text-success", "Trend direction"),
+              ("rsi", "RSI", 1.5, "bi-activity text-warning", "Overbought / oversold"),
+              ("macd", "MACD", 2.0, "bi-bar-chart-line text-primary", "Momentum"),
+              ("supertrend", "SuperTrend", 2.5, "bi-lightning-charge text-warning", "Adaptive trend"),
+              ("bb", "Bollinger", 1.5, "bi-bezier2 text-info", "Mean reversion"),
+              ("obv", "OBV", 1.0, "bi-bar-chart text-secondary", "Volume confirm"),
+            ] %}
+            <div class="col-md-2 col-4">
+              <label class="form-label small">
+                <i class="{{ icon }} me-1"></i>{{ label }}
+              </label>
+              <input type="number" class="form-control form-control-sm consensus-ind-weight"
+                     id="cw-ind-{{ ind }}" data-ind="{{ ind }}"
+                     value="{{ default_w }}" min="0" max="10" step="0.5">
+              <div class="form-text small" style="font-size:.65rem;">{{ _(desc) }}</div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Use Collector Data -->
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="consensus-use-collector">
+            <label class="form-check-label small" for="consensus-use-collector">
+              <i class="bi bi-database me-1"></i>{{ _('Use Collector data (pre-cleaned CSVs with longer history)') }}
+            </label>
+            <div class="form-text">{{ _('Requires the data collector container running for this symbol.') }}</div>
+          </div>
+
+          <!-- Vote Breakdown Preview -->
+          <div class="mt-3 p-2 rounded" style="background:rgba(255,193,7,.06); border:1px solid rgba(255,193,7,.15);">
+            <div class="small">
+              <i class="bi bi-info-circle text-warning me-1"></i>
+              <strong id="consensus-vote-count">30</strong> {{ _('total votes') }}
+              (<span id="consensus-tf-count">5</span> TF × <span id="consensus-ind-count">6</span> {{ _('indicators') }})
+              · {{ _('Max possible weight') }}: <strong id="consensus-max-weight">—</strong>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Consensus: indicator-specific params (optional tuning) -->
+      <div class="card bg-dark border-secondary mb-3">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-sliders me-2 text-info"></i>{{ _('Indicator Parameters (optional)') }}
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">{{ _('Fine-tune individual indicator settings. Defaults work well for most pairs.') }}</p>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('Fast MA') }}</label>
+              <input type="number" id="c-fast-ma" class="form-control form-control-sm" value="7" min="2" max="50">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('Slow MA') }}</label>
+              <input type="number" id="c-slow-ma" class="form-control form-control-sm" value="25" min="5" max="200">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('RSI Period') }}</label>
+              <input type="number" id="c-rsi-period" class="form-control form-control-sm" value="14" min="2" max="100">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('RSI Oversold / Overbought') }}</label>
+              <div class="d-flex gap-1">
+                <input type="number" id="c-oversold" class="form-control form-control-sm" value="30" min="5" max="49">
+                <input type="number" id="c-overbought" class="form-control form-control-sm" value="70" min="51" max="95">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('SuperTrend Period') }}</label>
+              <input type="number" id="c-st-period" class="form-control form-control-sm" value="10" min="3" max="100">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('SuperTrend Mult') }}</label>
+              <input type="number" id="c-st-mult" class="form-control form-control-sm" value="3.0" min="0.5" max="10" step="0.1">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('BB Period') }}</label>
+              <input type="number" id="c-bb-period" class="form-control form-control-sm" value="20" min="5" max="200">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">{{ _('OBV MA Length') }}</label>
+              <input type="number" id="c-obv-ma" class="form-control form-control-sm" value="20" min="5" max="100">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ── RISK MANAGEMENT ────────────────────────────────────────────── -->
     <div class="card bg-dark border-secondary mb-4">
@@ -606,6 +816,7 @@ function updateUI() {
 }
 
 document.getElementById('botForm').addEventListener('submit', (e) => {
+  if (strategyMode === 'consensus') return; // consensus handles its own validation
   const signalCount = [modMA,modRSI,modMACD,modSupertrend,modBB].filter(m=>m.checked).length;
   if (signalCount === 0) {
     e.preventDefault();
@@ -614,6 +825,132 @@ document.getElementById('botForm').addEventListener('submit', (e) => {
 });
 
 updateUI();
+
+// ── Strategy Mode Toggle ────────────────────────────────────────────────────
+let strategyMode = 'modular';
+
+function setStrategyMode(mode) {
+  strategyMode = mode;
+  document.getElementById('strategyMode').value = mode;
+
+  document.querySelectorAll('.strategy-mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-mode-' + mode).classList.add('active');
+
+  const isConsensus = mode === 'consensus';
+  document.getElementById('section-modules').style.display = isConsensus ? 'none' : '';
+  document.getElementById('section-timeframe').style.display = isConsensus ? 'none' : '';
+  document.getElementById('section-consensus').style.display = isConsensus ? '' : 'none';
+
+  // SL is always required for consensus
+  if (isConsensus) {
+    slBadge.style.display = '';
+    slOptional.style.display = 'none';
+    slInput.required = true;
+    document.getElementById('submitBtn').disabled = false;
+    noModWarn.style.display = 'none';
+  } else {
+    updateUI();
+  }
+
+  updateConsensusPreview();
+}
+
+// Consensus preview
+function updateConsensusPreview() {
+  const activeTfs = document.querySelectorAll('.consensus-tf:checked');
+  const activeInds = document.querySelectorAll('.consensus-ind-weight');
+  let tfCount = activeTfs.length;
+  let indCount = 0;
+  let maxWeight = 0;
+
+  activeInds.forEach(inp => {
+    if (parseFloat(inp.value) > 0) indCount++;
+  });
+
+  activeTfs.forEach(tf => {
+    const tfVal = tf.value;
+    const twInp = document.getElementById('cw-tf-' + tfVal);
+    const tw = twInp ? parseFloat(twInp.value) || 0 : 0;
+    activeInds.forEach(inp => {
+      const iw = parseFloat(inp.value) || 0;
+      maxWeight += tw * iw;
+    });
+  });
+
+  const el = id => document.getElementById(id);
+  if (el('consensus-vote-count')) el('consensus-vote-count').textContent = tfCount * indCount;
+  if (el('consensus-tf-count')) el('consensus-tf-count').textContent = tfCount;
+  if (el('consensus-ind-count')) el('consensus-ind-count').textContent = indCount;
+  if (el('consensus-max-weight')) el('consensus-max-weight').textContent = maxWeight.toFixed(1);
+}
+
+// Update threshold preview
+document.getElementById('consensus-entry')?.addEventListener('input', function() {
+  document.getElementById('entry-preview').textContent = this.value;
+});
+document.getElementById('consensus-exit')?.addEventListener('input', function() {
+  document.getElementById('exit-preview').textContent = this.value;
+});
+
+document.querySelectorAll('.consensus-tf, .consensus-tf-weight, .consensus-ind-weight').forEach(el => {
+  el.addEventListener('change', updateConsensusPreview);
+  el.addEventListener('input', updateConsensusPreview);
+});
+updateConsensusPreview();
+
+// Intercept form submission to inject consensus hidden fields
+document.getElementById('botForm').addEventListener('submit', function(e) {
+  if (strategyMode !== 'consensus') return;
+
+  const form = this;
+  function injectHidden(name, value) {
+    let inp = form.querySelector('input[name="' + name + '"]');
+    if (!inp) {
+      inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = name;
+      form.appendChild(inp);
+    }
+    inp.value = value;
+  }
+
+  injectHidden('consensus_mode', '1');
+
+  const tfs = [];
+  document.querySelectorAll('.consensus-tf:checked').forEach(cb => tfs.push(cb.value));
+  if (tfs.length === 0) {
+    e.preventDefault();
+    alert('{{ _("Select at least one timeframe.") }}');
+    return;
+  }
+  injectHidden('consensus_timeframes', tfs.join(','));
+  injectHidden('param_timeframe', document.getElementById('consensus-primary-tf').value);
+  injectHidden('consensus_entry_threshold', document.getElementById('consensus-entry').value);
+  injectHidden('consensus_exit_threshold', document.getElementById('consensus-exit').value);
+
+  const tfWeights = {};
+  document.querySelectorAll('.consensus-tf-weight').forEach(inp => {
+    tfWeights[inp.dataset.tf] = parseFloat(inp.value) || 0;
+  });
+  injectHidden('consensus_tf_weights', JSON.stringify(tfWeights));
+
+  const indWeights = {};
+  document.querySelectorAll('.consensus-ind-weight').forEach(inp => {
+    indWeights[inp.dataset.ind] = parseFloat(inp.value) || 0;
+  });
+  injectHidden('consensus_indicator_weights', JSON.stringify(indWeights));
+
+  injectHidden('consensus_use_collector', document.getElementById('consensus-use-collector').checked ? '1' : '0');
+  injectHidden('param_fast_ma', document.getElementById('c-fast-ma').value);
+  injectHidden('param_slow_ma', document.getElementById('c-slow-ma').value);
+  injectHidden('param_rsi_period', document.getElementById('c-rsi-period').value);
+  injectHidden('param_oversold', document.getElementById('c-oversold').value);
+  injectHidden('param_overbought', document.getElementById('c-overbought').value);
+  injectHidden('param_st_atr_period', document.getElementById('c-st-period').value);
+  injectHidden('param_st_multiplier', document.getElementById('c-st-mult').value);
+  injectHidden('param_bb_length', document.getElementById('c-bb-period').value);
+  injectHidden('param_obv_ma_length', document.getElementById('c-obv-ma').value);
+});
 
 {% if cached_symbols %}
 // ── Symbol Picker ────────────────────────────────────────────────────────────

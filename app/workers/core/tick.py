@@ -130,7 +130,29 @@ def tick_bot(bot_id: int) -> None:
         else:
             strategy  = get_algorithm(bot.algorithm)
             state     = dict(state_current)
+
+            # ── Multi-TF data for consensus strategy ──────────────────────
+            if getattr(strategy, "multi_timeframe", False):
+                try:
+                    from app.algorithms.consensus.data import get_multi_tf_data
+                    consensus_tfs = bot.params.get("timeframes", ["5m", "15m", "30m", "1h", "4h", "1d"])
+                    use_collector = bot.params.get("use_collector", False)
+                    mtf_data = get_multi_tf_data(
+                        client=client,
+                        symbol=bot.symbol,
+                        timeframes=consensus_tfs,
+                        state=state,
+                        use_collector=use_collector,
+                    )
+                    state["mtf_data"] = mtf_data
+                except Exception as mtf_exc:
+                    logger.warning("Multi-TF data fetch failed for bot %d: %s", bot_id, mtf_exc)
+                    state["mtf_data"] = {}
+
             signal, new_state = strategy.generate_signal(df, state, bot.params)
+
+            # Clean up mtf_data from state before persisting (too large for JSON)
+            new_state.pop("mtf_data", None)
 
         # ── Advance next-tick boundary (aligns to candle close) ───────────
         next_boundary = math.ceil(now_ts / tick_interval) * tick_interval

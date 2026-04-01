@@ -65,6 +65,7 @@ def _build_registry() -> dict[str, type[BaseStrategy]]:
     from app.algorithms.supertrend import SuperTrendStrategy
     from app.algorithms.bb_bounce import BBBounceStrategy
     from app.algorithms.combined import CombinedStrategy
+    from app.algorithms.consensus_strategy import ConsensusStrategy
     return {
         "ma_crossover": MACrossoverStrategy,
         "rsi": RSIStrategy,
@@ -72,6 +73,7 @@ def _build_registry() -> dict[str, type[BaseStrategy]]:
         "supertrend": SuperTrendStrategy,
         "bb_bounce": BBBounceStrategy,
         "combined": CombinedStrategy,
+        "consensus": ConsensusStrategy,
     }
 
 

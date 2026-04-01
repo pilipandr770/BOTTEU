@@ -49,6 +49,7 @@ services:
     volumes:
       - instance_data:/app/instance
       - static_data:/app/app/static
+      - collector_data:/app/collector/data
     expose:
       - "5000"
 
@@ -76,10 +77,25 @@ services:
       - certbot_conf:/etc/letsencrypt
     entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'
 
+  # ── Data Collector (Binance WebSocket → CSV) ───────────────────────────
+  # Streams 1m klines for multiple symbols, aggregates to 5m/15m/30m/1h/4h/1d,
+  # computes indicators, cleans data. Shared volume with web service.
+  collector:
+    build: ./collector
+    restart: unless-stopped
+    environment:
+      SYMBOLS: ${COLLECTOR_SYMBOLS:-BTCUSDT}
+      DATA_DIR: /app/data
+      ROLL_WINDOW: ${COLLECTOR_ROLL_WINDOW:-7770}
+      MAX_RECONNECTS: 20
+    volumes:
+      - collector_data:/app/data
+
 volumes:
   postgres_data:
   instance_data:
   static_data:
   certbot_www:
   certbot_conf:
+  collector_data:
 
