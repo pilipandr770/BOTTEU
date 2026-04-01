@@ -232,9 +232,19 @@ def create():
         name   = request.form.get("name", "").strip()
         symbol = request.form.get("symbol", "").strip().upper()
 
+        import logging as _logging
+        _logging.getLogger(__name__).info(
+            "create POST: name=%r symbol=%r strategy_mode=%r consensus_tfs=%r modules=%r",
+            name, symbol,
+            request.form.get("strategy_mode"),
+            request.form.get("consensus_timeframes"),
+            request.form.getlist("modules"),
+        )
+
         if not name or not symbol:
             flash(_("Bot name and trading pair are required."), "danger")
-            return render_template("bots/create.html")
+            return render_template("bots/create.html",
+                                   cached_symbols=get_cached_symbols(current_user.id))
 
         # ── Consensus mode branch ────────────────────────────────────────
         is_consensus = (
@@ -297,7 +307,8 @@ def create():
             modules = request.form.getlist("modules")
             if not modules:
                 flash(_("Enable at least one signal module."), "danger")
-                return render_template("bots/create.html")
+                return render_template("bots/create.html",
+                                       cached_symbols=get_cached_symbols(current_user.id))
 
             params: dict = {}
             for key, val in request.form.items():

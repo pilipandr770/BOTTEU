@@ -69,7 +69,7 @@
             <div class="form-text">{{ _('Showing Binance spot pairs synced from your API key.') }}</div>
             {% else %}
             <input type="text" name="symbol" class="form-control font-monospace"
-                   placeholder="BTCUSDT" required maxlength="20"
+                   placeholder="BTCUSDT" value="BTCUSDT" required maxlength="20"
                    pattern="[A-Za-z0-9]+" title="{{ _('Spot pair, e.g. BTCUSDT') }}">
             <div class="form-text text-warning">
               <i class="bi bi-exclamation-triangle me-1"></i>
