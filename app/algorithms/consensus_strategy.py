@@ -129,14 +129,14 @@ class ConsensusStrategy(BaseStrategy):
         # ── ML ensemble votes (3 in-process models) ──
         if use_ml_signals:
             try:
-                from app.ml.trainer import get_ml_votes, auto_train_if_needed
+                from app.ml.trainer import get_ml_votes, streaming_update
 
                 ml_weight = float(params.get("ml_weight", 3.0))
                 # symbol comes from state (injected by tick.py) or params fallback
                 symbol = state.get("symbol") or params.get("symbol", "BTCUSDT")
 
-                # Auto-train on first tick if models are not yet ready
-                auto_train_if_needed(symbol, primary_tf, mtf_data)
+                # Streaming update every tick — models learn continuously
+                streaming_update(symbol, primary_tf, mtf_data)
 
                 ml_votes = get_ml_votes(
                     symbol=symbol,

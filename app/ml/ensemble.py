@@ -1,17 +1,20 @@
 """
-ML Ensemble — 3 scikit-learn classifiers vote on BUY/SELL/HOLD.
+ML Ensemble — 3 streaming classifiers vote on BUY/SELL/HOLD.
+
+All three models use partial_fit() → true online / streaming learning.
+Predictions start after MIN_WARM_SAMPLES ticks (default 20).
+No pre-training or collector CSV needed — improves every tick.
 
 Models
 ------
-  0  sgd_logreg    SGDClassifier(loss='log_loss')       online-capable
-  1  sgd_huber     SGDClassifier(loss='modified_huber') online-capable, robust
-  2  rf_batch      RandomForestClassifier               batch, retrained each time
+  0  sgd_logreg      SGDClassifier(loss='log_loss')       online logistic regression
+  1  pa_classifier   PassiveAggressiveClassifier           online, updates on errors only
+  2  sgd_huber       SGDClassifier(loss='modified_huber') online, robust to price spikes
 
 Majority vote
 -------------
-  2 or 3 models agree  → use that label
-  All 3 differ          → HOLD (0)
-  Majority is 0         → HOLD
+  2 or 3 models agree on non-HOLD → use that label
+  Otherwise → HOLD
 
 Persistence
 -----------
@@ -28,24 +31,25 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 CLASSES = np.array([-1, 0, 1], dtype=np.int8)
-MODEL_TAGS = ["sgd_logreg", "sgd_huber", "rf_batch"]
+MODEL_TAGS = ["sgd_logreg", "pa_classifier", "sgd_huber"]
+MIN_WARM_SAMPLES = 20   # start predicting after this many samples seen
 
 
 def _build_models():
-    from sklearn.linear_model import SGDClassifier
-    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier
     return [
         SGDClassifier(
-            loss="log_loss", max_iter=1000, tol=1e-3,
+            loss="log_loss", max_iter=1, warm_start=True,
             class_weight="balanced", random_state=42,
         ),
-        SGDClassifier(
-            loss="modified_huber", max_iter=1000, tol=1e-3,
+        PassiveAggressiveClassifier(
+            max_iter=1, warm_start=True,
             class_weight="balanced", random_state=43,
+            n_jobs=1,
         ),
-        RandomForestClassifier(
-            n_estimators=50, max_depth=5, class_weight="balanced",
-            random_state=44, n_jobs=1,
+        SGDClassifier(
+            loss="modified_huber", max_iter=1, warm_start=True,
+            class_weight="balanced", random_state=44,
         ),
     ]
 
@@ -57,6 +61,7 @@ class MLEnsemble:
         self.models = None
         self.scalers = None
         self.fitted: list[bool] = [False, False, False]
+        self.n_seen: int = 0        # total samples seen via partial_fit
         self._train_stats: dict = {}
 
     # ── Internal helpers ───────────────────────────────────────────────────
@@ -70,18 +75,81 @@ class MLEnsemble:
     def _store_path(self) -> str:
         return os.path.join(self.store_dir, f"{self.key}_ensemble.pkl")
 
-    # ── Training ───────────────────────────────────────────────────────────
+    # ── Properties ─────────────────────────────────────────────────────────
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> dict:
+    @property
+    def is_warm(self) -> bool:
+        """True when models have seen enough samples to give meaningful signals."""
+        return self.n_seen >= MIN_WARM_SAMPLES
+
+    @property
+    def is_trained(self) -> bool:
+        return any(self.fitted)
+
+    @property
+    def train_stats(self) -> dict:
+        return dict(self._train_stats)
+
+    @property
+    def models_trained(self) -> list[bool]:
+        return list(self.fitted)
+
+    # ── Streaming update (called every tick) ──────────────────────────────
+
+    def partial_update(self, X: np.ndarray, y: np.ndarray) -> dict:
         """
-        Batch-train all 3 models. Returns dict with accuracy per model.
-        Raises ValueError if fewer than 50 samples.
+        Incremental online update with a mini-batch (e.g. last 50 candles).
+        Called every tick — no waiting for collected data.
+        All 3 models update via partial_fit().
+
+        Returns per-model accuracy on the current batch.
         """
         self._ensure_init()
 
         n = len(X)
-        if n < 50:
-            raise ValueError(f"Need ≥ 50 samples, got {n}")
+        if n < 2:
+            return {"skipped": "too few samples in batch"}
+
+        stats: dict = {"n_batch": int(n), "n_seen_after": int(self.n_seen + n)}
+
+        for i, (model, scaler) in enumerate(zip(self.models, self.scalers)):
+            tag = MODEL_TAGS[i]
+            try:
+                if not self.fitted[i]:
+                    X_scaled = scaler.fit_transform(X)
+                else:
+                    scaler.partial_fit(X)
+                    X_scaled = scaler.transform(X)
+
+                model.partial_fit(X_scaled, y, classes=CLASSES)
+                self.fitted[i] = True
+
+                preds = model.predict(X_scaled)
+                acc = float(np.mean(preds == y))
+                stats[f"{tag}_acc"] = round(acc, 3)
+            except Exception as exc:
+                logger.warning(
+                    "MLEnsemble partial_update: model %d (%s) failed: %s", i, tag, exc
+                )
+                stats[f"{tag}_error"] = str(exc)
+
+        self.n_seen += n
+        self._train_stats = stats
+        return stats
+
+    # ── Batch seed (optional initial training or manual retrain) ──────────
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> dict:
+        """
+        Seed all 3 models with a larger batch (uses partial_fit internally).
+        Optional — streaming_update() is enough for live operation.
+        Requires ≥ MIN_WARM_SAMPLES rows.
+        """
+        self._ensure_init()
+
+        n = len(X)
+        if n < MIN_WARM_SAMPLES:
+            raise ValueError(f"Need ≥ {MIN_WARM_SAMPLES} samples, got {n}")
 
         unique, counts = np.unique(y, return_counts=True)
         stats: dict = {
@@ -89,22 +157,26 @@ class MLEnsemble:
             "label_dist": {int(k): int(v) for k, v in zip(unique, counts)},
         }
 
+        chunk = max(50, n // 4)
         for i, (model, scaler) in enumerate(zip(self.models, self.scalers)):
             tag = MODEL_TAGS[i]
             try:
                 X_scaled = scaler.fit_transform(X)
-                if hasattr(model, "partial_fit"):
-                    model.partial_fit(X_scaled, y, classes=CLASSES)
-                else:
-                    model.fit(X_scaled, y)
+                for start in range(0, n, chunk):
+                    model.partial_fit(
+                        X_scaled[start: start + chunk],
+                        y[start: start + chunk],
+                        classes=CLASSES,
+                    )
                 self.fitted[i] = True
                 preds = model.predict(X_scaled)
                 acc = float(np.mean(preds == y))
                 stats[f"{tag}_acc"] = round(acc, 3)
             except Exception as exc:
-                logger.warning("MLEnsemble: model %d (%s) training failed: %s", i, tag, exc)
+                logger.warning("MLEnsemble.fit: model %d (%s) failed: %s", i, tag, exc)
                 stats[f"{tag}_error"] = str(exc)
 
+        self.n_seen = max(self.n_seen, n)
         self._train_stats = stats
         return stats
 
@@ -113,6 +185,7 @@ class MLEnsemble:
     def predict_one(self, x: np.ndarray) -> tuple[int, list[int], float]:
         """
         Predict for a single feature vector.
+        Returns HOLD silently if not yet warm (n_seen < MIN_WARM_SAMPLES).
 
         Returns
         -------
@@ -123,7 +196,7 @@ class MLEnsemble:
         confidence : float
             Fraction of models that agree with majority (0.67 or 1.0)
         """
-        if not any(self.fitted):
+        if not self.is_warm:
             return 0, [0, 0, 0], 0.0
 
         x2d = x.reshape(1, -1)
@@ -161,11 +234,12 @@ class MLEnsemble:
                 "models": self.models,
                 "scalers": self.scalers,
                 "fitted": self.fitted,
+                "n_seen": self.n_seen,
                 "train_stats": self._train_stats,
             },
             self._store_path(),
         )
-        logger.info("MLEnsemble saved → %s", self._store_path())
+        logger.debug("MLEnsemble saved → %s  (n_seen=%d)", self._store_path(), self.n_seen)
 
     def load(self) -> bool:
         """Load from disk. Returns True on success."""
@@ -178,23 +252,10 @@ class MLEnsemble:
             self.models = data["models"]
             self.scalers = data["scalers"]
             self.fitted = data["fitted"]
+            self.n_seen = data.get("n_seen", 0)
             self._train_stats = data.get("train_stats", {})
-            logger.debug("MLEnsemble loaded ← %s", path)
+            logger.debug("MLEnsemble loaded ← %s  (n_seen=%d)", path, self.n_seen)
             return True
         except Exception as exc:
             logger.warning("MLEnsemble: load failed: %s", exc)
             return False
-
-    # ── Properties ─────────────────────────────────────────────────────────
-
-    @property
-    def is_trained(self) -> bool:
-        return any(self.fitted)
-
-    @property
-    def train_stats(self) -> dict:
-        return dict(self._train_stats)
-
-    @property
-    def models_trained(self) -> list[bool]:
-        return list(self.fitted)

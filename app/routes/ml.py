@@ -90,6 +90,8 @@ def status(bot_id: int):
         loaded = ens.load()
         statuses[tf] = {
             "trained": loaded and ens.is_trained,
+            "is_warm": loaded and ens.is_warm,
+            "n_seen": ens.n_seen if loaded else 0,
             "models": {
                 tag: {"trained": loaded and ens.fitted[i]}
                 for i, tag in enumerate(MODEL_TAGS)

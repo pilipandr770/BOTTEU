@@ -3,6 +3,7 @@ ML Trainer — high-level functions to train ensembles and retrieve Vote objects
 
 Public API
 ----------
+    streaming_update(symbol, primary_tf, mtf_data)  → stats dict  (call every tick)
     train_from_df(df, key, ...)      → stats dict
     train_from_csv(path, key, ...)   → stats dict
     get_ml_votes(symbol, mtf_data, primary_tf, ml_weight)  → list[Vote]
@@ -157,6 +158,58 @@ def get_ml_votes(
     return votes
 
 
+def streaming_update(
+    symbol: str,
+    primary_tf: str,
+    mtf_data: dict,
+    lookback: int = 60,
+) -> dict:
+    """
+    Incremental online update called on every tick.
+    Extracts the last `lookback` candles from mtf_data[primary_tf],
+    computes features + forward labels, and calls partial_update() on
+    the ensemble.  Saves models after each update.
+
+    No pre-training or collector CSV required — models start improving
+    from the very first tick and reach MIN_WARM_SAMPLES (~20) within
+    the first few minutes.
+
+    Returns stats dict or {"skipped": reason}.
+    """
+    from app.ml.ensemble import MLEnsemble
+    from app.ml.features import extract_features, extract_labels
+
+    df = mtf_data.get(primary_tf)
+    if df is None or len(df) < 10:
+        return {"skipped": "not enough live data"}
+
+    key = make_key(symbol, primary_tf)
+    ensemble = MLEnsemble(store_dir=ML_MODELS_DIR, key=key)
+    ensemble.load()      # load previous weights if they exist (no-op if not found)
+    ensemble._ensure_init()
+
+    # Use last `lookback` candles for the mini-batch
+    df_slice = df.iloc[-lookback:]
+    X = extract_features(df_slice)
+    # forward_n=3, threshold_pct=0.3 → faster labels for short timeframes
+    y = extract_labels(df_slice, forward_n=3, threshold_pct=0.3)
+
+    # Drop last 3 rows whose labels are undefined (look-forward NaN)
+    X = X[:-3]
+    y = y[:-3]
+
+    mask = np.isfinite(X).all(axis=1)
+    X, y = X[mask], y[mask]
+
+    if len(X) < 5:
+        return {"skipped": "too few valid rows after cleanup"}
+
+    stats = ensemble.partial_update(X, y)
+    ensemble.save()
+    logger.debug("Streaming update %s %s: %s", symbol, primary_tf, stats)
+    return stats
+
+
 def auto_train_if_needed(
     symbol: str,
     primary_tf: str,
@@ -164,9 +217,8 @@ def auto_train_if_needed(
     collector_data_dir: str | None = None,
 ) -> bool:
     """
-    Train ensemble from collector CSV if not already trained.
-    Called automatically on first tick with use_ml_signals=True.
-    Returns True if already trained or training succeeded.
+    Legacy helper kept for the manual /ml/train route.
+    For live ticks, streaming_update() is used instead.
     """
     from app.ml.ensemble import MLEnsemble
     from app.algorithms.consensus.data import COLLECTOR_DATA_DIR
@@ -174,11 +226,9 @@ def auto_train_if_needed(
     key = make_key(symbol, primary_tf)
     ensemble = MLEnsemble(store_dir=ML_MODELS_DIR, key=key)
     if ensemble.load() and ensemble.is_trained:
-        return True  # already trained
+        return True
 
     data_dir = collector_data_dir or COLLECTOR_DATA_DIR
-
-    # Try collector CSV for primary TF
     csv_path = os.path.join(data_dir, f"{symbol.lower()}_{primary_tf}_clean.csv")
     if os.path.exists(csv_path):
         stats = train_from_csv(csv_path, key=key)
@@ -186,7 +236,6 @@ def auto_train_if_needed(
             logger.info("ML auto-trained from collector CSV: %s  stats=%s", csv_path, stats)
             return True
 
-    # Fallback: use the in-memory DataFrame if long enough
     df = mtf_data.get(primary_tf)
     if df is not None and len(df) >= 100:
         stats = train_from_df(df, key=key)
