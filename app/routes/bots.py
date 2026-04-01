@@ -237,7 +237,10 @@ def create():
             return render_template("bots/create.html")
 
         # ── Consensus mode branch ────────────────────────────────────────
-        is_consensus = request.form.get("consensus_mode") == "1"
+        is_consensus = (
+            request.form.get("strategy_mode") == "consensus"
+            or request.form.get("consensus_mode") == "1"
+        )
 
         if is_consensus:
             # Parse consensus-specific fields
