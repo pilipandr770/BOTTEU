@@ -36,20 +36,18 @@ MIN_WARM_SAMPLES = 20   # start predicting after this many samples seen
 
 
 def _build_models():
-    from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier
+    from sklearn.linear_model import SGDClassifier
     return [
         SGDClassifier(
-            loss="log_loss", max_iter=1, warm_start=True,
-            class_weight="balanced", random_state=42,
+            loss="log_loss", max_iter=1, warm_start=True, random_state=42,
         ),
-        PassiveAggressiveClassifier(
-            max_iter=1, warm_start=True,
-            class_weight="balanced", random_state=43,
-            n_jobs=1,
+        # Passive-Aggressive (PA-I) via SGD — PAC deprecated in sklearn ≥ 1.8
+        SGDClassifier(
+            loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0,
+            max_iter=1, warm_start=True, random_state=43,
         ),
         SGDClassifier(
-            loss="modified_huber", max_iter=1, warm_start=True,
-            class_weight="balanced", random_state=44,
+            loss="modified_huber", max_iter=1, warm_start=True, random_state=44,
         ),
     ]
 
@@ -94,6 +92,19 @@ class MLEnsemble:
     def models_trained(self) -> list[bool]:
         return list(self.fitted)
 
+    def _compute_sample_weight(self, y: np.ndarray) -> np.ndarray:
+        """Compute per-sample weights to balance BUY/HOLD/SELL classes."""
+        from sklearn.utils.class_weight import compute_class_weight
+        present = np.unique(y)
+        if len(present) < 2:
+            return np.ones(len(y), dtype=float)
+        try:
+            cw = compute_class_weight("balanced", classes=present, y=y)
+            weight_map = dict(zip(present, cw))
+            return np.array([weight_map[yi] for yi in y], dtype=float)
+        except Exception:
+            return np.ones(len(y), dtype=float)
+
     # ── Streaming update (called every tick) ──────────────────────────────
 
     def partial_update(self, X: np.ndarray, y: np.ndarray) -> dict:
@@ -111,6 +122,7 @@ class MLEnsemble:
             return {"skipped": "too few samples in batch"}
 
         stats: dict = {"n_batch": int(n), "n_seen_after": int(self.n_seen + n)}
+        sw = self._compute_sample_weight(y)
 
         for i, (model, scaler) in enumerate(zip(self.models, self.scalers)):
             tag = MODEL_TAGS[i]
@@ -121,7 +133,7 @@ class MLEnsemble:
                     scaler.partial_fit(X)
                     X_scaled = scaler.transform(X)
 
-                model.partial_fit(X_scaled, y, classes=CLASSES)
+                model.partial_fit(X_scaled, y, classes=CLASSES, sample_weight=sw)
                 self.fitted[i] = True
 
                 preds = model.predict(X_scaled)
@@ -162,11 +174,12 @@ class MLEnsemble:
             tag = MODEL_TAGS[i]
             try:
                 X_scaled = scaler.fit_transform(X)
+                sw = self._compute_sample_weight(y)
                 for start in range(0, n, chunk):
+                    sl = slice(start, start + chunk)
                     model.partial_fit(
-                        X_scaled[start: start + chunk],
-                        y[start: start + chunk],
-                        classes=CLASSES,
+                        X_scaled[sl], y[sl],
+                        classes=CLASSES, sample_weight=sw[sl],
                     )
                 self.fitted[i] = True
                 preds = model.predict(X_scaled)
