@@ -395,10 +395,22 @@ def detail(bot_id: int):
 
     # Compute trade statistics from closed (SELL) orders
     sell_orders = Order.query.filter_by(bot_id=bot_id, side=OrderSide.SELL).all()
-    total_trades = len(sell_orders)
-    wins = sum(1 for o in sell_orders if o.pnl_usdt and float(o.pnl_usdt) > 0)
-    total_pnl = sum(float(o.pnl_usdt) for o in sell_orders if o.pnl_usdt)
-    win_rate = round(wins / total_trades * 100) if total_trades else 0
+
+    real_sells = [o for o in sell_orders if not o.is_simulated]
+    demo_sells = [o for o in sell_orders if o.is_simulated]
+
+    # Real stats
+    total_trades = len(real_sells)
+    wins         = sum(1 for o in real_sells if o.pnl_usdt and float(o.pnl_usdt) > 0)
+    total_pnl    = sum(float(o.pnl_usdt) for o in real_sells if o.pnl_usdt)
+    win_rate     = round(wins / total_trades * 100) if total_trades else 0
+
+    # Demo / paper-trading stats
+    demo_trades   = len(demo_sells)
+    demo_wins     = sum(1 for o in demo_sells if o.pnl_usdt and float(o.pnl_usdt) > 0)
+    demo_total_pnl = sum(float(o.pnl_usdt) for o in demo_sells if o.pnl_usdt)
+    demo_win_rate  = round(demo_wins / demo_trades * 100) if demo_trades else 0
+    demo_avg_pnl   = round(demo_total_pnl / demo_trades, 4) if demo_trades else 0.0
 
     # Recent logs — newest first (for initial render)
     logs = (
@@ -425,6 +437,11 @@ def detail(bot_id: int):
         wins=wins,
         total_pnl=total_pnl,
         win_rate=win_rate,
+        demo_trades=demo_trades,
+        demo_wins=demo_wins,
+        demo_total_pnl=demo_total_pnl,
+        demo_win_rate=demo_win_rate,
+        demo_avg_pnl=demo_avg_pnl,
     )
 
 

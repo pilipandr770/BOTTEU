@@ -66,44 +66,90 @@
 {# ── Stats row ────────────────────────────────────────────────────────────────── #}
 {% set sim_orders = orders | selectattr('is_simulated') | list %}
 {% set real_orders = orders | rejectattr('is_simulated') | list %}
-<div class="row g-3 mb-4">
+{% set is_demo_mode = (total_trades == 0 and demo_trades > 0) %}
+
+{# Show real stats if there are real trades; otherwise show demo stats in the main row #}
+<div class="row g-3 mb-2">
   <div class="col-6 col-md-3">
-    <div class="card bg-dark border-secondary text-center py-3 h-100">
-      <div class="h3 fw-bold text-info mb-1">{{ total_trades }}</div>
-      <div class="small text-muted">{{ _('Closed Trades') }}</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card bg-dark border-secondary text-center py-3 h-100">
-      <div class="h3 fw-bold {{ 'text-success' if win_rate >= 50 else 'text-warning' }} mb-1">
-        {{ win_rate }}%
+    <div class="card bg-dark border-{{ 'warning' if is_demo_mode else 'secondary' }} text-center py-3 h-100">
+      <div class="h3 fw-bold {{ 'text-warning' if is_demo_mode else 'text-info' }} mb-1">
+        {{ demo_trades if is_demo_mode else total_trades }}
       </div>
       <div class="small text-muted">
-        {{ _('Profitable') }}
-        {% if total_trades %}({{ wins }}/{{ total_trades }}){% endif %}
+        {% if is_demo_mode %}🧪 {{ _('Demo Trades') }}{% else %}{{ _('Closed Trades') }}{% endif %}
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card bg-dark border-secondary text-center py-3 h-100">
-      <div class="h3 fw-bold {{ 'text-success' if total_pnl >= 0 else 'text-danger' }} mb-1">
-        {{ '{:+.2f}'.format(total_pnl) }}
+    <div class="card bg-dark border-{{ 'warning' if is_demo_mode else 'secondary' }} text-center py-3 h-100">
+      {% set wr = demo_win_rate if is_demo_mode else win_rate %}
+      {% set wt = demo_trades if is_demo_mode else total_trades %}
+      {% set ww = demo_wins if is_demo_mode else wins %}
+      <div class="h3 fw-bold {{ 'text-success' if wr >= 50 else 'text-warning' }} mb-1">{{ wr }}%</div>
+      <div class="small text-muted">
+        {{ _('Win Rate') }}{% if wt %} ({{ ww }}/{{ wt }}){% endif %}
+        {% if is_demo_mode %}<span class="text-warning ms-1">🧪</span>{% endif %}
       </div>
-      <div class="small text-muted">{{ _('Real P&L (USDT)') }}</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card bg-dark border-{{ 'warning' if sim_orders else 'secondary' }} text-center py-3 h-100">
-      {% if sim_orders %}
-      <div class="h3 fw-bold text-warning mb-1">{{ sim_orders | selectattr('side.value', 'eq', 'SELL') | list | length }}</div>
-      <div class="small text-warning">🧪 {{ _('Demo Trades') }}</div>
+    {% set pnl_disp = demo_total_pnl if is_demo_mode else total_pnl %}
+    <div class="card bg-dark border-{{ 'warning' if is_demo_mode else 'secondary' }} text-center py-3 h-100">
+      <div class="h3 fw-bold {{ 'text-success' if pnl_disp >= 0 else 'text-danger' }} mb-1">
+        {{ '{:+.2f}'.format(pnl_disp) }}
+      </div>
+      <div class="small text-muted">
+        {% if is_demo_mode %}🧪 {{ _('Demo P&L (USDT)') }}{% else %}{{ _('Real P&L (USDT)') }}{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card bg-dark border-{{ 'warning' if is_demo_mode else 'secondary' }} text-center py-3 h-100">
+      {% if is_demo_mode %}
+        <div class="h3 fw-bold text-warning mb-1">{{ '{:+.4f}'.format(demo_avg_pnl) }}</div>
+        <div class="small text-muted">🧪 {{ _('Avg P&L/trade') }}</div>
+      {% elif total_trades %}
+        {% set avg = total_pnl / total_trades %}
+        <div class="h3 fw-bold {{ 'text-success' if avg >= 0 else 'text-danger' }} mb-1">
+          {{ '{:+.4f}'.format(avg) }}
+        </div>
+        <div class="small text-muted">{{ _('Avg P&L/trade') }}</div>
       {% else %}
-      <div class="h3 fw-bold text-success mb-1"><i class="bi bi-check-circle"></i></div>
-      <div class="small text-muted">{{ _('Real orders only') }}</div>
+        <div class="h3 fw-bold text-success mb-1"><i class="bi bi-shield-check"></i></div>
+        <div class="small text-muted">{{ _('Real orders only') }}</div>
       {% endif %}
     </div>
   </div>
 </div>
+
+{# ── Demo stats card (shown when both real AND demo trades exist) ─────────────── #}
+{% if total_trades > 0 and demo_trades > 0 %}
+<div class="card bg-dark border-warning mb-4 py-2 px-3">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <span class="badge bg-warning text-dark fs-6">🧪 {{ _('Demo Mode Results') }}</span>
+    <span class="text-muted small">{{ demo_trades }} {{ _('paper trades') }}</span>
+    <span class="fw-semibold {{ 'text-success' if demo_total_pnl >= 0 else 'text-danger' }}">
+      {{ _('P&L') }}: {{ '{:+.2f}'.format(demo_total_pnl) }} USDT
+    </span>
+    <span class="text-muted small">{{ _('Win rate') }}: {{ demo_win_rate }}% ({{ demo_wins }}/{{ demo_trades }})</span>
+    <span class="text-muted small">{{ _('Avg/trade') }}: {{ '{:+.4f}'.format(demo_avg_pnl) }}</span>
+    <span class="text-muted small ms-auto" style="font-size:.72rem;">
+      <i class="bi bi-info-circle me-1"></i>{{ _('Theoretical P&L — bot had insufficient balance for real orders') }}
+    </span>
+  </div>
+</div>
+{% elif is_demo_mode and bot.status.value == 'running' %}
+<div class="alert alert-warning py-2 mb-4 d-flex align-items-center gap-2" style="font-size:.85rem;">
+  <i class="bi bi-flask me-1 fs-5"></i>
+  <div>
+    <strong>{{ _('Paper Trading Mode') }}</strong> —
+    {{ _('Bot is running but your balance is below the required') }}
+    <strong>{{ bot.position_size_usdt }} USDT</strong>.
+    {{ _('All signals are simulated: prices and P&L are real market data, just no real order is placed.') }}
+    <span class="text-warning">{{ _('Fund your account to switch to live trading automatically.') }}</span>
+  </div>
+</div>
+{% endif %}
 
 {# ── Open position + Settings ─────────────────────────────────────────────────── #}
 {% set state = bot.state or {} %}
