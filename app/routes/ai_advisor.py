@@ -216,6 +216,96 @@ def toggle_autopilot():
     })
 
 
+@ai_bp.route("/create-bot", methods=["POST"])
+@login_required
+@csrf.exempt
+def create_bot_from_ai():
+    """Create a new bot pre-filled with AI recommendation settings."""
+    from app.models.api_key import ApiKey
+    from app.models.subscription import Plan
+    from app.services.binance_client import get_cached_symbols
+
+    data = request.get_json(silent=True) or {}
+    consultation_id = data.get("consultation_id")
+    bot_name = (data.get("bot_name") or "").strip()
+    position_size_usdt = data.get("position_size_usdt", 50)
+
+    if not consultation_id:
+        return jsonify({"error": "consultation_id required"}), 400
+
+    consultation = AIConsultation.query.filter_by(
+        id=int(consultation_id), user_id=current_user.id
+    ).first()
+    if not consultation:
+        return jsonify({"error": "Consultation not found"}), 404
+
+    # Validate bot name
+    if not bot_name:
+        algo_label = (consultation.recommended_algorithm or "bot").upper()
+        bot_name = f"AI {algo_label} {consultation.symbol}"
+    if len(bot_name) > 100:
+        return jsonify({"error": "Bot name too long (max 100 characters)"}), 400
+
+    # Validate position size
+    try:
+        position_size_usdt = float(position_size_usdt)
+        if position_size_usdt < 1:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid position size"}), 400
+
+    # Check API key
+    api_key_record = ApiKey.query.filter_by(user_id=current_user.id, is_valid=True).first()
+    if not api_key_record:
+        return jsonify({"error": "Please add and verify your Binance API key first."}), 400
+
+    # Check bot limit (free = 1 bot)
+    sub = current_user.subscription
+    if not (sub and sub.is_active_pro):
+        bot_count = Bot.query.filter_by(user_id=current_user.id).count()
+        if bot_count >= 1:
+            return jsonify({"error": "Free plan allows 1 bot. Upgrade to Pro for unlimited bots."}), 403
+
+    algorithm = consultation.recommended_algorithm or "rsi"
+    rec_params = dict(consultation.recommended_params) if consultation.recommended_params else {}
+    timeframe = consultation.recommended_timeframe or rec_params.get("timeframe", "1h")
+    rec_params["timeframe"] = timeframe
+    rec_params["modules"] = [algorithm]
+    rec_params.setdefault("entry_logic", "OR")
+
+    bot = Bot(
+        user_id=current_user.id,
+        name=bot_name,
+        symbol=consultation.symbol,
+        algorithm=algorithm,
+        params=rec_params,
+        state={
+            "_log": [
+                f"Created from AI consultation #{consultation.id} "
+                f"(confidence: {consultation.confidence_score}%, regime: {consultation.market_regime})"
+            ]
+        },
+        position_size_usdt=position_size_usdt,
+    )
+    db.session.add(bot)
+
+    consultation.applied = True
+
+    try:
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception("create_bot_from_ai failed: %s", exc)
+        return jsonify({"error": f"Failed to create bot: {exc}"}), 500
+
+    return jsonify({
+        "success": True,
+        "bot_id": bot.id,
+        "bot_name": bot.name,
+        "message": f"Bot '{bot.name}' created with {algorithm} strategy on {timeframe}",
+    })
+
+
 @ai_bp.route("/history")
 @login_required
 def history():

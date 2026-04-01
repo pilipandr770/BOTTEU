@@ -290,6 +290,28 @@
             </button>
             <span class="text-muted small align-self-center" id="apply-bot-name"></span>
           </div>
+
+          <!-- Create New Bot from AI -->
+          <div id="create-bot-section" style="display:none;">
+            <hr class="border-secondary">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="flex-grow-1" style="max-width:280px;">
+                <input type="text" id="new-bot-name" class="form-control form-control-sm"
+                       placeholder="{{ _('Bot name (auto-filled)') }}" maxlength="100">
+              </div>
+              <div style="max-width:140px;">
+                <div class="input-group input-group-sm">
+                  <input type="number" id="new-bot-size" class="form-control" value="50" min="1" step="1">
+                  <span class="input-group-text">USDT</span>
+                </div>
+              </div>
+              <button id="btn-create-bot" class="btn btn-warning btn-sm" onclick="createBotFromAI()">
+                <i class="bi bi-robot me-1"></i> {{ _('Create New Bot') }}
+              </button>
+              <span class="text-muted small">{{ _('— instantly, with AI settings') }}</span>
+            </div>
+            <div id="create-bot-result" class="mt-2"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -583,6 +605,18 @@ function renderAIResults(advice) {
     applySection.style.cssText = 'display: none !important;';
   }
 
+  // Create Bot section — always visible after analysis
+  if (advice.consultation_id) {
+    lastConsultationId = advice.consultation_id;
+    const createSection = document.getElementById('create-bot-section');
+    createSection.style.display = 'block';
+    // Auto-fill suggested bot name
+    const algoLabel = ALGO_LABELS[advice.recommended_algorithm] || advice.recommended_algorithm || 'Bot';
+    const symbol = document.getElementById('ai-symbol').value.trim().toUpperCase();
+    document.getElementById('new-bot-name').value = `AI ${algoLabel} ${symbol}`;
+    document.getElementById('create-bot-result').innerHTML = '';
+  }
+
   // Show scan results too
   if (advice.scan_data) {
     renderScanResults(advice.scan_data);
@@ -674,5 +708,47 @@ document.getElementById('ai-bot-id').addEventListener('change', function() {
     if (match) document.getElementById('ai-symbol').value = match[1];
   }
 });
+
+async function createBotFromAI() {
+  if (!lastConsultationId) return;
+  const botName = document.getElementById('new-bot-name').value.trim();
+  const posSize = parseFloat(document.getElementById('new-bot-size').value) || 50;
+  const resultEl = document.getElementById('create-bot-result');
+  const btn = document.getElementById('btn-create-bot');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ _("Creating...") }}';
+  resultEl.innerHTML = '';
+
+  try {
+    const resp = await fetch('/ai/create-bot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        consultation_id: lastConsultationId,
+        bot_name: botName,
+        position_size_usdt: posSize,
+      })
+    });
+    const data = await resp.json();
+    if (data.error) {
+      resultEl.innerHTML = `<div class="alert alert-danger alert-sm py-2 mb-0"><i class="bi bi-x-circle me-1"></i>${data.error}</div>`;
+    } else {
+      resultEl.innerHTML = `
+        <div class="alert alert-success py-2 mb-0 d-flex align-items-center justify-content-between gap-2">
+          <div><i class="bi bi-check-circle-fill me-1"></i><strong>${data.bot_name}</strong> — ${data.message}</div>
+          <a href="/bots/${data.bot_id}" class="btn btn-sm btn-success">{{ _("Open Bot") }} →</a>
+        </div>`;
+      btn.disabled = true;
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<div class="alert alert-danger py-2 mb-0">{{ _("Network error") }}: ${e.message}</div>`;
+  } finally {
+    if (btn.disabled && !resultEl.querySelector('.alert-success')) {
+      btn.disabled = false;
+    }
+    btn.innerHTML = '<i class="bi bi-robot me-1"></i>{{ _("Create New Bot") }}';
+  }
+}
 </script>
 {% endblock %}
