@@ -171,19 +171,6 @@ def extract_labels(
 
     close = df["close"].astype(float)
 
-    # ATR-adaptive scaling: normalise threshold by recent ATR%
-    # so BTCUSDT (low vol%) and SOLUSDT (high vol%) get comparable labels
-    if "atr" in df.columns:
-        atr = df["atr"].astype(float).iloc[-1]
-        price = close.iloc[-1]
-        if price > 0 and atr > 0:
-            atr_pct = float(atr / price * 100.0)
-            # scale threshold: if ATR% is 2× the typical level, widen threshold 40%
-            # clamp scale to [0.5, 2.0] to avoid extremes
-            typical_atr = threshold_pct * 1.5   # rough heuristic
-            scale = min(2.0, max(0.5, atr_pct / typical_atr)) if typical_atr > 0 else 1.0
-            threshold_pct = threshold_pct * scale
-
     future_ret = (close.shift(-forward_n) / (close + 1e-9) - 1.0) * 100.0
     y = np.where(
         future_ret > threshold_pct, 1,
