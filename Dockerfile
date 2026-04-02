@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
 
 WORKDIR /build
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --prefix=/install -r requirements.txt
+RUN pip install --upgrade pip --root-user-action=ignore && \
+    pip install --prefix=/install -r requirements.txt --root-user-action=ignore
 
 # ── Runtime image ─────────────────────────────────────────────────────────────
 FROM python:3.10.18-slim AS runtime
