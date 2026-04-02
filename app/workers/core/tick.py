@@ -146,6 +146,7 @@ def tick_bot(bot_id: int) -> None:
                     )
                     state["mtf_data"] = mtf_data
                     state["symbol"]   = bot.symbol  # used by ML ensemble
+                except Exception as mtf_exc:
                     logger.warning("Multi-TF data fetch failed for bot %d: %s", bot_id, mtf_exc)
                     state["mtf_data"] = {}
 
