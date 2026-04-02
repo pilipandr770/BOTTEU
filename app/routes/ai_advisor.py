@@ -66,7 +66,11 @@ def scan():
 @csrf.exempt
 @limiter.limit("10 per hour")
 def analyze():
-    """Run full AI analysis (scanner + Claude advisor)."""
+    """Run full AI analysis (scanner + Claude advisor). Requires Pro or Elite plan."""
+    sub = current_user.subscription
+    if not (sub and sub.has_ai):
+        return jsonify({"error": "AI advisor requires a Pro or Elite subscription."}), 403
+
     data = request.get_json(silent=True) or {}
     symbol = data.get("symbol", "BTCUSDT").strip().upper()
     bot_id = data.get("bot_id")
@@ -259,12 +263,13 @@ def create_bot_from_ai():
     if not api_key_record:
         return jsonify({"error": "Please add and verify your Binance API key first."}), 400
 
-    # Check bot limit (free = 1 bot)
+    # Check bot limit vs plan
     sub = current_user.subscription
-    if not (sub and sub.is_active_pro):
-        bot_count = Bot.query.filter_by(user_id=current_user.id).count()
-        if bot_count >= 1:
-            return jsonify({"error": "Free plan allows 1 bot. Upgrade to Pro for unlimited bots."}), 403
+    if not (sub and sub.has_ai):
+        return jsonify({"error": "AI auto-bot creation requires a Pro or Elite subscription."}), 403
+    bot_count = Bot.query.filter_by(user_id=current_user.id).count()
+    if bot_count >= sub.max_bots:
+        return jsonify({"error": f"Your plan allows {sub.max_bots} bot(s). Upgrade to add more."}), 403
 
     algorithm = consultation.recommended_algorithm or "rsi"
     rec_params = dict(consultation.recommended_params) if consultation.recommended_params else {}

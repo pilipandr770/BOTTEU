@@ -23,10 +23,10 @@ bots_bp = Blueprint("bots", __name__, url_prefix="/bots")
 
 def _check_bot_limit():
     sub = current_user.subscription
-    if sub and sub.is_active_pro:
-        return True
+    if not sub:
+        return False
     bot_count = Bot.query.filter_by(user_id=current_user.id).count()
-    return bot_count < 1  # Free: 1 bot
+    return bot_count < sub.max_bots
 
 
 # ── API Key Management ────────────────────────────────────────────────────────
@@ -222,7 +222,12 @@ def index():
 @login_required
 def create():
     if not _check_bot_limit():
-        flash(_("Free plan allows 1 bot. Upgrade to Pro for unlimited bots."), "warning")
+        sub = current_user.subscription
+        limit = sub.max_bots if sub else 0
+        flash(_(
+            "Your plan allows %(n)s bot(s). Upgrade your subscription to add more.",
+            n=limit
+        ), "warning")
         return redirect(url_for("subscriptions.plans"))
 
     if not ApiKey.query.filter_by(user_id=current_user.id, is_valid=True).first():

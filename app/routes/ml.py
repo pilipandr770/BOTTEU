@@ -24,7 +24,7 @@ ml_bp = Blueprint("ml", __name__, url_prefix="/ml")
 @login_required
 def train(bot_id: int):
     """
-    Trigger ML ensemble training for a bot.
+    Trigger ML ensemble training for a bot. Requires Elite plan.
     Accepts JSON or form POST. CSRF token must be in X-CSRFToken header or form field.
     """
     # Validate CSRF from header (fetch sends it there)
@@ -33,6 +33,11 @@ def train(bot_id: int):
         validate_csrf(token)
     except ValidationError:
         return jsonify({"success": False, "error": "CSRF validation failed"}), 400
+
+    sub = current_user.subscription
+    if not (sub and sub.has_ml):
+        return jsonify({"success": False, "error": "ML ensemble requires an Elite subscription."}), 403
+
     bot = Bot.query.filter_by(id=bot_id, user_id=current_user.id).first_or_404()
 
     req = request.get_json(silent=True) or {}

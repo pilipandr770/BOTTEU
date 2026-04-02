@@ -2,10 +2,270 @@
 {% block title %}{{ _('Subscription Plans') }}{% endblock %}
 {% block content %}
 
+{% set sub = current_user.subscription %}
+
 <div class="text-center mb-5">
-  <h2 class="fw-bold">{{ _('Choose Your Plan') }}</h2>
-  <p class="text-muted">{{ _('Start free. Upgrade when you need more power.') }}</p>
+  <h2 class="fw-bold">{{ _('Professional Trading Plans') }}</h2>
+  <p class="text-muted">{{ _('Automated Binance spot trading. No free tier — serious tools for serious traders.') }}</p>
 </div>
+
+<div class="row justify-content-center g-4 mb-5">
+
+  <!-- Basic Plan — €200/mo -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body d-flex flex-column p-4">
+        <div class="mb-3">
+          <span class="badge bg-secondary mb-2">Basic</span>
+          <h3 class="fw-bold mb-0">€200<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
+          <div class="text-muted small">{{ _('cancel anytime') }}</div>
+        </div>
+        <p class="text-muted small mb-3">{{ _('For experienced traders who know their indicators and build strategies themselves.') }}</p>
+        <ul class="list-unstyled text-muted small flex-grow-1 mb-4">
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong class="text-white">{{ _('1 active bot') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('All algorithms (MA, RSI, MACD, BB, SuperTrend)') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Full backtesting — manual strategy tuning') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Stop-Loss / Take-Profit / Trailing TP') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Telegram notifications') }}</li>
+          <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('AI advisor') }}</li>
+          <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('ML ensemble') }}</li>
+          <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('Multiple bots') }}</li>
+        </ul>
+        {% if sub and sub.is_active_basic %}
+          <div class="text-center mb-3">
+            <span class="badge bg-success fs-6 px-3 py-2">✓ {{ _('Active Plan') }}</span>
+          </div>
+          <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-gear me-1"></i>{{ _('Manage') }}
+          </a>
+        {% elif sub and sub.is_any_paid %}
+          <button class="btn btn-outline-secondary w-100" disabled>{{ _('Lower plan') }}</button>
+        {% else %}
+          <form method="POST" action="{{ url_for('subscriptions.checkout', plan_key='basic') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-light w-100 fw-semibold">
+              <i class="bi bi-arrow-right-circle me-1"></i>{{ _('Subscribe — Basic') }}
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pro Plan — €500/mo -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card bg-dark border-success h-100 position-relative">
+      <div class="position-absolute top-0 start-50 translate-middle">
+        <span class="badge bg-success px-3 py-2 fs-6">⭐ {{ _('Most Popular') }}</span>
+      </div>
+      <div class="card-body d-flex flex-column p-4 pt-5">
+        <div class="mb-3">
+          <span class="badge bg-success mb-2">Pro</span>
+          <h3 class="fw-bold mb-0">€500<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
+          <div class="text-muted small">{{ _('cancel anytime') }}</div>
+        </div>
+        <p class="text-muted small mb-3">{{ _('5 simultaneous bots with AI-powered recommendations for smarter entry/exit points.') }}</p>
+        <ul class="list-unstyled text-muted small flex-grow-1 mb-4">
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong class="text-white">{{ _('5 active bots') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('All algorithms') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Full backtesting') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Stop-Loss / Take-Profit / Trailing TP') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Telegram notifications + commands') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong class="text-success">{{ _('AI market advisor') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong class="text-success">{{ _('AI auto-bot creation') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('ML ensemble signals') }}</li>
+        </ul>
+        {% if sub and sub.is_active_pro %}
+          <div class="text-center mb-3">
+            <span class="badge bg-success fs-6 px-3 py-2">✓ {{ _('Active Plan') }}</span>
+          </div>
+          <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-success w-100">
+            <i class="bi bi-gear me-1"></i>{{ _('Manage') }}
+          </a>
+        {% elif sub and sub.is_active_elite %}
+          <button class="btn btn-outline-secondary w-100" disabled>{{ _('Lower plan') }}</button>
+        {% else %}
+          <form method="POST" action="{{ url_for('subscriptions.checkout', plan_key='pro') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success w-100 fw-semibold">
+              <i class="bi bi-lightning-fill me-1"></i>{{ _('Subscribe — Pro') }}
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Elite Plan — €1000/mo -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card bg-dark border-warning h-100 position-relative">
+      <div class="position-absolute top-0 start-50 translate-middle">
+        <span class="badge bg-warning text-dark px-3 py-2 fs-6">👑 Elite</span>
+      </div>
+      <div class="card-body d-flex flex-column p-4 pt-5">
+        <div class="mb-3">
+          <span class="badge bg-warning text-dark mb-2">Elite</span>
+          <h3 class="fw-bold mb-0">€1000<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
+          <div class="text-muted small">{{ _('cancel anytime') }}</div>
+        </div>
+        <p class="text-muted small mb-3">{{ _('Unlimited bots with full AI + Machine Learning ensemble signals for maximum performance.') }}</p>
+        <ul class="list-unstyled text-muted small flex-grow-1 mb-4">
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i><strong class="text-white">{{ _('Unlimited bots') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i>{{ _('All algorithms') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i>{{ _('Full backtesting') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i>{{ _('Stop-Loss / Take-Profit / Trailing TP') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i>{{ _('Telegram notifications + commands') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i><strong class="text-warning">{{ _('AI market advisor') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i><strong class="text-warning">{{ _('AI auto-bot creation') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i><strong class="text-warning">{{ _('ML ensemble signals (3 models)') }}</strong></li>
+          <li class="mb-2"><i class="bi bi-check-circle text-warning me-2"></i>{{ _('Priority support') }}</li>
+        </ul>
+        {% if sub and sub.is_active_elite %}
+          <div class="text-center mb-3">
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2">✓ {{ _('Active Plan') }}</span>
+          </div>
+          <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-warning w-100">
+            <i class="bi bi-gear me-1"></i>{{ _('Manage') }}
+          </a>
+        {% else %}
+          <form method="POST" action="{{ url_for('subscriptions.checkout', plan_key='elite') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-warning text-dark w-100 fw-semibold">
+              <i class="bi bi-stars me-1"></i>{{ _('Subscribe — Elite') }}
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Expert Consultation -->
+<div class="row justify-content-center mb-5">
+  <div class="col-lg-10">
+    <div class="card bg-dark border-info">
+      <div class="card-body d-flex flex-column flex-md-row align-items-center gap-4 p-4">
+        <div class="text-center text-md-start flex-grow-1">
+          <div class="fs-4 mb-1">🎓 <strong>{{ _('Expert Consultation') }}</strong></div>
+          <p class="text-muted mb-0">
+            {{ _('1-hour one-on-one session with our trading automation expert. We will set up your bots, tune parameters, and explain the best strategies for your portfolio.') }}
+          </p>
+        </div>
+        <div class="text-center flex-shrink-0">
+          <div class="fw-bold fs-3 text-info">€100</div>
+          <div class="text-muted small mb-3">{{ _('/ 1 hour') }}</div>
+          <form method="POST" action="{{ url_for('subscriptions.checkout_consultation') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-info fw-semibold px-4">
+              <i class="bi bi-calendar-check me-1"></i>{{ _('Book Session') }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feature comparison table -->
+<div class="row justify-content-center mb-5">
+  <div class="col-lg-10">
+    <h5 class="fw-bold mb-3 text-center text-muted">{{ _('Full Feature Comparison') }}</h5>
+    <div class="card bg-dark border-secondary">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0 text-center">
+          <thead class="table-secondary">
+            <tr>
+              <th class="text-start">{{ _('Feature') }}</th>
+              <th>Basic<br><small class="text-muted fw-normal">€200/mo</small></th>
+              <th class="text-success">Pro<br><small class="text-muted fw-normal">€500/mo</small></th>
+              <th class="text-warning">Elite<br><small class="text-muted fw-normal">€1000/mo</small></th>
+            </tr>
+          </thead>
+          <tbody class="small">
+            <tr><td class="text-start text-muted">{{ _('Active bots') }}</td><td>1</td><td class="text-success">5</td><td class="text-warning">∞</td></tr>
+            <tr><td class="text-start text-muted">{{ _('All algorithms') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Backtesting') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Stop-Loss / TP / Trailing') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Telegram notifications') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('AI market advisor') }}</td><td class="text-secondary">—</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('AI auto-bot creation') }}</td><td class="text-secondary">—</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('ML ensemble signals') }}</td><td class="text-secondary">—</td><td class="text-secondary">—</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Priority support') }}</td><td class="text-secondary">—</td><td class="text-secondary">—</td><td class="text-warning">✓</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <h5 class="fw-bold mb-3 text-center text-muted">FAQ</h5>
+    <div class="accordion accordion-flush" id="faqAccordion">
+
+      <div class="accordion-item bg-dark border-secondary mb-2">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-dark text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#faq1">
+            {{ _('Can I cancel my subscription at any time?') }}
+          </button>
+        </h2>
+        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body text-muted small">
+            {{ _('Yes. Cancel anytime from the subscription management portal. Your plan remains active until the end of the billing period.') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item bg-dark border-secondary mb-2">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-dark text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#faq2">
+            {{ _('Can I upgrade from Basic to Pro or Elite?') }}
+          </button>
+        </h2>
+        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body text-muted small">
+            {{ _('Yes. Use the Stripe portal to upgrade at any time. You will be charged a prorated amount for the remainder of the billing period.') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item bg-dark border-secondary mb-2">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-dark text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#faq3">
+            {{ _('Is there a refund policy?') }}
+          </button>
+        </h2>
+        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body text-muted small">
+            {{ _('We offer refunds within 14 days of purchase if no trades were executed. Contact us via the Impressum page.') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item bg-dark border-secondary">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-dark text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#faq4">
+            {{ _('Do you store my payment information?') }}
+          </button>
+        </h2>
+        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body text-muted small">
+            {{ _('No. All payments are processed securely by Stripe. We never see or store your card details.') }}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
 
 <div class="row justify-content-center g-4 mb-5">
 

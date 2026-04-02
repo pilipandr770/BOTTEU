@@ -4,14 +4,18 @@ from app.extensions import db
 
 
 class Plan(str, enum.Enum):
-    FREE = "free"
-    PRO = "pro"
+    FREE  = "free"   # no paid plan (default, 0 bots)
+    BASIC = "basic"  # €200/mo — 1 bot, no AI/ML
+    PRO   = "pro"    # €500/mo — 5 bots, AI recommendations
+    ELITE = "elite"  # €1000/mo — unlimited bots, AI + ML
 
 
 # Plan limits
 PLAN_LIMITS = {
-    Plan.FREE: {"max_bots": 1, "max_pairs_per_bot": 1},
-    Plan.PRO: {"max_bots": 999, "max_pairs_per_bot": 999},
+    Plan.FREE:  {"max_bots": 0},
+    Plan.BASIC: {"max_bots": 1},
+    Plan.PRO:   {"max_bots": 5},
+    Plan.ELITE: {"max_bots": 9999},
 }
 
 
@@ -32,17 +36,49 @@ class Subscription(db.Model):
 
     user = db.relationship("User", back_populates="subscription")
 
-    @property
-    def is_active_pro(self) -> bool:
-        if self.plan != Plan.PRO:
+    def _is_plan_active(self, plan: Plan) -> bool:
+        if self.plan != plan:
             return False
         if self.expires_at is None:
             return True
         return datetime.now(timezone.utc) < self.expires_at
 
-    def get_limit(self, key: str):
-        plan = self.plan if self.is_active_pro else Plan.FREE
-        return PLAN_LIMITS[plan][key]
+    @property
+    def is_active_basic(self) -> bool:
+        return self._is_plan_active(Plan.BASIC)
+
+    @property
+    def is_active_pro(self) -> bool:
+        return self._is_plan_active(Plan.PRO)
+
+    @property
+    def is_active_elite(self) -> bool:
+        return self._is_plan_active(Plan.ELITE)
+
+    @property
+    def is_any_paid(self) -> bool:
+        """True if user has any active paid subscription."""
+        return self.is_active_basic or self.is_active_pro or self.is_active_elite
+
+    @property
+    def has_ai(self) -> bool:
+        """AI advisor access: PRO and ELITE."""
+        return self.is_active_pro or self.is_active_elite
+
+    @property
+    def has_ml(self) -> bool:
+        """ML ensemble access: ELITE only."""
+        return self.is_active_elite
+
+    @property
+    def max_bots(self) -> int:
+        if self.is_active_elite:
+            return PLAN_LIMITS[Plan.ELITE]["max_bots"]
+        if self.is_active_pro:
+            return PLAN_LIMITS[Plan.PRO]["max_bots"]
+        if self.is_active_basic:
+            return PLAN_LIMITS[Plan.BASIC]["max_bots"]
+        return PLAN_LIMITS[Plan.FREE]["max_bots"]
 
     def __repr__(self) -> str:
         return f"<Subscription user_id={self.user_id} plan={self.plan}>"

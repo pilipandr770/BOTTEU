@@ -9,6 +9,13 @@ from app.models.subscription import Subscription, Plan
 
 subscriptions_bp = Blueprint("subscriptions", __name__, url_prefix="/subscriptions")
 
+# Map plan key → (Plan enum, config key, display name)
+_PLAN_MAP = {
+    "basic": (Plan.BASIC, "STRIPE_PRICE_ID_BASIC", "Basic"),
+    "pro":   (Plan.PRO,   "STRIPE_PRICE_ID_PRO",   "Pro"),
+    "elite": (Plan.ELITE, "STRIPE_PRICE_ID_ELITE",  "Elite"),
+}
+
 
 @subscriptions_bp.route("/plans")
 @login_required
@@ -16,11 +23,14 @@ def plans():
     return render_template("subscriptions/plans.html")
 
 
-@subscriptions_bp.route("/checkout", methods=["POST"])
+@subscriptions_bp.route("/checkout/<plan_key>", methods=["POST"])
 @login_required
-def checkout():
+def checkout(plan_key: str):
+    if plan_key not in _PLAN_MAP:
+        abort(404)
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
-    price_id = current_app.config.get("STRIPE_PRICE_ID_PRO", "")
+    plan_enum, config_key, plan_name = _PLAN_MAP[plan_key]
+    price_id = current_app.config.get(config_key, "")
     if not price_id:
         flash(_("Payment is not configured yet. Please contact support."), "warning")
         return redirect(url_for("subscriptions.plans"))
@@ -33,7 +43,32 @@ def checkout():
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=url_for("subscriptions.success", _external=True) + "?session_id={CHECKOUT_SESSION_ID}",
             cancel_url=url_for("subscriptions.plans", _external=True),
-            metadata={"user_id": str(current_user.id)},
+            metadata={"user_id": str(current_user.id), "plan": plan_key},
+        )
+        return redirect(session.url, code=303)
+    except stripe.error.StripeError:
+        flash(_("Payment error. Please try again or contact support."), "danger")
+        return redirect(url_for("subscriptions.plans"))
+
+
+@subscriptions_bp.route("/checkout/consultation", methods=["POST"])
+@login_required
+def checkout_consultation():
+    stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
+    price_id = current_app.config.get("STRIPE_PRICE_ID_CONSULTATION", "")
+    if not price_id:
+        flash(_("Consultation booking is not configured yet. Please contact support."), "warning")
+        return redirect(url_for("subscriptions.plans"))
+
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            mode="payment",
+            customer_email=current_user.email,
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=url_for("subscriptions.consultation_success", _external=True),
+            cancel_url=url_for("subscriptions.plans", _external=True),
+            metadata={"user_id": str(current_user.id), "type": "consultation"},
         )
         return redirect(session.url, code=303)
     except stripe.error.StripeError:
@@ -44,7 +79,14 @@ def checkout():
 @subscriptions_bp.route("/success")
 @login_required
 def success():
-    flash(_("🎉 Subscription activated! Welcome to Pro."), "success")
+    flash(_("🎉 Subscription activated! Your plan is now live."), "success")
+    return redirect(url_for("dashboard.index"))
+
+
+@subscriptions_bp.route("/consultation-success")
+@login_required
+def consultation_success():
+    flash(_("✅ Consultation booked! We will contact you within 24 hours."), "success")
     return redirect(url_for("dashboard.index"))
 
 
@@ -84,10 +126,12 @@ def webhook():
     if event["type"] == "checkout.session.completed":
         session_obj = event["data"]["object"]
         user_id = int(session_obj.get("metadata", {}).get("user_id", 0))
-        if user_id:
+        plan_key = session_obj.get("metadata", {}).get("plan", "")
+        if user_id and plan_key in _PLAN_MAP:
+            plan_enum, _, _ = _PLAN_MAP[plan_key]
             sub = Subscription.query.filter_by(user_id=user_id).first()
             if sub:
-                sub.plan = Plan.PRO
+                sub.plan = plan_enum
                 sub.stripe_customer_id = session_obj.get("customer")
                 sub.stripe_subscription_id = session_obj.get("subscription")
                 db.session.commit()

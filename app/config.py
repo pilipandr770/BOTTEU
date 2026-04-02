@@ -50,7 +50,12 @@ class Config:
     STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY", "")
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
     STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-    STRIPE_PRICE_ID_PRO = os.environ.get("STRIPE_PRICE_ID_PRO", "")
+    # Subscription plan price IDs (create in Stripe Dashboard → Products)
+    STRIPE_PRICE_ID_BASIC = os.environ.get("STRIPE_PRICE_ID_BASIC", "")   # €200/mo
+    STRIPE_PRICE_ID_PRO   = os.environ.get("STRIPE_PRICE_ID_PRO", "")     # €500/mo
+    STRIPE_PRICE_ID_ELITE = os.environ.get("STRIPE_PRICE_ID_ELITE", "")   # €1000/mo
+    # One-time consultation payment link (Stripe Payment Link or Price ID)
+    STRIPE_PRICE_ID_CONSULTATION = os.environ.get("STRIPE_PRICE_ID_CONSULTATION", "")  # €100
 
     # App
     APP_URL = os.environ.get("APP_URL", "http://localhost:5000")
