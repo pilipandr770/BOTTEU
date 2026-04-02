@@ -1,11 +1,14 @@
 """Subscriptions blueprint — Stripe checkout, portal, webhooks."""
+import logging
 import stripe
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, abort
 from flask_login import login_required, current_user
 from flask_babel import gettext as _
 
-from app.extensions import db, csrf
+from app.extensions import db, csrf, mail
 from app.models.subscription import Subscription, Plan
+
+logger = logging.getLogger(__name__)
 
 subscriptions_bp = Blueprint("subscriptions", __name__, url_prefix="/subscriptions")
 
@@ -127,6 +130,8 @@ def webhook():
         session_obj = event["data"]["object"]
         user_id = int(session_obj.get("metadata", {}).get("user_id", 0))
         plan_key = session_obj.get("metadata", {}).get("plan", "")
+        event_type = session_obj.get("metadata", {}).get("type", "")
+
         if user_id and plan_key in _PLAN_MAP:
             plan_enum, _, _ = _PLAN_MAP[plan_key]
             sub = Subscription.query.filter_by(user_id=user_id).first()
@@ -135,6 +140,31 @@ def webhook():
                 sub.stripe_customer_id = session_obj.get("customer")
                 sub.stripe_subscription_id = session_obj.get("subscription")
                 db.session.commit()
+
+        elif event_type == "consultation" and user_id:
+            # Notify admin by email about paid consultation
+            try:
+                from flask_mail import Message
+                from app.models.user import User
+                customer_email = session_obj.get("customer_details", {}).get("email", "")
+                user = User.query.get(user_id)
+                user_email = user.email if user else customer_email
+                admin_email = current_app.config.get("MAIL_DEFAULT_SENDER", "")
+                if admin_email and current_app.config.get("MAIL_USERNAME"):
+                    msg = Message(
+                        subject="💼 New Consultation Booked — BOTTEU",
+                        recipients=[admin_email] if isinstance(admin_email, str) else [admin_email[1]],
+                        body=(
+                            f"A user has paid for a 1-hour expert consultation.\n\n"
+                            f"User email: {user_email}\n"
+                            f"User ID: {user_id}\n"
+                            f"Stripe session: {session_obj.get('id')}\n\n"
+                            f"Please contact them within 24 hours to schedule the session."
+                        ),
+                    )
+                    mail.send(msg)
+            except Exception as exc:
+                logger.error("Failed to send consultation notification email: %s", exc)
 
     elif event["type"] == "customer.subscription.deleted":
         stripe_sub_id = event["data"]["object"]["id"]
