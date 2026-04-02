@@ -427,38 +427,99 @@
 
 {# ── Pricing ── #}
 <section class="py-5 border-bottom border-secondary mb-4">
-  <h2 class="text-center fw-bold mb-4">{{ _('Pricing') }}</h2>
-  <div class="row justify-content-center g-4">
-    <div class="col-md-4">
+  <h2 class="text-center fw-bold mb-2">{{ _('Pricing') }}</h2>
+  <p class="text-center text-muted mb-5">{{ _('Professional tools. No free tier — built for traders who are serious about results.') }}</p>
+  <div class="row justify-content-center g-4 mb-4">
+
+    {# Basic #}
+    <div class="col-lg-3 col-md-6">
       <div class="card bg-dark border-secondary h-100">
-        <div class="card-body text-center">
-          <h5 class="text-muted text-uppercase">{{ _('Free') }}</h5>
-          <div class="display-5 fw-bold text-white my-3">€0</div>
-          <ul class="list-unstyled text-muted">
-            <li><i class="bi bi-check-circle text-success me-1"></i> 1 {{ _('Trading Bot') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> 1 {{ _('Trading Pair') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('All Algorithms') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Backtest') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Telegram Alerts') }}</li>
+        <div class="card-body text-center d-flex flex-column">
+          <h5 class="text-muted text-uppercase mb-1">Basic</h5>
+          <div class="display-5 fw-bold text-white my-3">€200<small class="fs-6 text-muted">/{{ _('month') }}</small></div>
+          <p class="text-muted small mb-3">{{ _('For experienced traders who tune strategies manually.') }}</p>
+          <ul class="list-unstyled text-muted small text-start mb-4 flex-grow-1">
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> <strong class="text-white">1 {{ _('active bot') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('All algorithms') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('Full backtesting') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('Stop-Loss / TP / Trailing') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('Telegram alerts') }}</li>
+            <li class="mb-1"><i class="bi bi-x-circle text-secondary me-1"></i> {{ _('AI advisor') }}</li>
+            <li class="mb-1"><i class="bi bi-x-circle text-secondary me-1"></i> {{ _('ML signals') }}</li>
           </ul>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success w-100 mt-3">{{ _('Get Started') }}</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light w-100">{{ _('Get Started') }}</a>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card border-success h-100" style="background:#0d1f0d;">
-        <div class="card-body text-center">
-          <span class="badge bg-success mb-2">{{ _('Popular') }}</span>
-          <h5 class="text-success text-uppercase">Pro</h5>
-          <div class="display-5 fw-bold text-white my-3">€19<small class="fs-6 text-muted">/{{ _('month') }}</small></div>
-          <ul class="list-unstyled text-muted">
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Unlimited Bots') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Unlimited Pairs') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('Priority Support') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('All future algorithms') }}</li>
-            <li><i class="bi bi-check-circle text-success me-1"></i> {{ _('No commission on profits') }}</li>
+
+    {# Pro #}
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-success h-100 position-relative" style="background:#0d1f0d;">
+        <div class="position-absolute top-0 start-50 translate-middle">
+          <span class="badge bg-success px-3 py-2">⭐ {{ _('Most Popular') }}</span>
+        </div>
+        <div class="card-body text-center d-flex flex-column pt-4">
+          <h5 class="text-success text-uppercase mb-1">Pro</h5>
+          <div class="display-5 fw-bold text-white my-3">€500<small class="fs-6 text-muted">/{{ _('month') }}</small></div>
+          <p class="text-muted small mb-3">{{ _('5 bots with AI-powered market recommendations.') }}</p>
+          <ul class="list-unstyled text-muted small text-start mb-4 flex-grow-1">
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> <strong class="text-white">5 {{ _('active bots') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('All algorithms') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('Full backtesting') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('Stop-Loss / TP / Trailing') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> {{ _('Telegram alerts') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> <strong class="text-success">{{ _('AI market advisor') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-success me-1"></i> <strong class="text-success">{{ _('AI auto-bot creation') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-x-circle text-secondary me-1"></i> {{ _('ML signals') }}</li>
           </ul>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-success w-100 mt-3">{{ _('Start Pro Trial') }}</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-success w-100">{{ _('Subscribe — Pro') }}</a>
+        </div>
+      </div>
+    </div>
+
+    {# Elite #}
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-warning h-100 position-relative" style="background:#1a1500;">
+        <div class="position-absolute top-0 start-50 translate-middle">
+          <span class="badge bg-warning text-dark px-3 py-2">👑 Elite</span>
+        </div>
+        <div class="card-body text-center d-flex flex-column pt-4">
+          <h5 class="text-warning text-uppercase mb-1">Elite</h5>
+          <div class="display-5 fw-bold text-white my-3">€1000<small class="fs-6 text-muted">/{{ _('month') }}</small></div>
+          <p class="text-muted small mb-3">{{ _('Unlimited bots with AI + Machine Learning ensemble signals.') }}</p>
+          <ul class="list-unstyled text-muted small text-start mb-4 flex-grow-1">
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> <strong class="text-white">{{ _('Unlimited bots') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> {{ _('All algorithms') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> {{ _('Full backtesting') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> {{ _('Stop-Loss / TP / Trailing') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> {{ _('Telegram alerts') }}</li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> <strong class="text-warning">{{ _('AI market advisor') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> <strong class="text-warning">{{ _('AI auto-bot creation') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> <strong class="text-warning">{{ _('ML ensemble signals') }}</strong></li>
+            <li class="mb-1"><i class="bi bi-check-circle text-warning me-1"></i> {{ _('Priority support') }}</li>
+          </ul>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-warning text-dark w-100">{{ _('Subscribe — Elite') }}</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# Consultation #}
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card bg-dark border-info">
+        <div class="card-body d-flex flex-column flex-md-row align-items-center gap-4 p-4">
+          <div class="flex-grow-1">
+            <div class="fs-5 mb-1">🎓 <strong>{{ _('Expert Consultation') }}</strong></div>
+            <p class="text-muted small mb-0">{{ _('1-hour session with our trading automation expert. Bot setup, parameter tuning, strategy selection for your portfolio.') }}</p>
+          </div>
+          <div class="text-center flex-shrink-0">
+            <div class="fw-bold fs-3 text-info">€100 <small class="fs-6 text-muted">/ 1h</small></div>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-info mt-2">
+              <i class="bi bi-calendar-check me-1"></i>{{ _('Book Session') }}
+            </a>
+          </div>
         </div>
       </div>
     </div>
