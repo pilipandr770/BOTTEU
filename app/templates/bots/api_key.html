@@ -149,7 +149,8 @@
           {{ _('Removing the API key will stop all running bots that depend on it.') }}
         </p>
         <form method="POST" action="{{ url_for('bots.api_key') }}"
-              onsubmit="return confirm('{{ _('Remove API key? All bots will stop.') }}')">
+              data-confirm="{{ _('Remove API key? All bots will stop.') }}"
+              onsubmit="return confirm(this.dataset.confirm)">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="delete">
           <button type="submit" class="btn btn-outline-danger btn-sm">
