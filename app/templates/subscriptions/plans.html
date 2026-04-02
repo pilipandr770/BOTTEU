@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}{{ _('Subscription Plans') }}{% endblock %}
 {% block content %}
 
@@ -6,25 +6,25 @@
 
 <div class="text-center mb-5">
   <h2 class="fw-bold">{{ _('Professional Trading Plans') }}</h2>
-  <p class="text-muted">{{ _('Automated Binance spot trading. No free tier — serious tools for serious traders.') }}</p>
+  <p class="text-muted">{{ _('Automated Binance spot trading. No free tier вЂ” serious tools for serious traders.') }}</p>
 </div>
 
 <div class="row justify-content-center g-4 mb-5">
 
-  <!-- Basic Plan — €200/mo -->
+  <!-- Basic Plan вЂ” в‚¬200/mo -->
   <div class="col-lg-4 col-md-6">
     <div class="card bg-dark border-secondary h-100">
       <div class="card-body d-flex flex-column p-4">
         <div class="mb-3">
           <span class="badge bg-secondary mb-2">Basic</span>
-          <h3 class="fw-bold mb-0">€200<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
+          <h3 class="fw-bold mb-0">в‚¬200<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
           <div class="text-muted small">{{ _('cancel anytime') }}</div>
         </div>
         <p class="text-muted small mb-3">{{ _('For experienced traders who know their indicators and build strategies themselves.') }}</p>
         <ul class="list-unstyled text-muted small flex-grow-1 mb-4">
           <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong class="text-white">{{ _('1 active bot') }}</strong></li>
           <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('All algorithms (MA, RSI, MACD, BB, SuperTrend)') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Full backtesting — manual strategy tuning') }}</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Full backtesting вЂ” manual strategy tuning') }}</li>
           <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Stop-Loss / Take-Profit / Trailing TP') }}</li>
           <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Telegram notifications') }}</li>
           <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('AI advisor') }}</li>
@@ -33,7 +33,7 @@
         </ul>
         {% if sub and sub.is_active_basic %}
           <div class="text-center mb-3">
-            <span class="badge bg-success fs-6 px-3 py-2">✓ {{ _('Active Plan') }}</span>
+            <span class="badge bg-success fs-6 px-3 py-2">вњ“ {{ _('Active Plan') }}</span>
           </div>
           <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-secondary w-100">
             <i class="bi bi-gear me-1"></i>{{ _('Manage') }}
@@ -44,7 +44,7 @@
           <form method="POST" action="{{ url_for('subscriptions.checkout', plan_key='basic') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline-light w-100 fw-semibold">
-              <i class="bi bi-arrow-right-circle me-1"></i>{{ _('Subscribe — Basic') }}
+              <i class="bi bi-arrow-right-circle me-1"></i>{{ _('Subscribe вЂ” Basic') }}
             </button>
           </form>
         {% endif %}
@@ -52,16 +52,16 @@
     </div>
   </div>
 
-  <!-- Pro Plan — €500/mo -->
+  <!-- Pro Plan вЂ” в‚¬500/mo -->
   <div class="col-lg-4 col-md-6">
     <div class="card bg-dark border-success h-100 position-relative">
       <div class="position-absolute top-0 start-50 translate-middle">
-        <span class="badge bg-success px-3 py-2 fs-6">⭐ {{ _('Most Popular') }}</span>
+        <span class="badge bg-success px-3 py-2 fs-6">в­ђ {{ _('Most Popular') }}</span>
       </div>
       <div class="card-body d-flex flex-column p-4 pt-5">
         <div class="mb-3">
           <span class="badge bg-success mb-2">Pro</span>
-          <h3 class="fw-bold mb-0">€500<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
+          <h3 class="fw-bold mb-0">в‚¬500<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
           <div class="text-muted small">{{ _('cancel anytime') }}</div>
         </div>
         <p class="text-muted small mb-3">{{ _('5 simultaneous bots with AI-powered recommendations for smarter entry/exit points.') }}</p>
@@ -77,7 +77,7 @@
         </ul>
         {% if sub and sub.is_active_pro %}
           <div class="text-center mb-3">
-            <span class="badge bg-success fs-6 px-3 py-2">✓ {{ _('Active Plan') }}</span>
+            <span class="badge bg-success fs-6 px-3 py-2">вњ“ {{ _('Active Plan') }}</span>
           </div>
           <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-success w-100">
             <i class="bi bi-gear me-1"></i>{{ _('Manage') }}
@@ -88,7 +88,7 @@
           <form method="POST" action="{{ url_for('subscriptions.checkout', plan_key='pro') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-success w-100 fw-semibold">
-              <i class="bi bi-lightning-fill me-1"></i>{{ _('Subscribe — Pro') }}
+              <i class="bi bi-lightning-fill me-1"></i>{{ _('Subscribe вЂ” Pro') }}
             </button>
           </form>
         {% endif %}
@@ -96,16 +96,16 @@
     </div>
   </div>
 
-  <!-- Elite Plan — €1000/mo -->
+  <!-- Elite Plan вЂ” в‚¬1000/mo -->
   <div class="col-lg-4 col-md-6">
     <div class="card bg-dark border-warning h-100 position-relative">
       <div class="position-absolute top-0 start-50 translate-middle">
-        <span class="badge bg-warning text-dark px-3 py-2 fs-6">👑 Elite</span>
+        <span class="badge bg-warning text-dark px-3 py-2 fs-6">рџ‘‘ Elite</span>
       </div>
       <div class="card-body d-flex flex-column p-4 pt-5">
         <div class="mb-3">
           <span class="badge bg-warning text-dark mb-2">Elite</span>
-          <h3 class="fw-bold mb-0">€1000<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
+          <h3 class="fw-bold mb-0">в‚¬1000<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
           <div class="text-muted small">{{ _('cancel anytime') }}</div>
         </div>
         <p class="text-muted small mb-3">{{ _('Unlimited bots with full AI + Machine Learning ensemble signals for maximum performance.') }}</p>
@@ -122,7 +122,7 @@
         </ul>
         {% if sub and sub.is_active_elite %}
           <div class="text-center mb-3">
-            <span class="badge bg-warning text-dark fs-6 px-3 py-2">✓ {{ _('Active Plan') }}</span>
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2">вњ“ {{ _('Active Plan') }}</span>
           </div>
           <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-warning w-100">
             <i class="bi bi-gear me-1"></i>{{ _('Manage') }}
@@ -131,7 +131,7 @@
           <form method="POST" action="{{ url_for('subscriptions.checkout', plan_key='elite') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-warning text-dark w-100 fw-semibold">
-              <i class="bi bi-stars me-1"></i>{{ _('Subscribe — Elite') }}
+              <i class="bi bi-stars me-1"></i>{{ _('Subscribe вЂ” Elite') }}
             </button>
           </form>
         {% endif %}
@@ -147,13 +147,13 @@
     <div class="card bg-dark border-info">
       <div class="card-body d-flex flex-column flex-md-row align-items-center gap-4 p-4">
         <div class="text-center text-md-start flex-grow-1">
-          <div class="fs-4 mb-1">🎓 <strong>{{ _('Expert Consultation') }}</strong></div>
+          <div class="fs-4 mb-1">рџЋ“ <strong>{{ _('Expert Consultation') }}</strong></div>
           <p class="text-muted mb-0">
             {{ _('1-hour one-on-one session with our trading automation expert. We will set up your bots, tune parameters, and explain the best strategies for your portfolio.') }}
           </p>
         </div>
         <div class="text-center flex-shrink-0">
-          <div class="fw-bold fs-3 text-info">€100</div>
+          <div class="fw-bold fs-3 text-info">в‚¬100</div>
           <div class="text-muted small mb-3">{{ _('/ 1 hour') }}</div>
           <form method="POST" action="{{ url_for('subscriptions.checkout_consultation') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -177,21 +177,21 @@
           <thead class="table-secondary">
             <tr>
               <th class="text-start">{{ _('Feature') }}</th>
-              <th>Basic<br><small class="text-muted fw-normal">€200/mo</small></th>
-              <th class="text-success">Pro<br><small class="text-muted fw-normal">€500/mo</small></th>
-              <th class="text-warning">Elite<br><small class="text-muted fw-normal">€1000/mo</small></th>
+              <th>Basic<br><small class="text-muted fw-normal">в‚¬200/mo</small></th>
+              <th class="text-success">Pro<br><small class="text-muted fw-normal">в‚¬500/mo</small></th>
+              <th class="text-warning">Elite<br><small class="text-muted fw-normal">в‚¬1000/mo</small></th>
             </tr>
           </thead>
           <tbody class="small">
-            <tr><td class="text-start text-muted">{{ _('Active bots') }}</td><td>1</td><td class="text-success">5</td><td class="text-warning">∞</td></tr>
-            <tr><td class="text-start text-muted">{{ _('All algorithms') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Backtesting') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Stop-Loss / TP / Trailing') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Telegram notifications') }}</td><td>✓</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('AI market advisor') }}</td><td class="text-secondary">—</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('AI auto-bot creation') }}</td><td class="text-secondary">—</td><td class="text-success">✓</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('ML ensemble signals') }}</td><td class="text-secondary">—</td><td class="text-secondary">—</td><td class="text-warning">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Priority support') }}</td><td class="text-secondary">—</td><td class="text-secondary">—</td><td class="text-warning">✓</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Active bots') }}</td><td>1</td><td class="text-success">5</td><td class="text-warning">в€ћ</td></tr>
+            <tr><td class="text-start text-muted">{{ _('All algorithms') }}</td><td>вњ“</td><td class="text-success">вњ“</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Backtesting') }}</td><td>вњ“</td><td class="text-success">вњ“</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Stop-Loss / TP / Trailing') }}</td><td>вњ“</td><td class="text-success">вњ“</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Telegram notifications') }}</td><td>вњ“</td><td class="text-success">вњ“</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('AI market advisor') }}</td><td class="text-secondary">вЂ”</td><td class="text-success">вњ“</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('AI auto-bot creation') }}</td><td class="text-secondary">вЂ”</td><td class="text-success">вњ“</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('ML ensemble signals') }}</td><td class="text-secondary">вЂ”</td><td class="text-secondary">вЂ”</td><td class="text-warning">вњ“</td></tr>
+            <tr><td class="text-start text-muted">{{ _('Priority support') }}</td><td class="text-secondary">вЂ”</td><td class="text-secondary">вЂ”</td><td class="text-warning">вњ“</td></tr>
           </tbody>
         </table>
       </div>
@@ -257,165 +257,6 @@
         <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
           <div class="accordion-body text-muted small">
             {{ _('No. All payments are processed securely by Stripe. We never see or store your card details.') }}
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-{% endblock %}
-
-<div class="row justify-content-center g-4 mb-5">
-
-  <!-- Free Plan -->
-  <div class="col-lg-4 col-md-6">
-    <div class="card bg-dark border-secondary h-100">
-      <div class="card-body d-flex flex-column p-4">
-        <div class="mb-3">
-          <span class="badge bg-secondary mb-2">{{ _('Free') }}</span>
-          <h3 class="fw-bold mb-0">€0</h3>
-          <div class="text-muted small">{{ _('forever') }}</div>
-        </div>
-        <ul class="list-unstyled text-muted small flex-grow-1 mb-4">
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('1 active bot') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('All algorithms (MA, RSI)') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Backtesting') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Telegram notifications') }}</li>
-          <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('Multiple bots') }}</li>
-          <li class="mb-2"><i class="bi bi-x-circle text-secondary me-2"></i>{{ _('Priority support') }}</li>
-        </ul>
-        {% set sub = current_user.subscription %}
-        {% if not sub or not sub.is_active_pro %}
-          <button class="btn btn-outline-secondary w-100" disabled>{{ _('Current Plan') }}</button>
-        {% else %}
-          <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary w-100">{{ _('Downgrade') }}</a>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Pro Plan -->
-  <div class="col-lg-4 col-md-6">
-    <div class="card bg-dark border-success h-100 position-relative">
-      <div class="position-absolute top-0 start-50 translate-middle">
-        <span class="badge bg-success px-3 py-2 fs-6">⭐ {{ _('Most Popular') }}</span>
-      </div>
-      <div class="card-body d-flex flex-column p-4 pt-5">
-        <div class="mb-3">
-          <span class="badge bg-success mb-2">Pro</span>
-          <h3 class="fw-bold mb-0">€19<span class="text-muted fs-6 fw-normal">/{{ _('month') }}</span></h3>
-          <div class="text-muted small">{{ _('cancel anytime') }}</div>
-        </div>
-        <ul class="list-unstyled text-muted small flex-grow-1 mb-4">
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong class="text-white">{{ _('Unlimited bots') }}</strong></li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('All algorithms (MA, RSI, + future)') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Advanced backtesting') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Telegram notifications + commands') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Stop-Loss / Take-Profit / Trailing TP') }}</li>
-          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>{{ _('Priority email support') }}</li>
-        </ul>
-        {% if sub and sub.is_active_pro %}
-          <div class="text-center mb-3">
-            <span class="badge bg-success fs-6 px-3 py-2">✓ {{ _('Active') }}</span>
-            <div class="text-muted small mt-1">
-              {{ _('Renews') }} {{ sub.current_period_end.strftime('%d.%m.%Y') if sub.current_period_end else '' }}
-            </div>
-          </div>
-          <a href="{{ url_for('subscriptions.portal') }}" class="btn btn-outline-success w-100">
-            <i class="bi bi-gear me-1"></i>{{ _('Manage Subscription') }}
-          </a>
-        {% else %}
-          <form method="POST" action="{{ url_for('subscriptions.checkout') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-success w-100 fw-semibold">
-              <i class="bi bi-lightning-fill me-1"></i>{{ _('Upgrade to Pro') }}
-            </button>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Feature comparison -->
-<div class="row justify-content-center mb-5">
-  <div class="col-lg-8">
-    <h5 class="fw-bold mb-3 text-center text-muted">{{ _('Full Feature Comparison') }}</h5>
-    <div class="card bg-dark border-secondary">
-      <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle mb-0 text-center">
-          <thead class="table-secondary">
-            <tr>
-              <th class="text-start">{{ _('Feature') }}</th>
-              <th>{{ _('Free') }}</th>
-              <th class="text-success">Pro</th>
-            </tr>
-          </thead>
-          <tbody class="small">
-            <tr><td class="text-start text-muted">{{ _('Active bots') }}</td><td>1</td><td class="text-success">∞</td></tr>
-            <tr><td class="text-start text-muted">{{ _('MA Crossover') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('RSI Strategy') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Stop-Loss') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Take-Profit') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Trailing Take-Profit') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Backtesting') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Telegram notifications') }}</td><td>✓</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Multiple trading pairs simultaneously') }}</td><td class="text-secondary">—</td><td class="text-success">✓</td></tr>
-            <tr><td class="text-start text-muted">{{ _('Priority support') }}</td><td class="text-secondary">—</td><td class="text-success">✓</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FAQ -->
-<div class="row justify-content-center">
-  <div class="col-lg-7">
-    <h5 class="fw-bold mb-3 text-center text-muted">FAQ</h5>
-    <div class="accordion accordion-flush" id="faqAccordion">
-
-      <div class="accordion-item bg-dark border-secondary mb-2">
-        <h2 class="accordion-header">
-          <button class="accordion-button collapsed bg-dark text-white" type="button"
-                  data-bs-toggle="collapse" data-bs-target="#faq1">
-            {{ _('Can I cancel my subscription at any time?') }}
-          </button>
-        </h2>
-        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-          <div class="accordion-body text-muted small">
-            {{ _('Yes. You can cancel at any time from the subscription management portal. Your Pro features remain active until the end of the billing period.') }}
-          </div>
-        </div>
-      </div>
-
-      <div class="accordion-item bg-dark border-secondary mb-2">
-        <h2 class="accordion-header">
-          <button class="accordion-button collapsed bg-dark text-white" type="button"
-                  data-bs-toggle="collapse" data-bs-target="#faq2">
-            {{ _('Is there a refund policy?') }}
-          </button>
-        </h2>
-        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-          <div class="accordion-body text-muted small">
-            {{ _('We offer refunds within 14 days of purchase if no trades were executed with Pro features. Contact us via the Impressum.') }}
-          </div>
-        </div>
-      </div>
-
-      <div class="accordion-item bg-dark border-secondary">
-        <h2 class="accordion-header">
-          <button class="accordion-button collapsed bg-dark text-white" type="button"
-                  data-bs-toggle="collapse" data-bs-target="#faq3">
-            {{ _('Do you store my payment information?') }}
-          </button>
-        </h2>
-        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-          <div class="accordion-body text-muted small">
-            {{ _('No. All payments are processed by Stripe. We never see or store your card details.') }}
           </div>
         </div>
       </div>
