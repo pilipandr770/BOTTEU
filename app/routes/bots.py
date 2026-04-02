@@ -14,6 +14,7 @@ from app.models.api_key import ApiKey
 from app.models.telegram_account import TelegramAccount
 from app.models.subscription import Plan
 from app.algorithms.base import list_algorithms
+from flask import current_app
 from app.services.encryption import encrypt
 from app.services.binance_client import validate_api_key, get_cached_symbols
 
@@ -52,7 +53,8 @@ def api_key():
             else:
                 if not api_key_val or not api_secret_val:
                     flash(_("Both API Key and Secret are required."), "danger")
-                    return render_template("bots/api_key.html", existing=existing)
+                    outbound_ips = current_app.config.get("RENDER_OUTBOUND_IPS", [])
+                    return render_template("bots/api_key.html", existing=existing, outbound_ips=outbound_ips)
                 new_key = ApiKey(
                     user_id=current_user.id,
                     encrypted_api_key=encrypt(api_key_val),
@@ -71,7 +73,8 @@ def api_key():
             flash(_("API Key deleted."), "info")
             return redirect(url_for("bots.api_key"))
 
-    return render_template("bots/api_key.html", existing=existing)
+    outbound_ips = current_app.config.get("RENDER_OUTBOUND_IPS", [])
+    return render_template("bots/api_key.html", existing=existing, outbound_ips=outbound_ips)
 
 
 @bots_bp.route("/api-key/test", methods=["POST"])

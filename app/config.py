@@ -58,6 +58,13 @@ class Config:
     # Anthropic AI Advisor
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
+    # Render static outbound IPs (comma-separated) to show users for Binance whitelisting
+    RENDER_OUTBOUND_IPS = [
+        ip.strip()
+        for ip in os.environ.get("RENDER_OUTBOUND_IPS", "").split(",")
+        if ip.strip()
+    ]
+
     # Flask-Babel
     LANGUAGES = ["en", "de"]
     BABEL_DEFAULT_LOCALE = "en"

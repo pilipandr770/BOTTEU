@@ -39,6 +39,52 @@
     </div>
     {% endif %}
 
+    <!-- Server IP whitelist block -->
+    {% if outbound_ips %}
+    {% set is_cidr = '/' in outbound_ips[0] %}
+    <div class="card bg-dark border-{{ 'warning' if is_cidr else 'info' }} mb-4">
+      <div class="card-header text-{{ 'warning' if is_cidr else 'info' }}">
+        <i class="bi bi-hdd-network me-2"></i>{{ _('Server outbound IPs') }}
+      </div>
+      <div class="card-body">
+        {% if is_cidr %}
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
+          <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 flex-shrink-0"></i>
+          <div>
+            <strong>{{ _('IP whitelisting is not available on this hosting plan.') }}</strong><br>
+            {{ _('The server uses shared dynamic IP ranges (CIDR), which Binance does not support for whitelisting. Please set your Binance API key to') }}
+            <strong>{{ _('"Unrestricted (Less Secure)"') }}</strong>
+            {{ _('in Binance API Management.') }}
+          </div>
+        </div>
+        <p class="small text-muted mb-1">{{ _('Current outbound ranges (for reference):') }}</p>
+        {% else %}
+        <p class="small text-muted mb-2">
+          {{ _('Restrict your Binance API key to these IPs (one per line in Binance settings):') }}
+        </p>
+        {% endif %}
+        <div class="d-flex flex-column gap-1">
+          {% for ip in outbound_ips %}
+          <div class="d-flex align-items-center gap-2">
+            <code class="bg-black text-{{ 'warning' if is_cidr else 'info' }} px-2 py-1 rounded flex-grow-1 font-monospace" id="ip-{{ loop.index }}">{{ ip }}</code>
+            {% if not is_cidr %}
+            <button type="button" class="btn btn-sm btn-outline-secondary copy-ip-btn" data-target="ip-{{ loop.index }}" title="{{ _('Copy') }}">
+              <i class="bi bi-clipboard"></i>
+            </button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% if not is_cidr %}
+        <p class="small text-muted mt-2 mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          {{ _('Multiple users of this platform can all whitelist the same IPs — that is normal.') }}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Security notice -->
     <div class="card bg-dark border-warning mb-4">
       <div class="card-body small text-warning-emphasis">
@@ -46,7 +92,7 @@
         <strong>{{ _('Security tips:') }}</strong>
         <ul class="mb-0 mt-2">
           <li>{{ _('Enable "Spot Trading" permission only. Do NOT enable withdrawals.') }}</li>
-          <li>{{ _('Restrict API access to your server IP address in Binance settings.') }}</li>
+          <li>{{ _('Restrict API access to the server IPs shown above in Binance settings.') }}</li>
           <li>{{ _('Your credentials are encrypted with AES-128 (Fernet) and never stored in plain text.') }}</li>
         </ul>
       </div>
@@ -181,6 +227,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (testBtn) testBtn.addEventListener('click', () => callTestEndpoint(testBtn));
   if (syncBtn) syncBtn.addEventListener('click', () => callTestEndpoint(syncBtn));
+
+  // Copy IP buttons
+  document.querySelectorAll('.copy-ip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      if (target) {
+        navigator.clipboard.writeText(target.textContent.trim()).then(() => {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<i class="bi bi-check text-success"></i>';
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        });
+      }
+    });
+  });
 });
 </script>
 {% endblock extra_scripts %}
