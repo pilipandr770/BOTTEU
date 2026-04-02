@@ -3,7 +3,9 @@
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h3 class="fw-bold"><i class="bi bi-people text-warning me-2"></i>All Users</h3>
+  <h3 class="fw-bold"><i class="bi bi-people text-warning me-2"></i>All Users
+    <span class="badge bg-secondary fs-6 ms-2">{{ users|length }}</span>
+  </h3>
   <a href="{{ url_for('admin.index') }}" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i>Dashboard
   </a>
@@ -14,44 +16,107 @@
     <table class="table table-dark table-hover align-middle mb-0 small">
       <thead class="table-secondary">
         <tr>
-          <th>ID</th><th>Email</th><th>Verified</th><th>Admin</th><th>Plan</th>
-          <th>Bots</th><th>Registered</th><th>Actions</th>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Verified</th>
+          <th>Role</th>
+          <th>Plan</th>
+          <th>Bots (run/total)</th>
+          <th>Registered</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for u in users %}
+        {% set sub = u.subscription %}
+        {% set plan_val = sub.plan.value if sub else 'free' %}
         <tr>
           <td class="text-muted">{{ u.id }}</td>
-          <td>{{ u.email }}</td>
+
           <td>
-            {% if u.is_verified %}<span class="badge bg-success">✓ Verified</span>
-            {% else %}<span class="badge bg-secondary">Unverified</span>{% endif %}
+            <div>{{ u.email }}</div>
+            {% if sub and sub.stripe_customer_id %}
+              <div class="text-muted" style="font-size:0.7em">Stripe: {{ sub.stripe_customer_id }}</div>
+            {% endif %}
           </td>
+
           <td>
-            {% if u.is_admin %}<span class="badge bg-warning text-dark"><i class="bi bi-shield-fill"></i> Admin</span>
-            {% else %}<span class="badge bg-secondary">User</span>{% endif %}
+            {% if u.is_verified %}
+              <span class="badge bg-success">✓ Verified</span>
+            {% else %}
+              <span class="badge bg-secondary">Unverified</span>
+            {% endif %}
           </td>
+
           <td>
-            {% if u.subscription and u.subscription.plan.value == 'pro' %}
+            {% if u.is_admin %}
+              <span class="badge bg-warning text-dark"><i class="bi bi-shield-fill"></i> Admin</span>
+            {% else %}
+              <span class="badge bg-secondary">User</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if u.is_admin %}
+              <span class="badge bg-warning text-dark">👑 Elite (admin)</span>
+            {% elif plan_val == 'elite' %}
+              <span class="badge bg-warning text-dark">Elite</span>
+            {% elif plan_val == 'pro' %}
               <span class="badge bg-success">Pro</span>
+            {% elif plan_val == 'basic' %}
+              <span class="badge bg-info text-dark">Basic</span>
             {% else %}
               <span class="badge bg-secondary">Free</span>
             {% endif %}
-          </td>
-          <td class="text-muted">{{ u.bots|length }}</td>
-          <td class="text-muted">{{ u.created_at.strftime('%d.%m.%Y') }}</td>
-          <td>
-            {% if u.id != current_user.id %}
-            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=u.id) }}" class="d-inline">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-sm {{ 'btn-outline-secondary' if u.is_admin else 'btn-outline-warning' }}"
-                      title="{{ 'Revoke Admin' if u.is_admin else 'Grant Admin' }}">
-                <i class="bi bi-shield{{ '-slash' if u.is_admin else '' }}"></i>
-              </button>
-            </form>
-            {% else %}
-            <span class="text-muted small">You</span>
+            {% if sub and sub.expires_at %}
+              <div class="text-muted" style="font-size:0.7em">exp: {{ sub.expires_at.strftime('%d.%m.%Y') }}</div>
             {% endif %}
+          </td>
+
+          <td class="text-muted">
+            {% set running = u.bots|selectattr('status','equalto','running')|list|length %}
+            {% set total = u.bots|length %}
+            {% if total > 0 %}
+              <span class="{{ 'text-success' if running > 0 else '' }}">{{ running }}</span>/{{ total }}
+            {% else %}
+              <span class="text-secondary">—</span>
+            {% endif %}
+          </td>
+
+          <td class="text-muted">{{ u.created_at.strftime('%d.%m.%Y') }}</td>
+
+          <td>
+            <div class="d-flex gap-1 flex-wrap">
+              {# Toggle admin button #}
+              {% if u.id != current_user.id %}
+              <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=u.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                        class="btn btn-sm {{ 'btn-outline-secondary' if u.is_admin else 'btn-outline-warning' }}"
+                        title="{{ 'Revoke Admin' if u.is_admin else 'Grant Admin' }}">
+                  <i class="bi bi-shield{{ '-slash' if u.is_admin else '' }}"></i>
+                </button>
+              </form>
+              {% endif %}
+
+              {# Set plan dropdown (not for admins — they auto-get Elite) #}
+              {% if not u.is_admin %}
+              <form method="POST" action="{{ url_for('admin.set_plan', user_id=u.id) }}" class="d-inline d-flex gap-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="plan" class="form-select form-select-sm bg-dark text-white border-secondary" style="width:90px">
+                  <option value="free"  {{ 'selected' if plan_val == 'free' }}>Free</option>
+                  <option value="basic" {{ 'selected' if plan_val == 'basic' }}>Basic</option>
+                  <option value="pro"   {{ 'selected' if plan_val == 'pro' }}>Pro</option>
+                  <option value="elite" {{ 'selected' if plan_val == 'elite' }}>Elite</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-info" title="Set plan">
+                  <i class="bi bi-check2"></i>
+                </button>
+              </form>
+              {% else %}
+              <span class="text-muted small">You</span>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% else %}

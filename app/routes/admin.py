@@ -1,6 +1,6 @@
 """Admin blueprint — only accessible to users with is_admin=True."""
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 
 from app.extensions import db
@@ -72,4 +72,26 @@ def toggle_admin(user_id: int):
     user.is_admin = not user.is_admin
     db.session.commit()
     flash(f"{'Admin granted to' if user.is_admin else 'Admin revoked from'} {user.email}", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/<int:user_id>/set-plan", methods=["POST"])
+@login_required
+@admin_required
+def set_plan(user_id: int):
+    user = User.query.get_or_404(user_id)
+    plan_value = request.form.get("plan", "")
+    plan_map = {p.value: p for p in Plan}
+    if plan_value not in plan_map:
+        flash("Invalid plan.", "danger")
+        return redirect(url_for("admin.users"))
+    sub = user.subscription
+    if not sub:
+        sub = Subscription(user_id=user.id, plan=plan_map[plan_value])
+        db.session.add(sub)
+    else:
+        sub.plan = plan_map[plan_value]
+        sub.expires_at = None  # no expiry for manually assigned plans
+    db.session.commit()
+    flash(f"Plan set to '{plan_value}' for {user.email}", "success")
     return redirect(url_for("admin.users"))

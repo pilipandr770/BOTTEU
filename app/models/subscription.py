@@ -37,6 +37,9 @@ class Subscription(db.Model):
     user = db.relationship("User", back_populates="subscription")
 
     def _is_plan_active(self, plan: Plan) -> bool:
+        # Admins always have Elite access — no payment needed
+        if self.user and self.user.is_admin:
+            return plan == Plan.ELITE
         if self.plan != plan:
             return False
         if self.expires_at is None:
