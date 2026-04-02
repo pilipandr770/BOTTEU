@@ -25,7 +25,10 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
 
-    plan = db.Column(db.Enum(Plan), default=Plan.FREE, nullable=False)
+    plan = db.Column(
+        db.Enum(Plan, values_callable=lambda x: [e.value for e in x]),
+        default=Plan.FREE, nullable=False
+    )
     expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     stripe_customer_id = db.Column(db.String(100), nullable=True)

@@ -64,7 +64,7 @@
             {% else %}<span class="badge bg-secondary">User</span>{% endif %}
           </td>
           <td>
-            {% if u.subscription and u.subscription.plan.value == 'pro' %}
+            {% if u.subscription and u.subscription.plan.value in ('basic','pro','elite') %}
               <span class="badge bg-success">Pro</span>
             {% else %}
               <span class="badge bg-secondary">Free</span>
