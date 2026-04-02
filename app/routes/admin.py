@@ -81,17 +81,24 @@ def toggle_admin(user_id: int):
 def set_plan(user_id: int):
     user = User.query.get_or_404(user_id)
     plan_value = request.form.get("plan", "")
-    plan_map = {p.value: p for p in Plan}
-    if plan_value not in plan_map:
+    valid_values = {p.value for p in Plan}
+    if plan_value not in valid_values:
         flash("Invalid plan.", "danger")
         return redirect(url_for("admin.users"))
     sub = user.subscription
     if not sub:
-        sub = Subscription(user_id=user.id, plan=plan_map[plan_value])
+        sub = Subscription(user_id=user.id)
         db.session.add(sub)
-    else:
-        sub.plan = plan_map[plan_value]
-        sub.expires_at = None  # no expiry for manually assigned plans
+        db.session.flush()  # get sub.id
+    # Use raw SQL to avoid SQLAlchemy sending enum NAME instead of VALUE
+    db.session.execute(
+        db.text(
+            "UPDATE subscriptions SET plan = CAST(:plan AS plan), "
+            "expires_at = NULL, updated_at = NOW() "
+            "WHERE user_id = :uid"
+        ),
+        {"plan": plan_value, "uid": user_id},
+    )
     db.session.commit()
     flash(f"Plan set to '{plan_value}' for {user.email}", "success")
     return redirect(url_for("admin.users"))
