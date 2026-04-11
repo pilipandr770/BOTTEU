@@ -100,6 +100,13 @@ class Config:
         os.path.join(_BASE_DIR, "instance", "ml_models"),
     )
 
+    # ── Collector HTTP service URL ─────────────────────────────────────────
+    # When set, the web app fetches CSVs from the collector over HTTP as a
+    # fallback when no local file exists (used on Render where shared volumes
+    # are not available between services).
+    # Example: https://botteu-collector.onrender.com
+    COLLECTOR_BASE_URL: str = os.environ.get("COLLECTOR_BASE_URL", "").rstrip("/")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

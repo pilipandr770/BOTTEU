@@ -10,12 +10,16 @@ Configurable via environment variables:
     DATA_DIR        Output directory (default: /app/data)
     ROLL_WINDOW     Max rows per CSV (default: 7770 = ~5.4 days of 1m data)
     MAX_RECONNECTS  Max sequential reconnect attempts before long sleep (default: 20)
+    HTTP_PORT       Port to serve CSV files over HTTP (default: $PORT or 8080)
+                    Set to 0 to disable the HTTP server.
 """
 import os
+import http.server
 import logging
 import asyncio
 import signal as _signal
 import sys
+import threading
 
 import pandas as pd
 import numpy as np
@@ -36,6 +40,8 @@ SYMBOLS: list[str] = [s.strip().upper() for s in _symbols_raw.split(",") if s.st
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 ROLL_WINDOW = int(os.environ.get("ROLL_WINDOW", "7770"))
 MAX_RECONNECTS = int(os.environ.get("MAX_RECONNECTS", "20"))
+# Render sets $PORT for web services; HTTP_PORT allows explicit override; 0 = disabled
+HTTP_PORT = int(os.environ.get("PORT", os.environ.get("HTTP_PORT", "8080")))
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -287,6 +293,49 @@ async def stream_symbol(client: AsyncClient, symbol: str):
                 backoff = min(backoff * 2, 120)
 
 
+# ── CSV HTTP File Server ────────────────────────────────────────────────────
+
+class _CSVHandler(http.server.SimpleHTTPRequestHandler):
+    """Serves DATA_DIR over HTTP. Adds /health endpoint for Render health checks."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=DATA_DIR, **kwargs)
+
+    def do_GET(self):
+        if self.path in ("/health", "/health/"):
+            body = b'{"status":"ok"}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        # Block directory listing — only serve .csv and .json files
+        import pathlib
+        p = pathlib.PurePosixPath(self.path.split("?")[0])
+        if p.suffix not in (".csv", ".json") and p.name not in ("", "."):
+            self.send_error(403, "Only CSV and JSON files are served")
+            return
+        super().do_GET()
+
+    def log_message(self, fmt, *args):  # noqa: N802
+        logger.debug("HTTP " + fmt, *args)
+
+
+def _start_csv_http_server(port: int) -> None:
+    """Start a background thread serving DATA_DIR over HTTP on *port*."""
+    if port == 0:
+        logger.info("CSV HTTP server disabled (HTTP_PORT=0)")
+        return
+    try:
+        server = http.server.HTTPServer(("0.0.0.0", port), _CSVHandler)
+        t = threading.Thread(target=server.serve_forever, daemon=True, name="csv-http")
+        t.start()
+        logger.info("📡 CSV HTTP server started on port %d  (serving %s)", port, DATA_DIR)
+    except OSError as exc:
+        logger.error("Could not start CSV HTTP server on port %d: %s", port, exc)
+
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 async def main():
@@ -296,6 +345,9 @@ async def main():
     logger.info("Data dir: %s", DATA_DIR)
     logger.info("Roll window: %d rows (~%.1f days of 1m data)", ROLL_WINDOW, ROLL_WINDOW / 1440)
     logger.info("=" * 60)
+
+    # Start HTTP file server for Render (serves CSVs to web service)
+    _start_csv_http_server(HTTP_PORT)
 
     client = await AsyncClient.create()
 

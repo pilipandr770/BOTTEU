@@ -38,8 +38,46 @@ TF_BINANCE_INTERVAL: dict[str, str] = {
     "1h": "1h", "4h": "4h", "1d": "1d",
 }
 
-# Collector CSV directory (Docker volume mount)
+# Collector CSV directory (Docker volume mount — used in Docker Compose)
 COLLECTOR_DATA_DIR = os.environ.get("COLLECTOR_DATA_DIR", "collector/data")
+
+# HTTP URL of the collector service (used on Render where shared volumes are unavailable).
+# Populated from Flask app config at first use; can also be set directly via env var.
+COLLECTOR_BASE_URL: str = os.environ.get("COLLECTOR_BASE_URL", "").rstrip("/")
+
+
+def _fetch_collector_csv_http(symbol: str, tf: str) -> "pd.DataFrame | None":
+    """
+    Download a collector CSV over HTTP from COLLECTOR_BASE_URL.
+    Returns a DataFrame on success, None on any failure.
+    Falls back to Flask app config when the module-level variable is empty.
+    """
+    base_url = COLLECTOR_BASE_URL
+    if not base_url:
+        # Try Flask app config at runtime (avoids circular import at module-load)
+        try:
+            from flask import current_app
+            base_url = current_app.config.get("COLLECTOR_BASE_URL", "").rstrip("/")
+        except RuntimeError:
+            pass  # no app context
+    if not base_url:
+        return None
+
+    url = f"{base_url}/{symbol.lower()}_{tf}_clean.csv"
+    try:
+        import requests as _req
+        resp = _req.get(url, timeout=15)
+        if resp.status_code == 200:
+            from io import StringIO
+            df = pd.read_csv(StringIO(resp.text), parse_dates=["timestamp"])
+            if not df.empty:
+                logger.debug("Fetched collector CSV via HTTP: %s (%d rows)", url, len(df))
+                return df
+        else:
+            logger.debug("Collector HTTP %d for %s", resp.status_code, url)
+    except Exception as exc:
+        logger.debug("Collector HTTP fetch failed %s %s: %s", symbol, tf, exc)
+    return None
 
 
 def _klines_to_df(klines: list) -> pd.DataFrame:
@@ -110,21 +148,27 @@ def load_collector_csv(
 
     for tf in timeframes:
         filename = os.path.join(base_dir, f"{prefix}_{tf}_clean.csv")
-        if not os.path.exists(filename):
-            logger.debug("Collector CSV not found: %s", filename)
-            continue
-        try:
-            df = pd.read_csv(filename, parse_dates=["timestamp"])
-            if not df.empty:
-                # Ensure required OHLCV columns exist
+        if os.path.exists(filename):
+            # Local file (Docker Compose shared volume path)
+            try:
+                df = pd.read_csv(filename, parse_dates=["timestamp"])
+                if not df.empty:
+                    required = {"open", "high", "low", "close", "volume"}
+                    if required.issubset(df.columns):
+                        result[tf] = df
+                        logger.debug("Loaded %d rows from local collector CSV for %s %s", len(df), symbol, tf)
+                    else:
+                        logger.warning("Collector CSV missing columns: %s", filename)
+            except Exception as exc:
+                logger.error("Failed to load collector CSV %s: %s", filename, exc)
+        else:
+            # No local file — try collector HTTP service (Render deployment)
+            logger.debug("Collector CSV not found locally: %s — trying HTTP", filename)
+            df = _fetch_collector_csv_http(symbol, tf)
+            if df is not None:
                 required = {"open", "high", "low", "close", "volume"}
                 if required.issubset(df.columns):
                     result[tf] = df
-                    logger.debug("Loaded %d rows from collector for %s", len(df), tf)
-                else:
-                    logger.warning("Collector CSV missing columns: %s", filename)
-        except Exception as exc:
-            logger.error("Failed to load collector CSV %s: %s", filename, exc)
 
     return result
 

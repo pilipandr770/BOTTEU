@@ -308,7 +308,7 @@ def walkforward():
     timeframe = data.get("timeframe", "1h").strip()
     n_splits  = max(2, min(int(data.get("n_splits", 5)), 10))
 
-    # ── Locate collector CSV ──────────────────────────────────────────────
+    # ── Locate collector CSV (local first, then HTTP fallback) ────────────
     import os as _os
     data_dir = _os.environ.get(
         "DATA_DIR",
@@ -316,16 +316,29 @@ def walkforward():
     )
     csv_path = _os.path.join(data_dir, f"{symbol.lower()}_{timeframe}_clean.csv")
 
-    if not _os.path.exists(csv_path):
-        return jsonify({"error": f"Collector CSV not found: {csv_path}. Run the collector first."}), 404
+    df: pd.DataFrame | None = None
 
-    try:
-        df = pd.read_csv(csv_path, parse_dates=["timestamp"])
-    except Exception as exc:
-        return jsonify({"error": f"CSV read error: {exc}"}), 500
+    if _os.path.exists(csv_path):
+        try:
+            df = pd.read_csv(csv_path, parse_dates=["timestamp"])
+        except Exception as exc:
+            return jsonify({"error": f"CSV read error: {exc}"}), 500
+    else:
+        # Try fetching from the collector HTTP service (Render deployment)
+        from app.algorithms.consensus.data import _fetch_collector_csv_http
+        df = _fetch_collector_csv_http(symbol, timeframe)
+        if df is None:
+            return jsonify({
+                "error": (
+                    f"Collector CSV not found locally ({csv_path}) and "
+                    "COLLECTOR_BASE_URL is not set or returned no data. "
+                    "Ensure the collector service is running and COLLECTOR_BASE_URL is configured."
+                )
+            }), 404
 
-    if len(df) < 200:
-        return jsonify({"error": f"Not enough rows ({len(df)}) in CSV for walk-forward (need ≥ 200)."}), 400
+    if df is None or len(df) < 200:
+        n = len(df) if df is not None else 0
+        return jsonify({"error": f"Not enough rows ({n}) in CSV for walk-forward (need ≥ 200)."}), 400
 
     threshold_pct, forward_n = get_tf_label_params(timeframe)
 

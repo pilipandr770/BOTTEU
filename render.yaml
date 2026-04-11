@@ -1,4 +1,32 @@
 services:
+  # ── Data Collector (Binance WebSocket → CSV + HTTP file server) ───────────
+  # Always-on: streams 1m klines, aggregates to 6 timeframes, serves CSVs.
+  # All bots on the web service read from COLLECTOR_BASE_URL.
+  # Requires starter plan (free tier sleeps → WebSocket drops).
+  - type: web
+    name: botteu-collector
+    runtime: docker
+    dockerfilePath: ./collector/Dockerfile
+    dockerContext: ./collector
+    region: frankfurt
+    plan: starter           # must be always-on; free tier sleeps after 15 min
+    healthCheckPath: /health
+    envVars:
+      - key: SYMBOLS
+        value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT   # add more pairs as needed
+      - key: DATA_DIR
+        value: /app/data
+      - key: ROLL_WINDOW
+        value: "7770"       # ~5.4 days of 1m data per symbol
+      - key: MAX_RECONNECTS
+        value: "20"
+      # HTTP_PORT is NOT set — Render injects $PORT automatically for web services
+    disk:
+      name: collector-data
+      mountPath: /app/data
+      sizeGB: 2             # ~4 symbols × 7 timeframes × ~2 MB each = well within 2 GB
+
+  # ── Flask Web Application ─────────────────────────────────────────────────
   - type: web
     name: botteu
     runtime: python
@@ -46,6 +74,11 @@ services:
         sync: false
       - key: ML_MODELS_DIR
         value: /opt/render/ml_models
+      # URL of the collector service — used to fetch CSVs when no local copy exists.
+      # After deploying botteu-collector, set this to its Render URL:
+      #   https://botteu-collector.onrender.com
+      - key: COLLECTOR_BASE_URL
+        value: https://botteu-collector.onrender.com
     disk:
       name: ml-models
       mountPath: /opt/render/ml_models
