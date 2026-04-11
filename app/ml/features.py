@@ -83,7 +83,7 @@ def extract_features(df: pd.DataFrame) -> np.ndarray:
         hc = (high - close.shift()).abs()
         lc = (low  - close.shift()).abs()
         atr = pd.concat([hl, hc, lc], axis=1).max(axis=1).rolling(14).mean()
-    atr = atr.fillna(method="bfill").fillna(1.0).replace(0, 1e-8)
+    atr = atr.bfill().fillna(1.0).replace(0, 1e-8)
 
     # ── RSI (14) ──
     if "rsi" in df.columns:

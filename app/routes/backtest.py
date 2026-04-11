@@ -392,6 +392,14 @@ def walkforward():
             "label_dist":     train_stats.get("label_dist", {}),
         })
 
+    # ── Clean up temporary walk-forward pkl files ─────────────────────────
+    import glob as _glob
+    for wf_path in _glob.glob(_os.path.join(ML_MODELS_DIR, f"_wf_{symbol.lower()}_{timeframe}_fold*_ensemble.pkl")):
+        try:
+            _os.remove(wf_path)
+        except OSError:
+            pass
+
     if not fold_results:
         return jsonify({"error": "No valid folds produced."}), 500
 

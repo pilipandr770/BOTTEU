@@ -1,12 +1,42 @@
 """
 Flask Application Factory
 """
+import json
+import logging
 import os
 import threading
+from datetime import datetime, timezone
 from flask import Flask, request, session
 
 from app.config import config_map
-from app.extensions import db, login_manager, mail, migrate, csrf, limiter, babel
+from app.extensions import db, login_manager, mail, migrate, csrf, limiter, babel, init_redis
+
+
+class _JSONFormatter(logging.Formatter):
+    """Emit one JSON object per log record — structured, Render/Docker friendly."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "time":    datetime.now(timezone.utc).isoformat(),
+            "level":   record.levelname,
+            "logger":  record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
+
+
+def _configure_logging(debug: bool = False) -> None:
+    """Replace the root handler with a JSON formatter for structured output."""
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG if debug else logging.INFO)
+    # Remove existing handlers (e.g. basicConfig default StreamHandler)
+    for h in root.handlers[:]:
+        root.removeHandler(h)
+    handler = logging.StreamHandler()
+    handler.setFormatter(_JSONFormatter())
+    root.addHandler(handler)
 
 
 def create_app(config_name: str | None = None) -> Flask:
@@ -23,6 +53,8 @@ def create_app(config_name: str | None = None) -> Flask:
         cfg._validate()
     app.config.from_object(cfg)
 
+    _configure_logging(debug=app.config.get("DEBUG", False))
+
     # ── Extensions ────────────────────────────────────────────
     db.init_app(app)
     login_manager.init_app(app)
@@ -31,6 +63,7 @@ def create_app(config_name: str | None = None) -> Flask:
     csrf.init_app(app)
     limiter.init_app(app)
     babel.init_app(app, locale_selector=_get_locale)
+    init_redis(app.config.get("REDIS_URL", "redis://localhost:6379/0"))
 
     # Inject get_locale into every Jinja2 template
     from flask_babel import get_locale as babel_get_locale

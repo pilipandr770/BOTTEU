@@ -4,9 +4,11 @@ import stripe
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, abort
 from flask_login import login_required, current_user
 from flask_babel import gettext as _
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db, csrf, mail
 from app.models.subscription import Subscription, Plan
+from app.models.stripe_event import StripeProcessedEvent
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +128,17 @@ def webhook():
     except (ValueError, stripe.error.SignatureVerificationError):
         abort(400)
 
+    # ── Idempotency: skip already-processed events ────────────────────────
+    event_id = event["id"]
+    try:
+        db.session.add(StripeProcessedEvent(stripe_event_id=event_id, event_type=event["type"]))
+        db.session.flush()   # raises IntegrityError immediately if duplicate
+    except IntegrityError:
+        db.session.rollback()
+        logger.info("Stripe event %s already processed — skipping.", event_id)
+        return "", 200
+    # ─────────────────────────────────────────────────────────────────────
+
     if event["type"] == "checkout.session.completed":
         session_obj = event["data"]["object"]
         user_id = int(session_obj.get("metadata", {}).get("user_id", 0))
@@ -139,7 +152,6 @@ def webhook():
                 sub.plan = plan_enum
                 sub.stripe_customer_id = session_obj.get("customer")
                 sub.stripe_subscription_id = session_obj.get("subscription")
-                db.session.commit()
 
         elif event_type == "consultation" and user_id:
             # Notify admin by email about paid consultation
@@ -171,6 +183,13 @@ def webhook():
         sub = Subscription.query.filter_by(stripe_subscription_id=stripe_sub_id).first()
         if sub:
             sub.plan = Plan.FREE
-            db.session.commit()
+
+    # Single atomic commit: persists StripeProcessedEvent + subscription changes together.
+    try:
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        logger.error("Stripe webhook DB commit failed for event %s: %s", event_id, exc)
+        return "", 500
 
     return "", 200

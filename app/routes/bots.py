@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from flask_babel import gettext as _
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models.bot import Bot, BotStatus
 from app.models.bot_log import BotLog
 from app.models.order import Order, OrderSide
@@ -467,16 +467,41 @@ def clear_logs(bot_id: int):
 @bots_bp.route("/<int:bot_id>/logs")
 @login_required
 def bot_logs_api(bot_id: int):
-    """Return log entries newer than ?after=<id> as JSON (for polling)."""
+    """Return up to 50 log entries as JSON.
+
+    Query params:
+      after=<id>   — return entries with id > after (newest polling, forward scroll)
+      before=<id>  — return entries with id < before ordered desc (history / load-more)
+
+    When both are absent, returns the 50 most-recent entries (desc).
+    """
     bot = Bot.query.filter_by(id=bot_id, user_id=current_user.id).first_or_404()
-    after = request.args.get("after", 0, type=int)
-    entries = (
-        BotLog.query
-        .filter(BotLog.bot_id == bot.id, BotLog.id > after)
-        .order_by(BotLog.id.asc())
-        .limit(50)
-        .all()
-    )
+    after  = request.args.get("after",  type=int)
+    before = request.args.get("before", type=int)
+
+    q = BotLog.query.filter(BotLog.bot_id == bot.id)
+
+    if after is not None:
+        entries = (
+            q.filter(BotLog.id > after)
+            .order_by(BotLog.id.asc())
+            .limit(50)
+            .all()
+        )
+    elif before is not None:
+        entries = (
+            q.filter(BotLog.id < before)
+            .order_by(BotLog.id.desc())
+            .limit(50)
+            .all()
+        )[::-1]  # return in chronological order
+    else:
+        entries = (
+            q.order_by(BotLog.id.desc())
+            .limit(50)
+            .all()
+        )[::-1]
+
     return jsonify([{
         "id":      e.id,
         "level":   e.level,
@@ -487,10 +512,14 @@ def bot_logs_api(bot_id: int):
 
 @bots_bp.route("/<int:bot_id>/logs/stream")
 @login_required
+@limiter.limit("20 per hour")  # W2: prevent SSE flood
 def bot_logs_stream(bot_id: int):
     """
     Server-Sent Events (SSE) endpoint — streams new log entries in real time.
-    Connect with EventSource('/bots/<id>/logs/stream') in the browser.
+
+    Primary path : Redis Pub/Sub → zero DB polling, thread-safe with gthread.
+    Fallback path: DB polling in a bounded loop (≤ 120 s) when Redis is down.
+    Connection closes after MAX_SSE_SECONDS; EventSource reconnects automatically.
     """
     import json
     import time
@@ -498,9 +527,32 @@ def bot_logs_stream(bot_id: int):
 
     bot = Bot.query.filter_by(id=bot_id, user_id=current_user.id).first_or_404()
 
-    def generate(bid: int):
+    MAX_SSE_SECONDS = 300   # 5-minute max; EventSource will reconnect
+
+    def generate_redis(bid: int, r):
+        """Yield SSE events via Redis Pub/Sub."""
+        pubsub = r.pubsub()
+        pubsub.subscribe(f"bot:{bid}:logs")
+        end_time = time.monotonic() + MAX_SSE_SECONDS
+        try:
+            while time.monotonic() < end_time:
+                # get_message with timeout avoids blocking the thread indefinitely
+                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
+                if msg and msg["type"] == "message":
+                    data = msg["data"]
+                    yield f"data: {data.decode() if isinstance(data, bytes) else data}\n\n"
+        finally:
+            try:
+                pubsub.unsubscribe()
+                pubsub.close()
+            except Exception:
+                pass
+
+    def generate_db_fallback(bid: int):
+        """Yield SSE events by polling the DB (bounded to 120 s)."""
         last_id = 0
-        while True:
+        end_time = time.monotonic() + 120
+        while time.monotonic() < end_time:
             logs = (
                 BotLog.query
                 .filter(BotLog.bot_id == bid, BotLog.id > last_id)
@@ -515,8 +567,18 @@ def bot_logs_stream(bot_id: int):
                 )
             time.sleep(2)
 
+    from app.extensions import get_redis
+    r = get_redis()
+    try:
+        if r is not None:
+            generator = generate_redis(bot.id, r)
+        else:
+            generator = generate_db_fallback(bot.id)
+    except Exception:
+        generator = generate_db_fallback(bot.id)
+
     return Response(
-        stream_with_context(generate(bot.id)),
+        stream_with_context(generator),
         mimetype="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
