@@ -107,6 +107,12 @@ class Config:
     # Example: https://botteu-collector.onrender.com
     COLLECTOR_BASE_URL: str = os.environ.get("COLLECTOR_BASE_URL", "").rstrip("/")
 
+    # ── Inline collector (runs as background thread inside the web process) ─
+    # Comma-separated Binance pairs to stream.  Empty = collector disabled.
+    COLLECTOR_SYMBOLS: str = os.environ.get("COLLECTOR_SYMBOLS", "")
+    # Max candle rows kept per symbol CSV (~5.4 days of 1m data at 7770).
+    COLLECTOR_ROLL_WINDOW: int = int(os.environ.get("COLLECTOR_ROLL_WINDOW", "7770"))
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

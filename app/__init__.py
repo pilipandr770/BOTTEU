@@ -138,6 +138,61 @@ def create_app(config_name: str | None = None) -> Flask:
         t = threading.Thread(target=_loop, daemon=True, name="bot-tick")
         t.start()
 
+    # ── Inline Binance Collector Thread ────────────────────────────────────
+    # Streams 1m klines → CSVs → all timeframes, running inside this process.
+    # Enabled when COLLECTOR_SYMBOLS is set (non-empty).
+    _collector_thread_started = threading.Event()
+
+    @app.before_request
+    def _ensure_collector_thread():
+        if _collector_thread_started.is_set():
+            return
+        symbols_cfg = app.config.get("COLLECTOR_SYMBOLS", "").strip()
+        if not symbols_cfg:
+            return
+        _collector_thread_started.set()  # prevent double-start
+
+        symbols = [s.strip().upper() for s in symbols_cfg.split(",") if s.strip()]
+        data_dir = app.config.get("DATA_DIR", os.path.join(os.path.dirname(__file__), "..", "data"))
+        roll_window = int(app.config.get("COLLECTOR_ROLL_WINDOW", 7770))
+
+        def _run_collector():
+            import sys as _sys
+            import asyncio as _asyncio
+
+            # Add collector/ directory to sys.path so `import collector` works.
+            collector_dir = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "collector")
+            )
+            if collector_dir not in _sys.path:
+                _sys.path.insert(0, collector_dir)
+
+            os.makedirs(data_dir, exist_ok=True)
+
+            # Set env vars before the module is imported (module reads them at import time).
+            os.environ["DATA_DIR"] = data_dir
+            os.environ["SYMBOLS"] = ",".join(symbols)
+            os.environ["ROLL_WINDOW"] = str(roll_window)
+            os.environ["HTTP_PORT"] = "0"   # no HTTP server in embedded mode
+
+            try:
+                import collector as _col
+                # Override any already-resolved module-level constants.
+                _col.DATA_DIR = data_dir
+                _col.SYMBOLS = symbols
+                _col.ROLL_WINDOW = roll_window
+                _col.HTTP_PORT = 0
+                app.logger.info(
+                    "Collector thread starting: symbols=%s data_dir=%s",
+                    symbols, data_dir,
+                )
+                _asyncio.run(_col.main())
+            except Exception:
+                app.logger.exception("Collector thread crashed — will not restart automatically")
+
+        t_col = threading.Thread(target=_run_collector, daemon=True, name="botteu-collector")
+        t_col.start()
+
     # ── Telegram webhook auto-registration (production only) ─────────────────
     _tg_webhook = app.config.get("TELEGRAM_WEBHOOK_URL", "")
     _tg_token   = app.config.get("TELEGRAM_BOT_TOKEN", "")
