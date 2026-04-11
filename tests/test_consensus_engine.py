@@ -116,3 +116,64 @@ class TestBuildWeightMatrix:
         custom_ind = {"rsi": 5.0}
         matrix = build_weight_matrix(["1h"], ["rsi"], custom_tf, custom_ind)
         assert matrix[("1h", "rsi")] == pytest.approx(50.0)  # 10 × 5
+
+
+class TestComputeVolatilityModifier:
+    """
+    compute_volatility_modifier(atr_pct) uses:
+        modifier = 0.7 + 0.3 * log1p(atr_pct / ATR_NEUTRAL_PCT)
+    clamped to [0.5, 1.5].  ATR_NEUTRAL_PCT = 1.5.
+    """
+
+    def test_neutral_atr_returns_value_in_range(self):
+        """ATR = 1.5% (neutral) → ~0.908 (within valid [0.5, 1.5] range)."""
+        from app.algorithms.consensus.engine import compute_volatility_modifier
+        result = compute_volatility_modifier(1.5)
+        assert 0.5 < result < 1.5
+        assert result == pytest.approx(0.908, abs=0.01)
+
+    def test_high_atr_amplifies(self):
+        """ATR = 3.0% → modifier > modifier for 1.5% (amplified signals)."""
+        from app.algorithms.consensus.engine import compute_volatility_modifier
+        neutral = compute_volatility_modifier(1.5)
+        high    = compute_volatility_modifier(3.0)
+        assert high > neutral
+
+    def test_low_atr_dampens(self):
+        """ATR = 0.3% → modifier < modifier for 1.5% (dampened signals)."""
+        from app.algorithms.consensus.engine import compute_volatility_modifier
+        neutral = compute_volatility_modifier(1.5)
+        low     = compute_volatility_modifier(0.3)
+        assert low < neutral
+
+    def test_zero_atr_returns_minimum(self):
+        """ATR ≤ 0 → hardcoded 0.7 (floor before logarithm branch)."""
+        from app.algorithms.consensus.engine import compute_volatility_modifier
+        assert compute_volatility_modifier(0.0)  == pytest.approx(0.7)
+        assert compute_volatility_modifier(-1.0) == pytest.approx(0.7)
+
+    def test_very_high_atr_clamped_to_max(self):
+        """Extreme ATR (100%) must not exceed the upper clamp of 1.5."""
+        from app.algorithms.consensus.engine import compute_volatility_modifier
+        assert compute_volatility_modifier(100.0) <= 1.5
+
+    def test_very_low_atr_clamped_to_min(self):
+        """Near-zero ATR must not fall below the lower clamp of 0.5."""
+        from app.algorithms.consensus.engine import compute_volatility_modifier
+        assert compute_volatility_modifier(0.001) >= 0.5
+
+    def test_high_atr_absolute_value(self):
+        """ATR = 3.0% → ~1.030 (cross-check with formula)."""
+        import math
+        from app.algorithms.consensus.engine import compute_volatility_modifier, ATR_NEUTRAL_PCT
+        expected = 0.7 + 0.3 * math.log1p(3.0 / ATR_NEUTRAL_PCT)
+        expected = max(0.5, min(1.5, expected))
+        assert compute_volatility_modifier(3.0) == pytest.approx(expected, abs=1e-9)
+
+    def test_low_atr_absolute_value(self):
+        """ATR = 0.3% → ~0.755 (cross-check with formula)."""
+        import math
+        from app.algorithms.consensus.engine import compute_volatility_modifier, ATR_NEUTRAL_PCT
+        expected = 0.7 + 0.3 * math.log1p(0.3 / ATR_NEUTRAL_PCT)
+        expected = max(0.5, min(1.5, expected))
+        assert compute_volatility_modifier(0.3) == pytest.approx(expected, abs=1e-9)

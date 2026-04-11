@@ -31,17 +31,21 @@ from app.ml.trainer import (
 )
 
 __all__ = [
-    # ensemble
+    # Submodules
+    "ensemble",
+    "trainer",
+    "features",
+    # ensemble symbols
     "MLEnsemble",
     "MODEL_TAGS",
     "CLASSES",
-    # features
+    # features symbols
     "extract_features",
     "extract_labels",
     "get_tf_label_params",
     "FEATURE_NAMES",
     "N_FEATURES",
-    # trainer
+    # trainer symbols
     "get_ensemble",
     "get_ml_votes",
     "make_key",
