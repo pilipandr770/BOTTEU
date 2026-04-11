@@ -44,3 +44,9 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID_PRO
         sync: false
+      - key: ML_MODELS_DIR
+        value: /opt/render/ml_models
+    disk:
+      name: ml-models
+      mountPath: /opt/render/ml_models
+      sizeGB: 1

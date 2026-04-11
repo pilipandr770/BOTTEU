@@ -155,10 +155,13 @@ class ConsensusStrategy(BaseStrategy):
                 state["ml_votes"] = 0
 
         # ── Volatility modifier ──
-        vol_modifier = None
+        # Always compute a modifier; fall back to mid-volatility (1.5%) when
+        # no valid ATR data was collected (e.g. first tick, empty TFs).
         if atr_count > 0:
             avg_atr_pct /= atr_count
-            vol_modifier = compute_volatility_modifier(avg_atr_pct)
+        else:
+            avg_atr_pct = 1.5  # default mid-volatility fallback
+        vol_modifier = compute_volatility_modifier(avg_atr_pct)
 
         # ── Consensus ──
         result = compute_consensus(

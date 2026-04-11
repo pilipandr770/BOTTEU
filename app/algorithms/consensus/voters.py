@@ -90,27 +90,27 @@ def _supertrend(df: pd.DataFrame, atr_period: int = 10, multiplier: float = 3.0)
     final_lower = lower_band.copy()
 
     for i in range(1, len(df)):
-        if not np.isnan(final_lower.iloc[i - 1]):
-            if lower_band.iloc[i] > final_lower.iloc[i - 1]:
-                final_lower.iloc[i] = lower_band.iloc[i]
+        if not np.isnan(final_lower.iat[i - 1]):
+            if lower_band.iat[i] > final_lower.iat[i - 1]:
+                final_lower.iat[i] = lower_band.iat[i]
             else:
-                final_lower.iloc[i] = final_lower.iloc[i - 1]
-        if not np.isnan(final_upper.iloc[i - 1]):
-            if upper_band.iloc[i] < final_upper.iloc[i - 1]:
-                final_upper.iloc[i] = upper_band.iloc[i]
+                final_lower.iat[i] = final_lower.iat[i - 1]
+        if not np.isnan(final_upper.iat[i - 1]):
+            if upper_band.iat[i] < final_upper.iat[i - 1]:
+                final_upper.iat[i] = upper_band.iat[i]
             else:
-                final_upper.iloc[i] = final_upper.iloc[i - 1]
+                final_upper.iat[i] = final_upper.iat[i - 1]
 
-        if direction.iloc[i - 1] == 1:
-            if df["close"].iloc[i] < final_lower.iloc[i]:
-                direction.iloc[i] = -1
+        if direction.iat[i - 1] == 1:
+            if df["close"].iat[i] < final_lower.iat[i]:
+                direction.iat[i] = -1
             else:
-                direction.iloc[i] = 1
+                direction.iat[i] = 1
         else:
-            if df["close"].iloc[i] > final_upper.iloc[i]:
-                direction.iloc[i] = 1
+            if df["close"].iat[i] > final_upper.iat[i]:
+                direction.iat[i] = 1
             else:
-                direction.iloc[i] = -1
+                direction.iat[i] = -1
 
     return direction
 

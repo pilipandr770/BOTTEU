@@ -120,6 +120,42 @@ def status(bot_id: int):
     })
 
 
+@ml_bp.route("/status")
+@login_required
+def model_status():
+    """
+    Return detailed health info for a specific ML ensemble key.
+
+    Query params:
+        symbol    — e.g. BTCUSDT  (default: BTCUSDT)
+        timeframe — e.g. 1h       (default: 1h)
+    """
+    symbol    = request.args.get("symbol", "BTCUSDT").strip().upper()
+    timeframe = request.args.get("timeframe", "1h").strip()
+
+    from app.ml.trainer import get_ensemble, make_key, ML_MODELS_DIR
+
+    key = make_key(symbol, timeframe)
+    ens = get_ensemble(key)
+
+    pkl_path = os.path.join(ML_MODELS_DIR, f"{key}_ensemble.pkl")
+    file_exists = os.path.isfile(pkl_path)
+    file_size_kb = round(os.path.getsize(pkl_path) / 1024, 1) if file_exists else 0
+
+    return jsonify({
+        "symbol":          symbol,
+        "timeframe":       timeframe,
+        "key":             key,
+        "is_warm":         ens.is_warm,
+        "is_trained":      ens.is_trained,
+        "n_seen":          ens.n_seen,
+        "models_trained":  ens.models_trained,
+        "train_stats":     ens.train_stats,
+        "model_file_exists":   file_exists,
+        "model_file_size_kb":  file_size_kb,
+    })
+
+
 # ── Internal helper ───────────────────────────────────────────────────────
 
 def _train_from_binance(

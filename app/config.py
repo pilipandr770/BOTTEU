@@ -10,6 +10,10 @@ if sys.platform != "win32":
     os.environ.pop("CURL_CA_BUNDLE", None)
     os.environ.pop("REQUESTS_CA_BUNDLE", None)
 
+# ── Project-level base directory ───────────────────────────────────────────
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 class Config:
     # Core
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
@@ -88,6 +92,13 @@ class Config:
     REMEMBER_COOKIE_SECURE = False      # Overridden to True in ProductionConfig
     REMEMBER_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = 86400  # 24 h in seconds
+
+    # ── Filesystem paths (can be overridden per deploy via env vars) ──────
+    DATA_DIR = os.environ.get("DATA_DIR", os.path.join(_BASE_DIR, "data"))
+    ML_MODELS_DIR = os.environ.get(
+        "ML_MODELS_DIR",
+        os.path.join(_BASE_DIR, "instance", "ml_models"),
+    )
 
 
 class DevelopmentConfig(Config):

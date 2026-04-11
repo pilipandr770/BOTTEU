@@ -484,3 +484,43 @@ def bot_logs_api(bot_id: int):
         "time":    e.created_at.strftime("%d.%m %H:%M:%S"),
     } for e in entries])
 
+
+@bots_bp.route("/<int:bot_id>/logs/stream")
+@login_required
+def bot_logs_stream(bot_id: int):
+    """
+    Server-Sent Events (SSE) endpoint — streams new log entries in real time.
+    Connect with EventSource('/bots/<id>/logs/stream') in the browser.
+    """
+    import json
+    import time
+    from flask import Response, stream_with_context
+
+    bot = Bot.query.filter_by(id=bot_id, user_id=current_user.id).first_or_404()
+
+    def generate(bid: int):
+        last_id = 0
+        while True:
+            logs = (
+                BotLog.query
+                .filter(BotLog.bot_id == bid, BotLog.id > last_id)
+                .order_by(BotLog.id.asc())
+                .limit(20)
+                .all()
+            )
+            for log in logs:
+                last_id = log.id
+                yield (
+                    f"data: {json.dumps({'id': log.id, 'level': log.level, 'message': log.message, 'ts': log.created_at.isoformat()})}\n\n"
+                )
+            time.sleep(2)
+
+    return Response(
+        stream_with_context(generate(bot.id)),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # disable Nginx buffering for SSE
+        },
+    )
+

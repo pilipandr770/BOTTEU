@@ -280,3 +280,135 @@ def run():
         "stats": stats,
         "equity_curve": equity_curve[-200:],
     })
+
+
+@backtest_bp.route("/walkforward", methods=["POST"])
+@login_required
+@csrf.exempt
+@limiter.limit("10 per hour")
+def walkforward():
+    """
+    Walk-forward cross-validation backtest using the ML ensemble.
+
+    Accepts JSON:
+        symbol    — e.g. "BTCUSDT"
+        timeframe — e.g. "1h"
+        n_splits  — number of TimeSeriesSplit folds (default: 5)
+
+    Returns per-fold accuracy, PnL, and Sharpe ratio estimate.
+    """
+    from sklearn.model_selection import TimeSeriesSplit
+
+    from app.ml.features import extract_features, extract_labels, get_tf_label_params
+    from app.ml.ensemble import MLEnsemble
+    from app.ml.trainer import ML_MODELS_DIR
+
+    data = request.get_json(silent=True) or {}
+    symbol    = data.get("symbol", "BTCUSDT").strip().upper()
+    timeframe = data.get("timeframe", "1h").strip()
+    n_splits  = max(2, min(int(data.get("n_splits", 5)), 10))
+
+    # ── Locate collector CSV ──────────────────────────────────────────────
+    import os as _os
+    data_dir = _os.environ.get(
+        "DATA_DIR",
+        _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))), "data"),
+    )
+    csv_path = _os.path.join(data_dir, f"{symbol.lower()}_{timeframe}_clean.csv")
+
+    if not _os.path.exists(csv_path):
+        return jsonify({"error": f"Collector CSV not found: {csv_path}. Run the collector first."}), 404
+
+    try:
+        df = pd.read_csv(csv_path, parse_dates=["timestamp"])
+    except Exception as exc:
+        return jsonify({"error": f"CSV read error: {exc}"}), 500
+
+    if len(df) < 200:
+        return jsonify({"error": f"Not enough rows ({len(df)}) in CSV for walk-forward (need ≥ 200)."}), 400
+
+    threshold_pct, forward_n = get_tf_label_params(timeframe)
+
+    try:
+        X_full = extract_features(df)
+        y_full = extract_labels(df, forward_n=forward_n, threshold_pct=threshold_pct)
+        X_full = X_full[:-forward_n]
+        y_full = y_full[:-forward_n]
+        finite_mask = np.isfinite(X_full).all(axis=1)
+        X_full = X_full[finite_mask]
+        y_full = y_full[finite_mask]
+    except Exception as exc:
+        return jsonify({"error": f"Feature extraction failed: {exc}"}), 500
+
+    if len(X_full) < n_splits * 20:
+        return jsonify({"error": f"Not enough clean samples ({len(X_full)}) for {n_splits} folds."}), 400
+
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    fold_results = []
+
+    for fold_idx, (train_idx, test_idx) in enumerate(tscv.split(X_full)):
+        X_train, X_test = X_full[train_idx], X_full[test_idx]
+        y_train, y_test = y_full[train_idx], y_full[test_idx]
+
+        if len(X_train) < 30 or len(X_test) < 5:
+            continue
+
+        ens = MLEnsemble(store_dir=ML_MODELS_DIR, key=f"_wf_{symbol.lower()}_{timeframe}_fold{fold_idx}")
+        try:
+            train_stats = ens.fit(X_train, y_train)
+        except Exception as exc:
+            fold_results.append({"fold": fold_idx + 1, "error": str(exc)})
+            continue
+
+        # ── Evaluate on test set ──
+        correct = 0
+        pnl_returns: list[float] = []
+        for j in range(len(X_test)):
+            majority, _, _ = ens.predict_one(X_test[j])
+            actual = int(y_test[j])
+            if majority == actual:
+                correct += 1
+            # PnL simulation: +1 label → assume +threshold_pct return, -1 → negative
+            if majority != 0:
+                ret = float(majority) * threshold_pct
+                pnl_returns.append(ret)
+
+        accuracy = correct / len(X_test) if X_test.size > 0 else 0.0
+        total_pnl = sum(pnl_returns)
+
+        arr = np.array(pnl_returns)
+        sharpe = 0.0
+        if len(arr) >= 2:
+            std = float(np.std(arr, ddof=1))
+            sharpe = float(np.mean(arr) / std) if std > 0 else 0.0
+
+        fold_results.append({
+            "fold":           fold_idx + 1,
+            "train_samples":  len(X_train),
+            "test_samples":   len(X_test),
+            "accuracy":       round(accuracy, 4),
+            "total_pnl_pct":  round(total_pnl, 4),
+            "sharpe":         round(sharpe, 4),
+            "label_dist":     train_stats.get("label_dist", {}),
+        })
+
+    if not fold_results:
+        return jsonify({"error": "No valid folds produced."}), 500
+
+    valid = [f for f in fold_results if "error" not in f]
+    avg_acc    = round(float(np.mean([f["accuracy"]    for f in valid])), 4) if valid else 0.0
+    avg_pnl    = round(float(np.mean([f["total_pnl_pct"] for f in valid])), 4) if valid else 0.0
+    avg_sharpe = round(float(np.mean([f["sharpe"]      for f in valid])), 4) if valid else 0.0
+
+    return jsonify({
+        "symbol":         symbol,
+        "timeframe":      timeframe,
+        "n_splits":       n_splits,
+        "total_samples":  len(X_full),
+        "folds":          fold_results,
+        "summary": {
+            "avg_accuracy":    avg_acc,
+            "avg_total_pnl_pct": avg_pnl,
+            "avg_sharpe":      avg_sharpe,
+        },
+    })

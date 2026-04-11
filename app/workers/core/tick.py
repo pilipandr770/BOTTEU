@@ -192,6 +192,26 @@ def tick_bot(bot_id: int) -> None:
         _tg      = TelegramAccount.query.filter_by(user_id=bot.user_id, is_verified=True).first()
         _chat_id = _tg.chat_id if _tg else None
 
+        # ── BUG 5: Trailing stop — converts HOLD → SELL when price drops ──
+        if signal == "HOLD" and state_current.get("has_position"):
+            trailing_pct = bot.params.get("trailing_stop_pct")
+            if trailing_pct:
+                max_price = state_current.get("max_price", float(current_price))
+                new_price = float(current_price)
+                max_price = max(max_price, new_price)
+                new_state["max_price"] = max_price
+                trail_trigger = max_price * (1 - float(trailing_pct) / 100)
+                if new_price <= trail_trigger:
+                    signal = "SELL"
+                    new_state["exit_reason"] = "TRAILING_STOP"
+                    new_state["has_position"] = False
+                    db.session.add(BotLog(bot_id=bot.id, level="SELL",
+                        message=(
+                            f"🔻 Trailing stop triggered: price {new_price:.6f} "
+                            f"≤ trail trigger {trail_trigger:.6f} "
+                            f"(max {max_price:.6f}, -{float(trailing_pct):.2f}%)"
+                        )))
+
         # ── Risk Manager gate before BUY ──────────────────────────────────
         if signal == "BUY" and not state_current.get("has_position"):
             try:
@@ -225,48 +245,69 @@ def tick_bot(bot_id: int) -> None:
                     notify_buy(_chat_id, bot.symbol, float(current_price),
                                float(exec_qty), f"🧪 {bot.name} [DEMO]")
             else:
-                use_limit = bot.params.get("order_type", "smart") != "market"
-                resp      = place_smart_order(
-                    client, bot.symbol, "BUY",
-                    quote_amount=quote_amount, use_limit=use_limit,
-                )
-                exec_qty  = Decimal(resp.get("executedQty", "0"))
-                exec_price = (
-                    Decimal(resp.get("cummulativeQuoteQty", "0")) / exec_qty
-                    if exec_qty else Decimal("0")
-                )
-                db.session.add(Order(
-                    bot_id=bot.id,
-                    binance_order_id=str(resp.get("orderId")),
-                    symbol=bot.symbol, side=OrderSide.BUY,
-                    price=exec_price, qty=exec_qty,
-                    quote_qty=Decimal(resp.get("cummulativeQuoteQty", "0")),
-                    is_simulated=False,
-                ))
-                if _chat_id:
-                    notify_buy(_chat_id, bot.symbol, float(exec_price), float(exec_qty), bot.name)
-
-                # P1: Place exchange SL/OCO so position is protected even if server dies
-                sl_pct_p = bot.params.get("stop_loss_pct")
-                tp_pct_p = bot.params.get("take_profit_pct")
-                if sl_pct_p and exec_price and exec_qty:
-                    sl_price = exec_price * (1 - Decimal(str(sl_pct_p)) / 100)
-                    try:
-                        if tp_pct_p:
-                            tp_price = exec_price * (1 + Decimal(str(tp_pct_p)) / 100)
-                            oco_r = place_oco_sell_order(client, bot.symbol, exec_qty, sl_price, tp_price)
-                            new_state["oco_order_list_id"] = str(oco_r.get("orderListId", ""))
-                            db.session.add(BotLog(bot_id=bot.id, level="INFO",
-                                message=f"🛡 OCO placed: SL {float(sl_price):.6f} / TP {float(tp_price):.6f}"))
-                        else:
-                            sl_r = place_stop_loss_order(client, bot.symbol, exec_qty, sl_price)
-                            new_state["sl_order_id"] = str(sl_r.get("orderId", ""))
-                            db.session.add(BotLog(bot_id=bot.id, level="INFO",
-                                message=f"🛡 Stop-loss order placed at {float(sl_price):.6f}"))
-                    except Exception as _e:
-                        logger.warning("Exchange SL/OCO failed for bot %d: %s", bot.id, _e)
+                # ── FEATURE 3: Crypto.com cross-check before real BUY ─────
+                try:
+                    from app.services.cryptodotcom_client import price_deviation_pct
+                    deviation = price_deviation_pct(float(current_price), bot.symbol)
+                    if deviation is not None and deviation > 1.5:
+                        logger.warning(
+                            "Bot %d: Crypto.com price deviation %.2f%% > 1.5%% for %s "
+                            "— skipping BUY (possible stale/bad data)",
+                            bot.id, deviation, bot.symbol,
+                        )
                         db.session.add(BotLog(bot_id=bot.id, level="WARN",
-                            message=f"⚠️ Exchange SL/TP skipped: {_e}"))
+                            message=(
+                                f"⚠️ BUY skipped: Crypto.com price deviation {deviation:.2f}% "
+                                f"> 1.5% for {bot.symbol} (possible data issue)"
+                            )))
+                        signal = "HOLD"
+                        new_state["has_position"] = False
+                except Exception as _cdc_exc:
+                    logger.debug("Crypto.com cross-check failed: %s", _cdc_exc)
+
+                if signal == "BUY":  # only if cross-check didn't block
+                    use_limit = bot.params.get("order_type", "smart") != "market"
+                    resp      = place_smart_order(
+                        client, bot.symbol, "BUY",
+                        quote_amount=quote_amount, use_limit=use_limit,
+                    )
+                    exec_qty  = Decimal(resp.get("executedQty", "0"))
+                    exec_price = (
+                        Decimal(resp.get("cummulativeQuoteQty", "0")) / exec_qty
+                        if exec_qty else Decimal("0")
+                    )
+                    db.session.add(Order(
+                        bot_id=bot.id,
+                        binance_order_id=str(resp.get("orderId")),
+                        symbol=bot.symbol, side=OrderSide.BUY,
+                        price=exec_price, qty=exec_qty,
+                        quote_qty=Decimal(resp.get("cummulativeQuoteQty", "0")),
+                        is_simulated=False,
+                    ))
+                    if _chat_id:
+                        notify_buy(_chat_id, bot.symbol, float(exec_price), float(exec_qty), bot.name)
+
+                    # P1: Place exchange SL/OCO so position is protected even if server dies
+                    sl_pct_p = bot.params.get("stop_loss_pct")
+                    tp_pct_p = bot.params.get("take_profit_pct")
+                    if sl_pct_p and exec_price and exec_qty:
+                        sl_price = exec_price * (1 - Decimal(str(sl_pct_p)) / 100)
+                        try:
+                            if tp_pct_p:
+                                tp_price = exec_price * (1 + Decimal(str(tp_pct_p)) / 100)
+                                oco_r = place_oco_sell_order(client, bot.symbol, exec_qty, sl_price, tp_price)
+                                new_state["oco_order_list_id"] = str(oco_r.get("orderListId", ""))
+                                db.session.add(BotLog(bot_id=bot.id, level="INFO",
+                                    message=f"🛡 OCO placed: SL {float(sl_price):.6f} / TP {float(tp_price):.6f}"))
+                            else:
+                                sl_r = place_stop_loss_order(client, bot.symbol, exec_qty, sl_price)
+                                new_state["sl_order_id"] = str(sl_r.get("orderId", ""))
+                                db.session.add(BotLog(bot_id=bot.id, level="INFO",
+                                    message=f"🛡 Stop-loss order placed at {float(sl_price):.6f}"))
+                        except Exception as _e:
+                            logger.warning("Exchange SL/OCO failed for bot %d: %s", bot.id, _e)
+                            db.session.add(BotLog(bot_id=bot.id, level="WARN",
+                                message=f"⚠️ Exchange SL/TP skipped: {_e}"))
 
         # ── SELL ──────────────────────────────────────────────────────────
         elif signal == "SELL" and state_current.get("has_position"):
@@ -371,6 +412,19 @@ def tick_bot(bot_id: int) -> None:
                     if _chat_id:
                         notify_sell(_chat_id, bot.symbol, float(exec_price), float(exec_qty),
                                     bot.name, exit_reason_str, pnl_pct)
+
+        # ── BUG 4: Drawdown enforcement after SELL ────────────────────────
+        if signal == "SELL" and state_current.get("has_position"):
+            try:
+                from app.services.risk_manager import check_before_buy, emergency_stop
+                from app.models.risk_config import RiskConfig
+                rc = RiskConfig.query.filter_by(user_id=bot.user_id).first()
+                if rc and rc.enabled and rc.max_drawdown_pct:
+                    allowed, reason = check_before_buy(bot.user_id, bot.id)
+                    if not allowed and "drawdown" in reason.lower():
+                        emergency_stop(bot.user_id, reason)
+            except Exception:
+                pass
 
         bot.state = new_state
         db.session.commit()

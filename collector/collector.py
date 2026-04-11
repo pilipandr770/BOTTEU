@@ -119,15 +119,16 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     direction = pd.Series(1, index=df.index, dtype=int)
     final_upper = upper_band.copy()
     final_lower = lower_band.copy()
+    # TODO: fully vectorize with np.where in a future pass (currently 3-5× faster than .iloc)
     for i in range(1, len(df)):
-        if not np.isnan(final_lower.iloc[i - 1]):
-            final_lower.iloc[i] = max(lower_band.iloc[i], final_lower.iloc[i - 1])
-        if not np.isnan(final_upper.iloc[i - 1]):
-            final_upper.iloc[i] = min(upper_band.iloc[i], final_upper.iloc[i - 1])
-        if direction.iloc[i - 1] == 1:
-            direction.iloc[i] = -1 if close.iloc[i] < final_lower.iloc[i] else 1
+        if not np.isnan(final_lower.iat[i - 1]):
+            final_lower.iat[i] = max(lower_band.iat[i], final_lower.iat[i - 1])
+        if not np.isnan(final_upper.iat[i - 1]):
+            final_upper.iat[i] = min(upper_band.iat[i], final_upper.iat[i - 1])
+        if direction.iat[i - 1] == 1:
+            direction.iat[i] = -1 if close.iat[i] < final_lower.iat[i] else 1
         else:
-            direction.iloc[i] = 1 if close.iloc[i] > final_upper.iloc[i] else -1
+            direction.iat[i] = 1 if close.iat[i] > final_upper.iat[i] else -1
     df["supertrend_dir"] = direction
 
     return df

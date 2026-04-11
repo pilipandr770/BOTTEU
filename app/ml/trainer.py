@@ -36,7 +36,7 @@ def make_key(symbol: str, timeframe: str) -> str:
     return f"{symbol.strip().lower()}_{timeframe}"
 
 
-def get_ensemble(key: str):
+def get_ensemble(key: str) -> "MLEnsemble":
     """Return a MLEnsemble instance, loading from disk if available."""
     from app.ml.ensemble import MLEnsemble
     e = MLEnsemble(store_dir=ML_MODELS_DIR, key=key)
@@ -112,10 +112,10 @@ def train_from_csv(
 
 def get_ml_votes(
     symbol: str,
-    mtf_data: dict,
+    mtf_data: dict[str, "pd.DataFrame"],
     primary_tf: str,
     ml_weight: float = 3.0,
-) -> list:
+) -> "list[Vote]":
     """
     Load ensemble for (symbol, primary_tf), predict on latest candle,
     return a list of Vote objects (one per model that gave a non-neutral signal).
@@ -168,7 +168,7 @@ def get_ml_votes(
 def streaming_update(
     symbol: str,
     primary_tf: str,
-    mtf_data: dict,
+    mtf_data: dict[str, pd.DataFrame],
     lookback: int = 60,
 ) -> dict:
     """
