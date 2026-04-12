@@ -170,123 +170,127 @@ def clean_data(df: pd.DataFrame, min_rolling: int = 30, min_rows: int = 50) -> p
 # ── Atomic CSV write ───────────────────────────────────────────────────────
 
 def _atomic_write_csv(df: pd.DataFrame, filepath: str) -> None:
-    """Write *df* to *filepath* atomically via a tmp file + os.replace().
-
-    Ensures the HTTP server never serves a partial/corrupt CSV even if the
-    writer is preempted mid-write.
-    """
+    """Write DataFrame to CSV atomically using tmp → os.replace."""
     tmp = filepath + ".tmp"
-    df.to_csv(tmp, index=False)
-    os.replace(tmp, filepath)
+    try:
+        df.to_csv(tmp, index=False)
+        os.replace(tmp, filepath)
+    except Exception:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
 
 
 # ── River online-learning model ─────────────────────────────────────────────
 
-_RIVER_FEATURES = ["rsi", "macd", "bb_z", "atr", "supertrend_dir"]
-
 
 class RiverMLModel:
-    """Per-symbol online classifier that learns from every incoming candle.
-
-    Uses a Hoeffding Tree with ADWIN drift detector.  The target label is
-    the sign of the *next* close-to-close return: +1 (up) or -1 (down/flat).
-
-    The model and its metrics are persisted to ``<data_dir>/river_<symbol>.pkl``
-    so they survive collector restarts.
     """
+    Online ML using River HoeffdingTreeClassifier + ADWIN drift detection.
+    Trains on each closed 1m candle. Saves signal as JSON to signals_river/.
+    signal: 1=BUY, -1=SELL, 0=HOLD
+    """
+    FEATURE_COLS = ["rsi", "macd_histogram", "bb_z", "supertrend_dir", "atr", "obv"]
 
-    def __init__(self, symbol: str, data_dir: str) -> None:
-        self.symbol = symbol.upper()
-        self._pkl_path = os.path.join(data_dir, f"river_{symbol.lower()}.pkl")
-        self._state: dict = self._load()
+    def __init__(self, symbol: str, data_dir: str):
+        self.symbol = symbol
+        self.signals_dir = os.path.join(data_dir, "signals_river")
+        os.makedirs(self.signals_dir, exist_ok=True)
 
-    # ── Persistence ────────────────────────────────────────────────────────
-
-    def _load(self) -> dict:
-        import pickle
-        if os.path.exists(self._pkl_path):
-            try:
-                with open(self._pkl_path, "rb") as fh:
-                    state = pickle.load(fh)
-                logger.info("[River][%s] Loaded model (%d samples)", self.symbol, state.get("n", 0))
-                return state
-            except Exception as exc:
-                logger.warning("[River][%s] Could not load model: %s — starting fresh", self.symbol, exc)
-        return self._new_state()
-
-    def _new_state(self) -> dict:
         if not RIVER_AVAILABLE:
-            return {}
-        return {
-            "model": preprocessing.StandardScaler() | tree.HoeffdingAdaptiveTreeClassifier(),
-            "drift": drift.ADWIN(),
-            "metric": metrics.Accuracy(),
-            "n": 0,
-            "prev_close": None,
-        }
+            self.model = None
+            return
 
-    def _save(self) -> None:
-        import pickle
+        self.scaler  = preprocessing.StandardScaler()
+        self.model   = tree.HoeffdingTreeClassifier(
+            grace_period=50, delta=1e-5, tau=0.05, leaf_prediction="nba",
+        )
+        self.drift   = drift.ADWIN(delta=0.002)
+        self.metric  = metrics.Accuracy()
+        self.n_seen  = 0
+        self.last_signal = 0
+
+    def _extract_features(self, row: pd.Series) -> dict:
+        feats = {}
+        for col in self.FEATURE_COLS:
+            val = row.get(col, 0.0)
+            feats[col] = float(val) if pd.notna(val) else 0.0
+        return feats
+
+    def _make_label(self, current_close: float, prev_close: float) -> int:
+        if prev_close <= 0:
+            return 0
+        change_pct = (current_close - prev_close) / prev_close * 100
+        if change_pct >= 0.2:
+            return 1
+        if change_pct <= -0.2:
+            return -1
+        return 0
+
+    def update(self, df: pd.DataFrame) -> int:
+        if self.model is None or len(df) < 3:
+            return 0
         try:
-            tmp = self._pkl_path + ".tmp"
-            with open(tmp, "wb") as fh:
-                pickle.dump(self._state, fh)
-            os.replace(tmp, self._pkl_path)
+            row        = df.iloc[-1]
+            prev_close = float(df.iloc[-2]["close"])
+            curr_close = float(row["close"])
+
+            x        = self._extract_features(row)
+            x_scaled = self.scaler.learn_one(x).transform_one(x)
+
+            signal = self.model.predict_one(x_scaled) if self.n_seen >= 50 else 0
+            if signal is None:
+                signal = 0
+
+            if len(df) >= 3:
+                prev_row     = df.iloc[-2]
+                prev_x       = self._extract_features(prev_row)
+                prev_x_sc    = self.scaler.transform_one(prev_x)
+                label        = self._make_label(curr_close, prev_close)
+                self.model.learn_one(prev_x_sc, label)
+                self.metric.update(label, self.model.predict_one(prev_x_sc) or 0)
+
+            self.drift.update(float(curr_close))
+            if self.drift.drift_detected:
+                logger.info("[%s] ADWIN drift detected — resetting River model", self.symbol)
+                self.model  = tree.HoeffdingTreeClassifier(
+                    grace_period=50, delta=1e-5, tau=0.05, leaf_prediction="nba",
+                )
+                self.n_seen = 0
+
+            self.n_seen     += 1
+            self.last_signal = int(signal)
+            self._save_signal(signal, row)
+            return int(signal)
+
         except Exception as exc:
-            logger.warning("[River][%s] Could not save model: %s", self.symbol, exc)
+            logger.warning("[%s] River update error: %s", self.symbol, exc)
+            return 0
 
-    # ── Update ──────────────────────────────────────────────────────────────
-
-    def update(self, df: pd.DataFrame) -> int | None:
-        """Learn from the latest row and return a signal: +1 (up), -1 (down), or None."""
-        if not RIVER_AVAILABLE or df.empty:
-            return None
-
-        row = df.iloc[-1]
-        missing = [c for c in _RIVER_FEATURES if c not in df.columns]
-        if missing:
-            return None
-
-        x = {c: float(row[c]) for c in _RIVER_FEATURES if not pd.isna(row[c])}
-        if len(x) < len(_RIVER_FEATURES):
-            return None
-
-        state = self._state
-        prev_close = state.get("prev_close")
-        cur_close = float(row["close"])
-
-        # Label the *previous* sample with the actual outcome now that we know it
-        if prev_close is not None and "pending_x" in state:
-            y = 1 if cur_close > prev_close else -1
-            state["model"].learn_one(state["pending_x"], y)
-            y_pred = state["model"].predict_one(state["pending_x"])
-            if y_pred is not None:
-                state["metric"].update(y, y_pred)
-            # ADWIN drift detection on error signal (1 = error, 0 = correct)
-            error = int(y_pred != y) if y_pred is not None else 0
-            state["drift"].update(error)
-            if state["drift"].drift_detected:
-                logger.info("[River][%s] Drift detected — resetting model", self.symbol)
-                new = self._new_state()
-                new["n"] = state["n"]
-                state.update(new)
-
-        state["pending_x"] = x
-        state["prev_close"] = cur_close
-        state["n"] = state.get("n", 0) + 1
-
-        # Predict next candle direction
-        signal = state["model"].predict_one(x)
-
-        if state["n"] % 100 == 0:
-            acc = state["metric"].get() * 100
-            logger.info(
-                "[River][%s] n=%d  accuracy=%.1f%%  signal=%s",
-                self.symbol, state["n"], acc, signal,
-            )
-            self._save()
-
-        return signal
+    def _save_signal(self, signal: int, row: pd.Series) -> None:
+        import json
+        accuracy = None
+        if self.n_seen >= 50:
+            try:
+                accuracy = round(self.metric.get(), 4)
+            except Exception:
+                pass
+        data = {
+            "model":     "river_hoeffding",
+            "symbol":    self.symbol,
+            "tf":        "1m",
+            "signal":    int(signal),
+            "accuracy":  accuracy,
+            "n_seen":    self.n_seen,
+            "timestamp": str(row.get("timestamp", "")),
+        }
+        filepath = os.path.join(self.signals_dir, f"{self.symbol.lower()}_river.json")
+        tmp = filepath + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(data, f)
+        os.replace(tmp, filepath)
 
 
 # ── Aggregation ─────────────────────────────────────────────────────────────
@@ -389,6 +393,13 @@ async def stream_symbol(client: AsyncClient, symbol: str):
                         if not df_clean.empty:
                             _atomic_write_csv(df_clean, filepath)
                             river_signal = river_model.update(df_clean)
+                            if river_signal != 0:
+                                logger.info(
+                                    "🤖 [%s] River signal: %s (n_seen=%d)",
+                                    symbol,
+                                    "BUY" if river_signal == 1 else "SELL",
+                                    river_model.n_seen,
+                                )
                             logger.info(
                                 "✅ [%s] %d rows. close=%.2f time=%s signal=%s",
                                 symbol, len(df_clean), row["close"], row["timestamp"], river_signal,
@@ -466,16 +477,30 @@ class _CSVHandler(http.server.SimpleHTTPRequestHandler):
             return
         if self.path in ("/status", "/status/"):
             import json as _json
-            import time as _time
-            csv_files = [
-                f for f in os.listdir(DATA_DIR)
-                if f.endswith(".csv") and not f.endswith(".tmp")
-            ]
+            symbols_info = {}
+            for sym in SYMBOLS:
+                fp = _filepath_1m(sym)
+                symbols_info[sym] = {
+                    "exists":        os.path.exists(fp),
+                    "size_kb":       round(os.path.getsize(fp) / 1024, 1) if os.path.exists(fp) else 0,
+                    "last_modified": os.path.getmtime(fp) if os.path.exists(fp) else None,
+                }
+                # River signal info
+                river_fp = os.path.join(DATA_DIR, "signals_river", f"{sym.lower()}_river.json")
+                if os.path.exists(river_fp):
+                    try:
+                        with open(river_fp) as f:
+                            rd = _json.load(f)
+                        symbols_info[sym]["river_signal"]   = rd.get("signal")
+                        symbols_info[sym]["river_accuracy"] = rd.get("accuracy")
+                        symbols_info[sym]["river_n_seen"]   = rd.get("n_seen", 0)
+                    except Exception:
+                        pass
             body = _json.dumps({
-                "status": "ok",
-                "symbols": SYMBOLS,
-                "csv_files": len(csv_files),
-                "ts": int(_time.time()),
+                "status":      "ok",
+                "symbols":     symbols_info,
+                "data_dir":    DATA_DIR,
+                "roll_window": ROLL_WINDOW,
             }).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")

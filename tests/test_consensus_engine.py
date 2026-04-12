@@ -182,7 +182,7 @@ class TestComputeVolatilityModifier:
 class TestRiverVoteIntegration:
     """Test River signal → Vote conversion logic (no collector needed)."""
 
-    def _river_vote(self, signal: int, accuracy=None, n_seen: int = 100):
+    def _make_river_vote(self, signal: int, accuracy=None, n_seen: int = 100):
         """Simulate what consensus_strategy.py does with a River signal dict."""
         from app.algorithms.consensus.engine import Vote
 
@@ -204,39 +204,39 @@ class TestRiverVoteIntegration:
             confidence=confidence,
         )
 
-    def test_river_buy_signal_added_to_votes(self):
+    def test_river_buy_vote_counts_correctly(self):
         from app.algorithms.consensus.engine import compute_consensus
-        vote = self._river_vote(signal=1, accuracy=0.65, n_seen=200)
+        vote = self._make_river_vote(signal=1, accuracy=0.65, n_seen=200)
         assert vote is not None
         assert vote.signal == 1.0
         result = compute_consensus([vote])
         assert result.buy_votes == 1
 
-    def test_river_sell_signal_added_to_votes(self):
+    def test_river_sell_vote_counts_correctly(self):
         from app.algorithms.consensus.engine import compute_consensus
-        vote = self._river_vote(signal=-1, accuracy=0.60, n_seen=150)
+        vote = self._make_river_vote(signal=-1, accuracy=0.60, n_seen=150)
         assert vote is not None
         assert vote.signal == -1.0
         result = compute_consensus([vote])
         assert result.sell_votes == 1
 
-    def test_river_hold_signal_returns_none(self):
-        vote = self._river_vote(signal=0)
+    def test_river_hold_returns_none(self):
+        vote = self._make_river_vote(signal=0)
         assert vote is None  # HOLD votes are skipped — correct
 
-    def test_confidence_scales_with_accuracy(self):
-        vote_low  = self._river_vote(signal=1, accuracy=0.51, n_seen=100)
-        vote_high = self._river_vote(signal=1, accuracy=0.75, n_seen=100)
+    def test_high_accuracy_gives_higher_confidence(self):
+        vote_low  = self._make_river_vote(signal=1, accuracy=0.51, n_seen=100)
+        vote_high = self._make_river_vote(signal=1, accuracy=0.75, n_seen=100)
         assert vote_high.confidence > vote_low.confidence
 
-    def test_warmup_uses_low_confidence(self):
-        vote = self._river_vote(signal=1, accuracy=None, n_seen=10)
+    def test_warmup_phase_gives_half_confidence(self):
+        vote = self._make_river_vote(signal=1, accuracy=None, n_seen=10)
         assert vote.confidence == 0.5  # warming up
 
-    def test_river_weight_lower_than_sgd_ensemble(self):
+    def test_river_weight_less_than_sgd_ensemble(self):
         """River (2.5) should contribute less than full SGD ensemble (3.0×3=9.0)."""
         from app.algorithms.consensus.engine import compute_consensus, Vote
-        river_vote = self._river_vote(signal=1, accuracy=0.7, n_seen=500)
+        river_vote = self._make_river_vote(signal=1, accuracy=0.7, n_seen=500)
         sgd_votes = [
             Vote(voter=f"ml_sgd_{i}", timeframe="1h",
                  signal=1.0, weight=3.0, raw_value=1.0, confidence=0.67)
@@ -251,17 +251,34 @@ class TestRiverVoteIntegration:
         sgd_contrib   = sum(v.signal * v.weight * v.confidence for v in sgd_votes)
         assert abs(river_contrib) < abs(sgd_contrib)
 
-    def test_conflicting_river_and_indicators_reduce_score(self):
+    def test_river_sell_reduces_bullish_score(self):
         """River SELL against technical BUY votes should reduce final score."""
         from app.algorithms.consensus.engine import compute_consensus, Vote
         tech_votes = [
             Vote(voter="ma_cross",   timeframe="1h", signal=1.0, weight=8.0,  raw_value=1.0),
             Vote(voter="supertrend", timeframe="1h", signal=1.0, weight=10.0, raw_value=1.0),
         ]
-        river_sell = self._river_vote(signal=-1, accuracy=0.65, n_seen=300)
+        river_sell = self._make_river_vote(signal=-1, accuracy=0.65, n_seen=300)
 
         result_without_river = compute_consensus(tech_votes)
         result_with_river    = compute_consensus(tech_votes + [river_sell])
 
         # Adding a SELL vote must reduce the score
         assert result_with_river.normalized_score < result_without_river.normalized_score
+
+    def test_river_buy_raises_score_when_technicals_bullish(self):
+        """River BUY on top of technical BUY votes should increase raw_score."""
+        from app.algorithms.consensus.engine import compute_consensus, Vote
+        tech_votes = [
+            Vote(voter="ma_cross",   timeframe="1h", signal=1.0, weight=8.0,  raw_value=1.0),
+            Vote(voter="supertrend", timeframe="1h", signal=1.0, weight=10.0, raw_value=1.0),
+        ]
+        river_buy = self._make_river_vote(signal=1, accuracy=0.68, n_seen=200)
+
+        result_without_river = compute_consensus(tech_votes)
+        result_with_river    = compute_consensus(tech_votes + [river_buy])
+
+        # raw_score increases because both votes agree
+        assert result_with_river.raw_score > result_without_river.raw_score
+        # buy vote count goes from 2 to 3
+        assert result_with_river.buy_votes == result_without_river.buy_votes + 1
