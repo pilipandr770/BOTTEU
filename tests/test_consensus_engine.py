@@ -177,3 +177,91 @@ class TestComputeVolatilityModifier:
         expected = 0.7 + 0.3 * math.log1p(0.3 / ATR_NEUTRAL_PCT)
         expected = max(0.5, min(1.5, expected))
         assert compute_volatility_modifier(0.3) == pytest.approx(expected, abs=1e-9)
+
+
+class TestRiverVoteIntegration:
+    """Test River signal → Vote conversion logic (no collector needed)."""
+
+    def _river_vote(self, signal: int, accuracy=None, n_seen: int = 100):
+        """Simulate what consensus_strategy.py does with a River signal dict."""
+        from app.algorithms.consensus.engine import Vote
+
+        if signal == 0:
+            return None  # HOLD signals are skipped
+
+        signal_float = float(signal)
+        if accuracy is not None and n_seen >= 50:
+            confidence = max(0.3, min(1.0, float(accuracy) * 1.5))
+        else:
+            confidence = 0.5
+
+        return Vote(
+            voter="river_hoeffding",
+            timeframe="1m",
+            signal=signal_float,
+            weight=2.5,
+            raw_value=signal_float,
+            confidence=confidence,
+        )
+
+    def test_river_buy_signal_added_to_votes(self):
+        from app.algorithms.consensus.engine import compute_consensus
+        vote = self._river_vote(signal=1, accuracy=0.65, n_seen=200)
+        assert vote is not None
+        assert vote.signal == 1.0
+        result = compute_consensus([vote])
+        assert result.buy_votes == 1
+
+    def test_river_sell_signal_added_to_votes(self):
+        from app.algorithms.consensus.engine import compute_consensus
+        vote = self._river_vote(signal=-1, accuracy=0.60, n_seen=150)
+        assert vote is not None
+        assert vote.signal == -1.0
+        result = compute_consensus([vote])
+        assert result.sell_votes == 1
+
+    def test_river_hold_signal_returns_none(self):
+        vote = self._river_vote(signal=0)
+        assert vote is None  # HOLD votes are skipped — correct
+
+    def test_confidence_scales_with_accuracy(self):
+        vote_low  = self._river_vote(signal=1, accuracy=0.51, n_seen=100)
+        vote_high = self._river_vote(signal=1, accuracy=0.75, n_seen=100)
+        assert vote_high.confidence > vote_low.confidence
+
+    def test_warmup_uses_low_confidence(self):
+        vote = self._river_vote(signal=1, accuracy=None, n_seen=10)
+        assert vote.confidence == 0.5  # warming up
+
+    def test_river_weight_lower_than_sgd_ensemble(self):
+        """River (2.5) should contribute less than full SGD ensemble (3.0×3=9.0)."""
+        from app.algorithms.consensus.engine import compute_consensus, Vote
+        river_vote = self._river_vote(signal=1, accuracy=0.7, n_seen=500)
+        sgd_votes = [
+            Vote(voter=f"ml_sgd_{i}", timeframe="1h",
+                 signal=1.0, weight=3.0, raw_value=1.0, confidence=0.67)
+            for i in range(3)
+        ]
+        all_votes = [river_vote] + sgd_votes
+        result = compute_consensus(all_votes)
+        # River + SGD all BUY → strong BUY signal
+        assert result.decision == "BUY"
+        # River alone should not dominate (contribution < SGD total)
+        river_contrib = river_vote.signal * river_vote.weight * river_vote.confidence
+        sgd_contrib   = sum(v.signal * v.weight * v.confidence for v in sgd_votes)
+        assert abs(river_contrib) < abs(sgd_contrib)
+
+    def test_conflicting_river_and_indicators_reduce_score(self):
+        """River SELL against technical BUY votes should reduce final score."""
+        from app.algorithms.consensus.engine import compute_consensus, Vote
+        tech_votes = [
+            Vote(voter="ma_cross",   timeframe="1h", signal=1.0, weight=8.0,  raw_value=1.0),
+            Vote(voter="supertrend", timeframe="1h", signal=1.0, weight=10.0, raw_value=1.0),
+        ]
+        river_sell = self._river_vote(signal=-1, accuracy=0.65, n_seen=300)
+
+        result_without_river = compute_consensus(tech_votes)
+        result_with_river    = compute_consensus(tech_votes + [river_sell])
+
+        # Adding a SELL vote must reduce the score
+        assert result_with_river.normalized_score < result_without_river.normalized_score

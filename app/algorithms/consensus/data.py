@@ -179,26 +179,70 @@ def load_collector_signals(data_dir: str | None = None) -> list[dict]:
     """
     Load ML model signals from the collector's signals/ directories.
     Returns list of {"model": str, "tf": str, "signal": int, "timestamp": str}.
+
+    Two sources tried in order:
+    1. Local filesystem (Docker Compose / dev) — reads signal JSON files directly.
+    2. HTTP fallback (Render) — fetches known signal filenames from the collector
+       HTTP service when the local directory does not exist.
     """
     import json
-    base_dir = data_dir or COLLECTOR_DATA_DIR
     signals = []
+    base_dir = data_dir or COLLECTOR_DATA_DIR
 
     for subdir in ("signals", "signals_river"):
+        # ── Local filesystem (Docker Compose) ──
         signals_dir = os.path.join(base_dir, subdir)
-        if not os.path.isdir(signals_dir):
-            continue
-        for filename in os.listdir(signals_dir):
-            if not filename.endswith(".json"):
-                continue
-            filepath = os.path.join(signals_dir, filename)
-            try:
-                with open(filepath, "r") as f:
-                    data = json.load(f)
-                if isinstance(data, dict) and "signal" in data:
-                    signals.append(data)
-            except Exception as exc:
-                logger.debug("Could not load signal file %s: %s", filename, exc)
+        if os.path.isdir(signals_dir):
+            for filename in os.listdir(signals_dir):
+                if not filename.endswith(".json"):
+                    continue
+                filepath = os.path.join(signals_dir, filename)
+                try:
+                    with open(filepath, "r") as f:
+                        data = json.load(f)
+                    if isinstance(data, dict) and "signal" in data:
+                        signals.append(data)
+                except Exception as exc:
+                    logger.debug("Could not load signal file %s: %s", filename, exc)
+        else:
+            # ── HTTP fallback (Render deployment) ──
+            # Try to fetch known signal filenames from collector HTTP service.
+            # We don't know all symbols, so we try symbols from env.
+            _symbols_env = os.environ.get(
+                "COLLECTOR_SYMBOLS",
+                os.environ.get("SYMBOLS", "BTCUSDT")
+            )
+            _symbols = [s.strip().upper() for s in _symbols_env.split(",") if s.strip()]
+
+            for sym in _symbols:
+                # River signal filename pattern: {symbol_lower}_river.json
+                filename = f"{sym.lower()}_river.json"
+                base_url = COLLECTOR_BASE_URL
+                if not base_url:
+                    try:
+                        from flask import current_app
+                        base_url = current_app.config.get("COLLECTOR_BASE_URL", "").rstrip("/")
+                    except RuntimeError:
+                        pass
+                if not base_url:
+                    continue
+
+                url = f"{base_url}/{subdir}/{filename}"
+                try:
+                    import requests as _req
+                    _token = os.environ.get("COLLECTOR_API_TOKEN", "")
+                    _headers = {"Authorization": f"Bearer {_token}"} if _token else {}
+                    resp = _req.get(url, timeout=5, headers=_headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if isinstance(data, dict) and "signal" in data:
+                            signals.append(data)
+                            logger.debug(
+                                "Fetched River signal via HTTP: %s signal=%s acc=%s",
+                                sym, data.get("signal"), data.get("accuracy")
+                            )
+                except Exception as exc:
+                    logger.debug("River signal HTTP fetch failed %s: %s", sym, exc)
 
     return signals
 

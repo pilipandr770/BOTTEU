@@ -62,6 +62,10 @@ services:
       # random value in the Render dashboard (sync: false).
       - key: COLLECTOR_API_TOKEN
         sync: false
+      # URL of the collector HTTP service when deployed separately (optional).
+      # Leave empty when the collector runs inline in the same process.
+      - key: COLLECTOR_BASE_URL
+        sync: false
     disk:
       name: app-data
       mountPath: /opt/render/data

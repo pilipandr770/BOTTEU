@@ -436,6 +436,15 @@ def detail(bot_id: int):
         .all()
     )
 
+    # Extract River ML state for dashboard display
+    bot_state = bot.state or {}
+    river_info = {
+        "river_signal":     bot_state.get("river_signal"),
+        "river_accuracy":   bot_state.get("river_accuracy"),
+        "river_n_seen":     bot_state.get("river_n_seen", 0),
+        "river_confidence": bot_state.get("river_confidence"),
+    }
+
     return render_template(
         "bots/detail.html",
         bot=bot,
@@ -450,6 +459,7 @@ def detail(bot_id: int):
         demo_total_pnl=demo_total_pnl,
         demo_win_rate=demo_win_rate,
         demo_avg_pnl=demo_avg_pnl,
+        river_info=river_info,
     )
 
 

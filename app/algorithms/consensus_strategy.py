@@ -19,6 +19,7 @@ Parameters (user-configurable):
     indicator_weights:       {"ma_cross": 2.0, "rsi": 1.5, ...}
     use_collector:           false  (use collector CSVs)
     use_ml_signals:          false  (include ML model votes)
+    river_weight:            2.5  (weight of River Hoeffding signal in consensus)
 """
 from __future__ import annotations
 
@@ -153,6 +154,66 @@ class ConsensusStrategy(BaseStrategy):
             except Exception as exc:
                 logger.warning("ML ensemble failed: %s", exc)
                 state["ml_votes"] = 0
+
+        # ── River ML votes (streaming Hoeffding Tree from collector) ──
+        # River runs in the collector process and writes signals as JSON.
+        # We read them here and convert to Vote objects.
+        # Weight: configurable via params["river_weight"], default 2.5
+        # Confidence: uses River model accuracy if available, else 0.5
+        # Only added when use_ml_signals=True (same gate as SGD ensemble)
+        if use_ml_signals:
+            try:
+                from app.algorithms.consensus.data import load_collector_signals
+
+                river_weight = float(params.get("river_weight") or _c.get("river_weight", 2.5))
+                symbol = state.get("symbol") or params.get("symbol", "BTCUSDT")
+
+                raw_signals = load_collector_signals()
+                for sig in raw_signals:
+                    # Only use signals for this bot's symbol
+                    if sig.get("symbol", "").upper() != symbol.upper():
+                        continue
+                    if sig.get("model", "") != "river_hoeffding":
+                        continue
+
+                    signal_int = int(sig.get("signal", 0))
+                    if signal_int == 0:
+                        # HOLD vote from River — skip (neutral votes dilute score)
+                        continue
+
+                    signal_float = float(signal_int)  # 1.0 or -1.0
+
+                    # Confidence: use River accuracy if warm (n_seen >= 50), else 0.5
+                    accuracy = sig.get("accuracy")
+                    if accuracy is not None and sig.get("n_seen", 0) >= 50:
+                        # Accuracy is in [0,1]. We shift to confidence range:
+                        # accuracy=0.5 (random) → confidence=0.5
+                        # accuracy=0.7 (good)   → confidence=0.9
+                        # Formula: confidence = accuracy * 1.5, clamped [0.3, 1.0]
+                        confidence = max(0.3, min(1.0, float(accuracy) * 1.5))
+                    else:
+                        confidence = 0.5  # warming up — lower confidence
+
+                    tf = sig.get("tf", "1m")
+                    river_vote = Vote(
+                        voter=f"river_{sig.get('model', 'hoeffding')}",
+                        timeframe=tf,
+                        signal=signal_float,
+                        weight=river_weight,
+                        raw_value=signal_float,
+                        confidence=confidence,
+                    )
+                    all_votes.append(river_vote)
+
+                    # Track in state for dashboard display
+                    state["river_signal"] = signal_int
+                    state["river_accuracy"] = accuracy
+                    state["river_n_seen"] = sig.get("n_seen", 0)
+                    state["river_confidence"] = confidence
+
+            except Exception as exc:
+                logger.debug("River ML vote skipped: %s", exc)
+                state["river_signal"] = None
 
         # ── Volatility modifier ──
         # Always compute a modifier; fall back to mid-volatility (1.5%) when

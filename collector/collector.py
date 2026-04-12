@@ -483,11 +483,20 @@ class _CSVHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
-        # Block directory listing — only serve .csv and .json files
+        # Allow .csv and .json files, including from signals/ and signals_river/ subdirs
         import pathlib
         p = pathlib.PurePosixPath(self.path.split("?")[0])
-        if p.suffix not in (".csv", ".json") and p.name not in ("", "."):
-            self.send_error(403, "Only CSV and JSON files are served")
+        allowed_dirs = {"", ".", "signals", "signals_river"}
+        parts = [part for part in str(p).strip("/").split("/") if part]
+        if len(parts) > 2:
+            self.send_error(403, "Path depth not allowed")
+            return
+        if p.suffix not in (".csv", ".json"):
+            if p.name not in ("", "."):
+                self.send_error(403, "Only CSV and JSON files are served")
+                return
+        if len(parts) == 2 and parts[0] not in allowed_dirs:
+            self.send_error(403, "Directory not allowed")
             return
         super().do_GET()
 
