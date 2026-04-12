@@ -138,3 +138,46 @@ class TestCleanData:
         existing = [c for c in IND_COLS if c in cleaned.columns]
         nan_counts = cleaned[existing].isna().sum()
         assert nan_counts.sum() == 0, f"NaN found after clean_data:\n{nan_counts[nan_counts > 0]}"
+
+
+# ── _CSVHandler authentication ────────────────────────────────────────────────
+
+class TestCSVHandlerAuth:
+    """Tests for the Bearer token auth logic in _CSVHandler._is_authorized()."""
+
+    def test_no_token_configured_always_authorized(self):
+        """When COLLECTOR_API_TOKEN is empty every request is authorized."""
+        import collector as _col
+        orig = _col.COLLECTOR_API_TOKEN
+        _col.COLLECTOR_API_TOKEN = ""
+        try:
+            handler = object.__new__(_col._CSVHandler)
+            handler.headers = {}
+            assert _col._CSVHandler._is_authorized(handler) is True
+        finally:
+            _col.COLLECTOR_API_TOKEN = orig
+
+    def test_correct_bearer_token_authorized(self):
+        """A request with the correct Bearer token is authorized."""
+        import collector as _col
+        orig = _col.COLLECTOR_API_TOKEN
+        _col.COLLECTOR_API_TOKEN = "s3cr3t"
+        try:
+            handler = object.__new__(_col._CSVHandler)
+            handler.headers = {"Authorization": "Bearer s3cr3t"}
+            assert _col._CSVHandler._is_authorized(handler) is True
+        finally:
+            _col.COLLECTOR_API_TOKEN = orig
+
+    def test_wrong_bearer_token_rejected(self):
+        """A request with an incorrect Bearer token is rejected."""
+        import collector as _col
+        orig = _col.COLLECTOR_API_TOKEN
+        _col.COLLECTOR_API_TOKEN = "s3cr3t"
+        try:
+            handler = object.__new__(_col._CSVHandler)
+            handler.headers = {"Authorization": "Bearer wrong-token"}
+            assert _col._CSVHandler._is_authorized(handler) is False
+        finally:
+            _col.COLLECTOR_API_TOKEN = orig
+

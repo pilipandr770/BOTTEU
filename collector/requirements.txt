@@ -3,3 +3,4 @@ numpy
 python-binance
 websockets
 tqdm
+river>=0.21.0

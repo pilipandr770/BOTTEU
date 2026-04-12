@@ -7,6 +7,7 @@ Usage:
 """
 import asyncio
 import logging
+import signal
 import threading
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,22 @@ def start_polling(flask_app) -> None:
                 # aren't silently discarded — the bot will process them on startup
                 await application.updater.start_polling(drop_pending_updates=False)
                 logger.info("Telegram polling active — awaiting updates …")
+
+                # Graceful shutdown on SIGTERM / SIGINT
+                loop = asyncio.get_running_loop()
+
+                def _shutdown_handler():
+                    logger.info("Telegram polling shutting down…")
+                    asyncio.create_task(application.updater.stop())
+                    asyncio.create_task(application.stop())
+
+                for sig in (signal.SIGTERM, signal.SIGINT):
+                    try:
+                        loop.add_signal_handler(sig, _shutdown_handler)
+                    except (NotImplementedError, OSError):
+                        # Windows does not support loop.add_signal_handler
+                        pass
+
                 await asyncio.Event().wait()  # block until daemon thread is killed
 
         try:

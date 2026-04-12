@@ -58,38 +58,47 @@ async def _send_status(reply_fn, chat_id: int) -> None:
 
 async def _send_balance(reply_fn, chat_id: int) -> None:
     from app.models.telegram_account import TelegramAccount
-    from app.services.binance_client import get_client_for_user
-    from binance.exceptions import BinanceAPIException
+    from app.models.order import Order
+    from app.extensions import db
+    from sqlalchemy import func
 
     tg = TelegramAccount.query.filter_by(chat_id=chat_id, is_verified=True).first()
     if not tg:
         await reply_fn("⚠️ Account not linked.")
         return
 
-    try:
-        client = get_client_for_user(tg.user_id)
-        account = client.get_account()
-        balances = [
-            b for b in account["balances"]
-            if float(b["free"]) > 0 or float(b["locked"]) > 0
-        ]
-        if not balances:
-            await reply_fn("Your Spot wallet is empty.", reply_markup=_main_menu())
-            return
+    user_id = tg.user_id
 
-        lines = ["💰 <b>Spot Balance</b>\n"]
-        for b in balances[:15]:
-            lines.append(
-                f"<code>{b['asset']:<8}</code> "
-                f"Free: {float(b['free']):.6f}  "
-                f"Locked: {float(b['locked']):.6f}"
-            )
-        await reply_fn("\n".join(lines), parse_mode="HTML", reply_markup=_main_menu())
+    total_pnl = db.session.query(func.sum(Order.pnl_usdt)).filter_by(
+        user_id=user_id
+    ).scalar() or 0.0
 
-    except BinanceAPIException as exc:
-        await reply_fn(f"❌ Binance error: {exc.message}", reply_markup=_main_menu())
-    except Exception as exc:
-        await reply_fn(f"❌ Error: {exc}", reply_markup=_main_menu())
+    total_invested = db.session.query(func.sum(Order.quote_qty)).filter_by(
+        user_id=user_id
+    ).scalar() or 0.0
+
+    total_orders = db.session.query(func.count(Order.id)).filter_by(
+        user_id=user_id
+    ).scalar() or 0
+
+    winning_orders = db.session.query(func.count(Order.id)).filter(
+        Order.user_id == user_id,
+        Order.pnl_usdt > 0,
+    ).scalar() or 0
+
+    win_rate = (winning_orders / total_orders * 100) if total_orders > 0 else 0.0
+    pnl_pct = (total_pnl / total_invested * 100) if total_invested > 0 else 0.0
+    pnl_icon = "🟢" if total_pnl >= 0 else "🔴"
+
+    lines = [
+        "💼 <b>Portfolio Summary</b>\n",
+        f"Total invested: <code>{total_invested:,.2f} USDT</code>",
+        f"Realised PnL:   {pnl_icon} <code>{total_pnl:+,.2f} USDT ({pnl_pct:+.2f}%)</code>",
+        f"Total trades:   <code>{total_orders}</code>",
+        f"Win rate:       <code>{win_rate:.1f}%</code>",
+        "\n<i>PnL is calculated from filled orders recorded by BOTTEU.</i>",
+    ]
+    await reply_fn("\n".join(lines), parse_mode="HTML", reply_markup=_main_menu())
 
 
 # ── PTB error handler ─────────────────────────────────────────────────────────

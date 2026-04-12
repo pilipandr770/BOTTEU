@@ -58,6 +58,10 @@ services:
         value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT
       - key: COLLECTOR_ROLL_WINDOW
         value: "7770"          # ~5.4 days of 1m data per symbol
+      # Bearer token protecting the collector HTTP file server. Set a strong
+      # random value in the Render dashboard (sync: false).
+      - key: COLLECTOR_API_TOKEN
+        sync: false
     disk:
       name: app-data
       mountPath: /opt/render/data

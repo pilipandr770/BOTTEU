@@ -26,11 +26,21 @@ import numpy as np
 from binance import AsyncClient, BinanceSocketManager
 from datetime import datetime, timezone
 
+# ── Optional River online-learning dependency ───────────────────────────────
+try:
+    from river import tree, drift, metrics, preprocessing
+    RIVER_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    RIVER_AVAILABLE = False
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+if not RIVER_AVAILABLE:  # warn once after logger is configured
+    logger.warning("river not installed — online ML disabled (pip install river)")
 
 # ── Configuration ───────────────────────────────────────────────────────────
 
@@ -42,6 +52,7 @@ ROLL_WINDOW = int(os.environ.get("ROLL_WINDOW", "7770"))
 MAX_RECONNECTS = int(os.environ.get("MAX_RECONNECTS", "20"))
 # Render sets $PORT for web services; HTTP_PORT allows explicit override; 0 = disabled
 HTTP_PORT = int(os.environ.get("PORT", os.environ.get("HTTP_PORT", "8080")))
+COLLECTOR_API_TOKEN: str = os.environ.get("COLLECTOR_API_TOKEN", "")
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -156,6 +167,128 @@ def clean_data(df: pd.DataFrame, min_rolling: int = 30, min_rows: int = 50) -> p
     return df_clean
 
 
+# ── Atomic CSV write ───────────────────────────────────────────────────────
+
+def _atomic_write_csv(df: pd.DataFrame, filepath: str) -> None:
+    """Write *df* to *filepath* atomically via a tmp file + os.replace().
+
+    Ensures the HTTP server never serves a partial/corrupt CSV even if the
+    writer is preempted mid-write.
+    """
+    tmp = filepath + ".tmp"
+    df.to_csv(tmp, index=False)
+    os.replace(tmp, filepath)
+
+
+# ── River online-learning model ─────────────────────────────────────────────
+
+_RIVER_FEATURES = ["rsi", "macd", "bb_z", "atr", "supertrend_dir"]
+
+
+class RiverMLModel:
+    """Per-symbol online classifier that learns from every incoming candle.
+
+    Uses a Hoeffding Tree with ADWIN drift detector.  The target label is
+    the sign of the *next* close-to-close return: +1 (up) or -1 (down/flat).
+
+    The model and its metrics are persisted to ``<data_dir>/river_<symbol>.pkl``
+    so they survive collector restarts.
+    """
+
+    def __init__(self, symbol: str, data_dir: str) -> None:
+        self.symbol = symbol.upper()
+        self._pkl_path = os.path.join(data_dir, f"river_{symbol.lower()}.pkl")
+        self._state: dict = self._load()
+
+    # ── Persistence ────────────────────────────────────────────────────────
+
+    def _load(self) -> dict:
+        import pickle
+        if os.path.exists(self._pkl_path):
+            try:
+                with open(self._pkl_path, "rb") as fh:
+                    state = pickle.load(fh)
+                logger.info("[River][%s] Loaded model (%d samples)", self.symbol, state.get("n", 0))
+                return state
+            except Exception as exc:
+                logger.warning("[River][%s] Could not load model: %s — starting fresh", self.symbol, exc)
+        return self._new_state()
+
+    def _new_state(self) -> dict:
+        if not RIVER_AVAILABLE:
+            return {}
+        return {
+            "model": preprocessing.StandardScaler() | tree.HoeffdingAdaptiveTreeClassifier(),
+            "drift": drift.ADWIN(),
+            "metric": metrics.Accuracy(),
+            "n": 0,
+            "prev_close": None,
+        }
+
+    def _save(self) -> None:
+        import pickle
+        try:
+            tmp = self._pkl_path + ".tmp"
+            with open(tmp, "wb") as fh:
+                pickle.dump(self._state, fh)
+            os.replace(tmp, self._pkl_path)
+        except Exception as exc:
+            logger.warning("[River][%s] Could not save model: %s", self.symbol, exc)
+
+    # ── Update ──────────────────────────────────────────────────────────────
+
+    def update(self, df: pd.DataFrame) -> int | None:
+        """Learn from the latest row and return a signal: +1 (up), -1 (down), or None."""
+        if not RIVER_AVAILABLE or df.empty:
+            return None
+
+        row = df.iloc[-1]
+        missing = [c for c in _RIVER_FEATURES if c not in df.columns]
+        if missing:
+            return None
+
+        x = {c: float(row[c]) for c in _RIVER_FEATURES if not pd.isna(row[c])}
+        if len(x) < len(_RIVER_FEATURES):
+            return None
+
+        state = self._state
+        prev_close = state.get("prev_close")
+        cur_close = float(row["close"])
+
+        # Label the *previous* sample with the actual outcome now that we know it
+        if prev_close is not None and "pending_x" in state:
+            y = 1 if cur_close > prev_close else -1
+            state["model"].learn_one(state["pending_x"], y)
+            y_pred = state["model"].predict_one(state["pending_x"])
+            if y_pred is not None:
+                state["metric"].update(y, y_pred)
+            # ADWIN drift detection on error signal (1 = error, 0 = correct)
+            error = int(y_pred != y) if y_pred is not None else 0
+            state["drift"].update(error)
+            if state["drift"].drift_detected:
+                logger.info("[River][%s] Drift detected — resetting model", self.symbol)
+                new = self._new_state()
+                new["n"] = state["n"]
+                state.update(new)
+
+        state["pending_x"] = x
+        state["prev_close"] = cur_close
+        state["n"] = state.get("n", 0) + 1
+
+        # Predict next candle direction
+        signal = state["model"].predict_one(x)
+
+        if state["n"] % 100 == 0:
+            acc = state["metric"].get() * 100
+            logger.info(
+                "[River][%s] n=%d  accuracy=%.1f%%  signal=%s",
+                self.symbol, state["n"], acc, signal,
+            )
+            self._save()
+
+        return signal
+
+
 # ── Aggregation ─────────────────────────────────────────────────────────────
 
 def aggregate_and_save(df_1m: pd.DataFrame, freq: str, filename: str) -> None:
@@ -172,7 +305,7 @@ def aggregate_and_save(df_1m: pd.DataFrame, freq: str, filename: str) -> None:
     if len(agg) > ROLL_WINDOW:
         agg = agg.iloc[-ROLL_WINDOW:].reset_index(drop=True)
     if not agg.empty:
-        agg.to_csv(filename, index=False)
+        _atomic_write_csv(agg, filename)
 
 
 # ── Per-symbol file paths ───────────────────────────────────────────────────
@@ -206,6 +339,9 @@ async def stream_symbol(client: AsyncClient, symbol: str):
         df = pd.DataFrame(columns=columns)
 
     logger.info("🟢 [%s] Stream started. Existing rows: %d", symbol, len(df))
+
+    # One River online-learning model per symbol (survives reconnects)
+    river_model = RiverMLModel(symbol=symbol, data_dir=DATA_DIR)
 
     reconnect_count = 0
     backoff = 5  # seconds
@@ -251,10 +387,11 @@ async def stream_symbol(client: AsyncClient, symbol: str):
                     if len(df) >= 30:
                         df_clean = clean_data(df, min_rolling=30, min_rows=30)
                         if not df_clean.empty:
-                            df_clean.to_csv(filepath, index=False)
+                            _atomic_write_csv(df_clean, filepath)
+                            river_signal = river_model.update(df_clean)
                             logger.info(
-                                "✅ [%s] %d rows. close=%.2f time=%s",
-                                symbol, len(df_clean), row["close"], row["timestamp"],
+                                "✅ [%s] %d rows. close=%.2f time=%s signal=%s",
+                                symbol, len(df_clean), row["close"], row["timestamp"], river_signal,
                             )
                             for tf_key, rule in AGGREGATES.items():
                                 fname = _filepath_tf(symbol, tf_key)
@@ -296,14 +433,50 @@ async def stream_symbol(client: AsyncClient, symbol: str):
 # ── CSV HTTP File Server ────────────────────────────────────────────────────
 
 class _CSVHandler(http.server.SimpleHTTPRequestHandler):
-    """Serves DATA_DIR over HTTP. Adds /health endpoint for Render health checks."""
+    """Serves DATA_DIR over HTTP. Adds /health and /status endpoints.
+    When COLLECTOR_API_TOKEN is set, all non-health endpoints require a
+    valid ``Authorization: Bearer <token>`` header.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DATA_DIR, **kwargs)
 
+    def _is_authorized(self) -> bool:
+        """Return True if the request carries a valid Bearer token or no token is configured."""
+        if not COLLECTOR_API_TOKEN:
+            return True
+        auth = self.headers.get("Authorization", "")
+        if not auth.startswith("Bearer "):
+            return False
+        return auth[len("Bearer "):] == COLLECTOR_API_TOKEN
+
     def do_GET(self):
+        # /health is always public — Render uses it for health checks.
         if self.path in ("/health", "/health/"):
             body = b'{"status":"ok"}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        # All endpoints beyond /health require auth when a token is configured.
+        if not self._is_authorized():
+            self.send_error(401, "Unauthorized")
+            return
+        if self.path in ("/status", "/status/"):
+            import json as _json
+            import time as _time
+            csv_files = [
+                f for f in os.listdir(DATA_DIR)
+                if f.endswith(".csv") and not f.endswith(".tmp")
+            ]
+            body = _json.dumps({
+                "status": "ok",
+                "symbols": SYMBOLS,
+                "csv_files": len(csv_files),
+                "ts": int(_time.time()),
+            }).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))

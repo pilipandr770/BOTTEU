@@ -66,7 +66,9 @@ def _fetch_collector_csv_http(symbol: str, tf: str) -> "pd.DataFrame | None":
     url = f"{base_url}/{symbol.lower()}_{tf}_clean.csv"
     try:
         import requests as _req
-        resp = _req.get(url, timeout=15)
+        _token = os.environ.get("COLLECTOR_API_TOKEN", "")
+        _headers = {"Authorization": f"Bearer {_token}"} if _token else {}
+        resp = _req.get(url, headers=_headers, timeout=15)
         if resp.status_code == 200:
             from io import StringIO
             df = pd.read_csv(StringIO(resp.text), parse_dates=["timestamp"])
