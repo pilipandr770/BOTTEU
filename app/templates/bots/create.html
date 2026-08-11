@@ -157,7 +157,7 @@
           <div class="col-md-6">
             <div class="module-card enabled p-3" id="card-ma">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('ma')">
+                   onclick="toggleModule('ma', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-ma" name="modules" value="ma_crossover" checked>
                 <label class="form-check-label fw-semibold mb-0" for="mod-ma">
@@ -188,7 +188,7 @@
           <div class="col-md-6">
             <div class="module-card p-3" id="card-rsi">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('rsi')">
+                   onclick="toggleModule('rsi', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-rsi" name="modules" value="rsi">
                 <label class="form-check-label fw-semibold mb-0" for="mod-rsi">
@@ -226,7 +226,7 @@
           <div class="col-12">
             <div class="module-card p-3" id="card-vol">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('vol')">
+                   onclick="toggleModule('vol', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-vol" name="modules" value="volatility">
                 <label class="form-check-label fw-semibold mb-0" for="mod-vol">
@@ -278,7 +278,7 @@
           <div class="col-12">
             <div class="module-card p-3" id="card-adx">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('adx')">
+                   onclick="toggleModule('adx', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-adx" name="modules" value="adx_filter">
                 <label class="form-check-label fw-semibold mb-0" for="mod-adx">
@@ -317,7 +317,7 @@
           <div class="col-md-6">
             <div class="module-card p-3" id="card-macd">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('macd')">
+                   onclick="toggleModule('macd', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-macd" name="modules" value="macd">
                 <label class="form-check-label fw-semibold mb-0" for="mod-macd">
@@ -351,7 +351,7 @@
           <div class="col-md-6">
             <div class="module-card p-3" id="card-supertrend">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('supertrend')">
+                   onclick="toggleModule('supertrend', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-supertrend" name="modules" value="supertrend">
                 <label class="form-check-label fw-semibold mb-0" for="mod-supertrend">
@@ -383,7 +383,7 @@
           <div class="col-12">
             <div class="module-card p-3" id="card-bb">
               <div class="module-header d-flex align-items-center gap-2 mb-2"
-                   onclick="toggleModule('bb')">
+                   onclick="toggleModule('bb', event)">
                 <input class="form-check-input mt-0" type="checkbox"
                        id="mod-bb" name="modules" value="bb_bounce">
                 <label class="form-check-label fw-semibold mb-0" for="mod-bb">
@@ -769,7 +769,7 @@ const slOptional  = document.getElementById('slOptional');
 const slInput     = document.getElementById('slInput');
 
 // Toggle a module card when clicking the card header
-function toggleModule(which) {
+function toggleModule(which, evt) {
   const map = {
     ma:          [modMA,         cardMA],
     rsi:         [modRSI,        cardRSI],
@@ -781,7 +781,14 @@ function toggleModule(which) {
   };
   if (map[which]) {
     const [mod, card] = map[which];
-    mod.checked = !mod.checked;
+    // Clicking the checkbox (or its <label for="...">) already toggles it
+    // natively before this bubbles up here — flipping it again would cancel
+    // the click out. Only flip manually for clicks elsewhere in the header
+    // (icon, badge, padding) where no native toggle already happened.
+    const nativelyToggled = evt && (evt.target === mod || !!evt.target.closest('label'));
+    if (!nativelyToggled) {
+      mod.checked = !mod.checked;
+    }
     card.classList.toggle('enabled', mod.checked);
   }
   updateUI();
