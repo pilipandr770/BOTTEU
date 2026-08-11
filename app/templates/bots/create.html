@@ -1020,7 +1020,18 @@ function filterQuote(btn, quote) {
   activeQuote = quote;
   document.querySelectorAll('.btn[onclick^="filterQuote"]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderList(document.getElementById('symbolSearch').value.trim().toUpperCase());
+
+  // Leftover search text from before the switch (e.g. "BTCUSDT" from the
+  // default pre-selection) doesn't match any pair under the new quote —
+  // renderList() would silently show "No matches" while the OLD symbol
+  // stayed in the hidden #symbolValue field, so submitting at that point
+  // created a bot on the wrong pair. Clear the search (and the now-invalid
+  // selection) so the list repopulates with every pair for the new quote.
+  const searchBox = document.getElementById('symbolSearch');
+  searchBox.value = '';
+  document.getElementById('symbolValue').value = '';
+  renderList('');
+  searchBox.focus();
 }
 
 function renderList(query) {
