@@ -236,7 +236,7 @@ def analyze(scan_data: dict, lang: str = "en", mode: str = "swing") -> dict[str,
         try:
             message = client.messages.create(
                 model="claude-sonnet-5",
-                max_tokens=2000,
+                max_tokens=4096,
                 messages=[
                     {"role": "user", "content": user_prompt}
                 ],
