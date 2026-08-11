@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# BOTTEU — Docker Compose for hosts with a pre-existing shared Traefik reverse
+# proxy (as opposed to docker-compose.yml, which ships its own nginx+certbot
+# for a dedicated VPS). Use this file when Traefik already owns ports 80/443
+# and routes to backend containers via Docker labels + its ACME resolvers.
+#
+# Assumes a Traefik instance already running with:
+#   --providers.docker=true --providers.docker.exposedbydefault=false
+#   a certresolver named in TRAEFIK_CERTRESOLVER below (e.g. "letsencrypt" or
+#   a DNS-01 resolver like "cfdns")
+#
+# There is no nginx/certbot service here — Traefik terminates TLS and proxies
+# directly to the `web` container over the Docker network.
+#
+# Usage:
+#   cp .env.example .env   # fill in real values
+#   TRAEFIK_DOMAIN=botteu.example.com docker compose -f docker-compose.traefik.yml up -d --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: botteu_db
+      POSTGRES_USER: botteu_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-strongpassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U botteu_user -d botteu_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # IMPORTANT: --workers 1 is intentional (see gunicorn.conf.py). The bot tick
+  # thread and the Binance collector thread both run inside the Flask process;
+  # multiple workers would each start their own copies.
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      FLASK_ENV: production
+      DATABASE_URL: postgresql+psycopg://botteu_user:${POSTGRES_PASSWORD:-strongpassword}@postgres:5432/botteu_db
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /app/collector_data
+      COLLECTOR_SYMBOLS: ${COLLECTOR_SYMBOLS:-BTCUSDT}
+      COLLECTOR_ROLL_WINDOW: ${COLLECTOR_ROLL_WINDOW:-7770}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - instance_data:/app/instance
+      - collector_data:/app/collector_data
+    expose:
+      - "5000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.botteu.entrypoints=websecure"
+      - "traefik.http.routers.botteu.rule=Host(`${TRAEFIK_DOMAIN}`)"
+      - "traefik.http.routers.botteu.tls.certresolver=${TRAEFIK_CERTRESOLVER:-cfdns}"
+      - "traefik.http.services.botteu.loadbalancer.server.port=5000"
+
+volumes:
+  postgres_data:
+  instance_data:
+  collector_data:
