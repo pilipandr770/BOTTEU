@@ -476,6 +476,9 @@ def clear_logs(bot_id: int):
 
 @bots_bp.route("/<int:bot_id>/logs")
 @login_required
+@limiter.limit("300 per hour")  # detail.html polls every 30s (120/hour/tab) — the
+# global RATELIMIT_DEFAULT of 50/hour 429'd this after ~25 min with the page open
+# (same root cause as the /health incident); headroom here covers multiple tabs.
 def bot_logs_api(bot_id: int):
     """Return up to 50 log entries as JSON.
 
