@@ -164,6 +164,9 @@ const I18N = {
   botAnalyzes:  "{{ _('The bot analyzes the market normally, but real orders are not placed. All trades are recorded as demo orders') }}",
   topUp:        "{{ _('Top up the spot wallet by at least') }}",
   toEnable:     "{{ _('USDT to enable real trading.') }}",
+  perPairNote:  "{{ _('A bot only trades for real if its own pair\\'s quote asset (USDT or USDC) has enough free balance — a BTCUSDT bot cannot use USDC, and vice versa.') }}",
+  eachSuffix:   "{{ _('each') }}",
+  orUSDC:       "{{ _('or USDC') }}",
   empty:        "{{ _('Balance empty — all assets are zero.') }}",
   serverError:  "{{ _('Server request error') }}",
 };
@@ -201,19 +204,27 @@ async function loadBalance() {
     const balances = data.balances || [];
 
     // ── Mode calculation ──────────────────────────────────────────────
-    const stableFree = balances
-      .filter(b => b.asset === 'USDT' || b.asset === 'USDC')
-      .reduce((s, b) => s + b.free, 0);
-    const isReal = stableFree >= REAL_TRADE_MIN;
+    // Real trading is per-bot, gated by the free balance of THAT bot's own
+    // quote asset (USDT for a *USDT pair, USDC for a *USDC pair) — Binance
+    // treats them as separate order books, so one can't substitute for the
+    // other. Summing them into one "stable" total falsely implied a BTCUSDC
+    // balance made a BTCUSDT bot real, when it stayed in DEMO. Show both
+    // separately instead of a combined figure.
+    const usdtFree = balances.find(b => b.asset === 'USDT')?.free || 0;
+    const usdcFree = balances.find(b => b.asset === 'USDC')?.free || 0;
+    const stableFree = usdtFree + usdcFree; // display-only total, not a readiness check
+    const isReal = usdtFree >= REAL_TRADE_MIN || usdcFree >= REAL_TRADE_MIN;
 
     banner.style.display = 'block';
     if (isReal) {
-      banner.className = 'alert alert-success mb-3 py-2 px-3 d-flex align-items-center gap-2';
+      banner.className = 'alert alert-success mb-3 py-2 px-3 d-flex align-items-start gap-2';
       banner.innerHTML =
         '<span style="font-size:1.2rem">✅</span>' +
         `<div><strong>${I18N.realTitle}</strong> — ` +
-        `${I18N.available} ${stableFree.toLocaleString(LOCALE, {maximumFractionDigits: 2})} USDT/USDC ` +
-        `(${I18N.threshold} ${REAL_TRADE_MIN} USDT). ${I18N.botsReal}</div>`;
+        `${I18N.available} ${usdtFree.toLocaleString(LOCALE, {maximumFractionDigits: 2})} USDT, ` +
+        `${usdcFree.toLocaleString(LOCALE, {maximumFractionDigits: 2})} USDC ` +
+        `(${I18N.threshold} ${REAL_TRADE_MIN} ${I18N.eachSuffix}). ${I18N.botsReal}<br>` +
+        `<span class="small text-muted">${I18N.perPairNote}</span></div>`;
     } else {
       const needed = REAL_TRADE_MIN;
       const diff   = (needed - stableFree).toFixed(2);
@@ -222,8 +233,9 @@ async function loadBalance() {
         '<span style="font-size:1.3rem;line-height:1">🧪</span>' +
         '<div>' +
           `<strong>${I18N.demoTitle}</strong><br>` +
-          `${I18N.freeLabel} <strong>${stableFree.toLocaleString(LOCALE, {maximumFractionDigits: 4})}</strong> — ` +
-          `${I18N.missing}${diff} USDT ${I18N.toThreshold} ${needed} USDT.<br>` +
+          `${I18N.freeLabel} <strong>${usdtFree.toLocaleString(LOCALE, {maximumFractionDigits: 4})} USDT, ` +
+          `${usdcFree.toLocaleString(LOCALE, {maximumFractionDigits: 4})} USDC</strong> — ` +
+          `${I18N.missing}${diff} ${I18N.toThreshold} ${needed} USDT ${I18N.orUSDC}.<br>` +
           `<span class="small text-muted">${I18N.botAnalyzes} 🧪. ` +
           `${I18N.topUp} ${diff} ${I18N.toEnable}</span>` +
         '</div>';
