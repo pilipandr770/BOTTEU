@@ -67,7 +67,7 @@ def tick_bot(bot_id: int) -> None:
     from app.models.bot_log import BotLog
     from app.models.order import Order, OrderSide, ExitReason
     from app.algorithms.base import get_algorithm
-    from app.services.binance_client import get_client_for_user, get_quote_free_balance
+    from app.services.binance_client import get_client_for_user, get_quote_free_balance, SUPPORTED_QUOTES
     from app.services.order_manager import (
         place_market_order, place_smart_order,
         place_stop_loss_order,
@@ -164,12 +164,13 @@ def tick_bot(bot_id: int) -> None:
         free_balance  = get_quote_free_balance(client, bot.symbol)
         position_size = float(bot.position_size_usdt)
         simulate      = free_balance < max(REAL_TRADE_MIN, position_size)
+        quote_asset   = next((q for q in SUPPORTED_QUOTES if bot.symbol.upper().endswith(q)), "USDT")
 
         # ── Flush logs ────────────────────────────────────────────────────
         log_entries: list[tuple[str, str]] = new_state.pop("_log", [])
         if simulate:
             log_entries.insert(0, ("INFO",
-                f"🧪 [DEMO] Balance {free_balance:.4f} USDT < required {position_size:.2f} USDT — "
+                f"🧪 [DEMO] Balance {free_balance:.4f} {quote_asset} < required {position_size:.2f} {quote_asset} — "
                 f"demo mode (no real orders)"
             ))
         for level, msg in log_entries:
