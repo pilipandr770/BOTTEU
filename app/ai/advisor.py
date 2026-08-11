@@ -243,7 +243,12 @@ def analyze(scan_data: dict, lang: str = "en", mode: str = "swing") -> dict[str,
                 system=SYSTEM_PROMPT,
             )
 
-            response_text = message.content[0].text
+            # Some models return a ThinkingBlock before the TextBlock — find
+            # the actual text block instead of assuming content[0] is it.
+            text_block = next((b for b in message.content if b.type == "text"), None)
+            if text_block is None:
+                raise ValueError("No text block in Claude response")
+            response_text = text_block.text
 
             # Parse JSON from response
             # Claude may wrap in ```json ... ```, strip that
