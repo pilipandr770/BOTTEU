@@ -53,7 +53,7 @@ def api_key():
             else:
                 if not api_key_val or not api_secret_val:
                     flash(_("Both API Key and Secret are required."), "danger")
-                    outbound_ips = current_app.config.get("RENDER_OUTBOUND_IPS", [])
+                    outbound_ips = current_app.config.get("OUTBOUND_IPS", [])
                     return render_template("bots/api_key.html", existing=existing, outbound_ips=outbound_ips)
                 new_key = ApiKey(
                     user_id=current_user.id,
@@ -73,7 +73,7 @@ def api_key():
             flash(_("API Key deleted."), "info")
             return redirect(url_for("bots.api_key"))
 
-    outbound_ips = current_app.config.get("RENDER_OUTBOUND_IPS", [])
+    outbound_ips = current_app.config.get("OUTBOUND_IPS", [])
     return render_template("bots/api_key.html", existing=existing, outbound_ips=outbound_ips)
 
 

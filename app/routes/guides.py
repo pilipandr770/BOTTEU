@@ -2,7 +2,7 @@
 import threading
 from functools import wraps
 
-from flask import Blueprint, render_template, jsonify, abort
+from flask import Blueprint, current_app, render_template, jsonify, abort
 from flask_login import current_user, login_required
 
 guides_bp = Blueprint("guides", __name__, url_prefix="/guides")
@@ -19,7 +19,8 @@ def _admin_required(f):
 
 @guides_bp.route("/")
 def index():
-    return render_template("guides/index.html")
+    outbound_ips = current_app.config.get("OUTBOUND_IPS", [])
+    return render_template("guides/index.html", outbound_ips=outbound_ips)
 
 
 @guides_bp.route("/status")
