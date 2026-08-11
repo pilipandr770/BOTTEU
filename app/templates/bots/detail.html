@@ -215,7 +215,12 @@
         <i class="bi bi-gear me-2 text-secondary"></i>{{ _('Bot Settings') }}
       </div>
       <div class="card-body">
+        {# Modular/combined bots store an explicit list; single-algorithm bots
+           (rsi, macd, consensus, ...) don't — fall back to [bot.algorithm] so
+           the param rows below only show the ones actually in effect instead
+           of every field the create form happens to submit a default for. #}
         {% set p = bot.params or {} %}
+        {% set active_modules = p.get('modules', [bot.algorithm]) %}
         <div class="row g-2 small">
 
           {% if p.get('modules') %}
@@ -231,20 +236,39 @@
           <div class="col-6"><span class="text-muted">{{ _('Timeframe:') }}</span> <strong>{{ p.get('timeframe', '1h') }}</strong></div>
           <div class="col-6"><span class="text-muted">{{ _('Algorithm:') }}</span> <span class="badge bg-secondary">{{ bot.algorithm }}</span></div>
 
-          {% if p.get('fast_ma') %}
-          <div class="col-6"><span class="text-muted">{{ _('Fast MA:') }}</span> <strong>{{ p.get('fast_ma') }}</strong></div>
+          {% if 'ma_crossover' in active_modules %}
+            {% if p.get('fast_ma') %}
+            <div class="col-6"><span class="text-muted">{{ _('Fast MA:') }}</span> <strong>{{ p.get('fast_ma') }}</strong></div>
+            {% endif %}
+            {% if p.get('slow_ma') %}
+            <div class="col-6"><span class="text-muted">{{ _('Slow MA:') }}</span> <strong>{{ p.get('slow_ma') }}</strong></div>
+            {% endif %}
           {% endif %}
-          {% if p.get('slow_ma') %}
-          <div class="col-6"><span class="text-muted">{{ _('Slow MA:') }}</span> <strong>{{ p.get('slow_ma') }}</strong></div>
+          {% if 'rsi' in active_modules %}
+            {% if p.get('rsi_period') %}
+            <div class="col-6"><span class="text-muted">{{ _('RSI period:') }}</span> <strong>{{ p.get('rsi_period') }}</strong></div>
+            {% endif %}
+            {% if p.get('oversold') %}
+            <div class="col-6"><span class="text-muted">{{ _('RSI oversold:') }}</span> <strong>&lt;{{ p.get('oversold') }}</strong></div>
+            {% endif %}
+            {% if p.get('overbought') %}
+            <div class="col-6"><span class="text-muted">{{ _('RSI overbought:') }}</span> <strong>&gt;{{ p.get('overbought') }}</strong></div>
+            {% endif %}
           {% endif %}
-          {% if p.get('rsi_period') %}
-          <div class="col-6"><span class="text-muted">{{ _('RSI period:') }}</span> <strong>{{ p.get('rsi_period') }}</strong></div>
+          {% if 'macd' in active_modules %}
+            <div class="col-6"><span class="text-muted">{{ _('MACD fast/slow/signal:') }}</span> <strong>{{ p.get('macd_fast') }}/{{ p.get('macd_slow') }}/{{ p.get('macd_signal') }}</strong></div>
           {% endif %}
-          {% if p.get('oversold') %}
-          <div class="col-6"><span class="text-muted">{{ _('RSI oversold:') }}</span> <strong>&lt;{{ p.get('oversold') }}</strong></div>
+          {% if 'supertrend' in active_modules %}
+            <div class="col-6"><span class="text-muted">{{ _('SuperTrend period/mult:') }}</span> <strong>{{ p.get('st_period') }}/{{ p.get('st_multiplier') }}</strong></div>
           {% endif %}
-          {% if p.get('overbought') %}
-          <div class="col-6"><span class="text-muted">{{ _('RSI overbought:') }}</span> <strong>&gt;{{ p.get('overbought') }}</strong></div>
+          {% if 'bb_bounce' in active_modules %}
+            <div class="col-6"><span class="text-muted">{{ _('Bollinger period/std:') }}</span> <strong>{{ p.get('bb_period') }}/{{ p.get('bb_std') }}</strong></div>
+          {% endif %}
+          {% if 'adx_filter' in active_modules %}
+            <div class="col-6"><span class="text-muted">{{ _('ADX period/threshold:') }}</span> <strong>{{ p.get('adx_period') }}/{{ p.get('adx_threshold') }}</strong></div>
+          {% endif %}
+          {% if 'volatility' in active_modules %}
+            <div class="col-6"><span class="text-muted">{{ _('Volatility filter:') }}</span> <strong>{{ p.get('vol_indicator') }} {{ p.get('vol_period') }}/{{ p.get('vol_min_pct') }}%</strong></div>
           {% endif %}
 
           <div class="col-12 mt-1">
