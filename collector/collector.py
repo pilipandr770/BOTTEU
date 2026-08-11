@@ -237,8 +237,9 @@ class RiverMLModel:
             prev_close = float(df.iloc[-2]["close"])
             curr_close = float(row["close"])
 
-            x        = self._extract_features(row)
-            x_scaled = self.scaler.learn_one(x).transform_one(x)
+            x = self._extract_features(row)
+            self.scaler.learn_one(x)
+            x_scaled = self.scaler.transform_one(x)
 
             signal = self.model.predict_one(x_scaled) if self.n_seen >= 50 else 0
             if signal is None:

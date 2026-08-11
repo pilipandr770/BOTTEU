@@ -32,7 +32,7 @@ class Order(db.Model):
 
     exit_reason = db.Column(db.Enum(ExitReason), nullable=True)
 
-    # P&L: filled by bot_runner when SELL is executed
+    # P&L: filled by app/workers/core/tick.py when SELL is executed
     pnl_usdt = db.Column(db.Numeric(24, 8), nullable=True)
     pnl_pct = db.Column(db.Numeric(10, 4), nullable=True)
 

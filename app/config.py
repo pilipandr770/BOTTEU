@@ -14,6 +14,23 @@ if sys.platform != "win32":
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def _normalize_db_url(url: str) -> str:
+    """Force the psycopg3 dialect for bare postgres(ql):// URLs.
+
+    requirements.txt installs psycopg3 (psycopg[binary]), not psycopg2 — there
+    is no psycopg2-binary wheel for Python 3.13. SQLAlchemy defaults an
+    un-suffixed "postgres://" or "postgresql://" URL to the psycopg2 dialect,
+    which isn't installed and fails with ModuleNotFoundError at startup. Many
+    hosts (Render, Heroku-style) hand out bare URLs, so normalize here instead
+    of relying on every deploy target to add the driver suffix itself.
+    """
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url
+
+
 class Config:
     # Core
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
@@ -21,7 +38,7 @@ class Config:
     TESTING = False
 
     # Database
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///botteu_dev.db")
+    SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.environ.get("DATABASE_URL", "sqlite:///botteu_dev.db"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # If DB_SCHEMA is set, apply search_path so all tables go into that schema
     _db_schema = os.environ.get("DB_SCHEMA")
@@ -30,10 +47,8 @@ class Config:
         if _db_schema else {}
     )
 
-    # Redis / Celery
+    # Redis — SSE pub/sub (BotLog live updates) + rate-limiter storage
     REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
-    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
 
     # Security — Fernet key for API credentials
     FERNET_KEY = os.environ.get("FERNET_KEY", "")
@@ -116,7 +131,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///botteu_dev.db")
+    SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.environ.get("DATABASE_URL", "sqlite:///botteu_dev.db"))
 
 
 class ProductionConfig(Config):

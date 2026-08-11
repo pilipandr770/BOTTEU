@@ -5,9 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-# Only gcc needed for packages that compile C extensions (e.g. cryptography).
+# gcc/g++: C/C++ extensions (cryptography, river). rustc/cargo: river also has
+# no Linux wheel on PyPI (sdist only) and needs a Rust toolchain to build.
 # psycopg2-binary bundles its own libpq, so libpq-dev is not required.
-RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
+RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ rustc cargo && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build

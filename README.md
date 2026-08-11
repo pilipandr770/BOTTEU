@@ -1,5 +1,7 @@
 # BOTTEU — Automated Binance Spot Trading Bot
 
+[![Tests](https://github.com/pilipandr770/BOTTEU/actions/workflows/tests.yml/badge.svg)](https://github.com/pilipandr770/BOTTEU/actions/workflows/tests.yml)
+
 > **Not financial advice. All trading involves significant risk of loss.**
 
 ## Overview
@@ -12,7 +14,7 @@ Key features:
 - 📊 **Real-time bot logs** — every tick produces human-readable log entries (MA values, RSI, SL/TP hits)
 - 🧪 **Automatic simulation mode** — if the spot balance is below the order threshold, the bot runs in demo mode (no real orders placed, all trades logged as `🧪 DEMO`)
 - 💰 **Live spot balance widget** — shows free balance per asset and whether real or demo trading is active
-- 🤖 **In-process scheduler** — APScheduler runs bot ticks every 60 seconds inside Flask (no Celery / Redis required)
+- 🤖 **In-process scheduler** — a background thread ticks all running bots every 60 seconds inside Flask (no Celery / Redis / separate worker process required)
 
 ---
 
@@ -22,7 +24,7 @@ Key features:
 |----------------|------------|
 | Backend        | Flask 3 + Gunicorn (gthread worker) |
 | Database       | PostgreSQL (prod) / SQLite (dev) · SQLAlchemy · Flask-Migrate |
-| Bot Scheduler  | APScheduler 3.10 (in-process background thread) |
+| Bot Scheduler  | Python `threading.Thread` (in-process, 60s interval) |
 | Trading        | python-binance, pandas |
 | Historical Data | yfinance (Yahoo Finance) |
 | Visualization  | Plotly |
@@ -39,16 +41,17 @@ Key features:
 ```
 BOTTEU/
 ├── app/
-│   ├── __init__.py          # Flask app factory + APScheduler start
+│   ├── __init__.py          # Flask app factory + in-process tick/collector threads
 │   ├── config.py            # Config classes (dev / prod / test)
 │   ├── extensions.py        # SQLAlchemy, Login, Babel, etc.
 │   ├── models/              # User, ApiKey, Bot, BotLog, Order, Subscription, TelegramAccount
 │   ├── routes/              # auth, dashboard, bots, backtest, subscriptions, legal, guides
-│   ├── services/            # encryption, binance_client, order_manager, telegram_notifier
-│   ├── algorithms/          # base (registry), ma_crossover, rsi, combined
+│   ├── services/            # encryption, binance_client, order_manager, risk_manager, telegram_notifier
+│   ├── algorithms/          # base (registry), ma_crossover, rsi, combined, consensus
+│   ├── ml/                  # sklearn ensemble (features, trainer)
+│   ├── ai/                  # Claude-based advisor, autopilot, scanner
 │   ├── workers/
-│   │   ├── scheduler.py     # APScheduler tick engine (replaces Celery)
-│   │   └── bot_runner.py    # Core bot logic (signal → order)
+│   │   └── core/tick.py     # Core bot tick logic (signal → order), single source of truth
 │   ├── telegram/            # bot, handlers
 │   ├── templates/           # Jinja2 HTML templates
 │   ├── static/              # CSS, JS
@@ -101,8 +104,8 @@ flask db upgrade        # applies all existing migrations
 
 ```bash
 python run.py
-# Bot scheduler starts automatically in the background (APScheduler)
-# No separate Celery / Redis process needed
+# The tick thread starts on the first incoming HTTP request (health checks count)
+# No separate Celery / Redis / worker process needed
 ```
 
 Open http://localhost:5000
@@ -122,22 +125,34 @@ Services started:
 | Service | Role |
 |---------|------|
 | `postgres` | PostgreSQL 16 database |
-| `web` | Flask app + Gunicorn + APScheduler |
-| `nginx` | Reverse proxy (port 80/443) |
-| `certbot` | Auto-renews TLS certificates |
+| `redis` | SSE pub/sub (live bot logs) + rate-limiter storage |
+| `web` | Flask app + Gunicorn + in-process tick/collector threads |
+| `nginx` | Reverse proxy (port 80/443), self-signed cert on first boot |
+| `certbot` | Auto-renews TLS certificates (see "First-time SSL" for initial issuance) |
 
 > **Why only 1 Gunicorn worker?**  
-> APScheduler runs inside the Flask process. Multiple workers would each start their own scheduler → duplicate bot ticks → double orders. `gthread` workers provide concurrency via threads instead.
+> The tick thread runs inside the Flask process. Multiple workers would each start their own tick thread → duplicate bot ticks → double orders. `gthread` workers provide concurrency via threads instead.
 
 ### First-time SSL (Let's Encrypt)
 
-```bash
-# Issue certificate (run once):
-docker compose --profile certbot run --rm certbot
+Before the first deploy, edit `nginx/nginx.conf` and replace `yourdomain.com` /
+`www.yourdomain.com` with your real domain (both must already point at this
+server). Until a real certificate exists, nginx boots with a temporary
+self-signed one so `docker compose up` never crash-loops on a fresh host —
+browsers will show a certificate warning until you run the real issuance below.
 
-# After cert is issued, reload nginx:
+```bash
+# Issue the real certificate (run once, after DNS points here and the stack is up):
+docker compose run --rm --entrypoint \
+  "certbot certonly --webroot -w /var/www/certbot -d yourdomain.com -d www.yourdomain.com --email you@example.com --agree-tos --no-eff-email" \
+  certbot
+
+# Reload nginx to pick up the real certificate:
 docker compose exec nginx nginx -s reload
 ```
+
+The `certbot` service itself only *renews* certificates on a loop — the command
+above is a one-off override that performs the initial issuance.
 
 ### Set up Telegram webhook
 
@@ -196,6 +211,21 @@ Log panel auto-refreshes every 30 seconds via polling.
 
 ---
 
+## Testing
+
+```bash
+pip install -r requirements.txt
+pytest tests/ -v
+```
+
+Runs on every push/PR via GitHub Actions (`.github/workflows/tests.yml`) on
+Python 3.10 — the same version as the production Docker image. Covers
+algorithms, the consensus/ML ensemble, risk management, and Binance order
+placement (`order_manager.py`) with a mocked exchange client — no network
+calls or real API keys needed.
+
+---
+
 ## Security
 
 - API keys encrypted with Fernet (AES-128-CBC); master key in `.env` only
@@ -221,155 +251,3 @@ Log panel auto-refreshes every 30 seconds via polling.
 
 Proprietary. All rights reserved. © 2026 BOTTEU.
 
-
----
-
-## Project Structure
-
-```
-BOTTEU/
-├── app/
-│   ├── __init__.py         # Flask app factory
-│   ├── config.py           # Config classes (dev/prod/test)
-│   ├── extensions.py       # SQLAlchemy, Login, Babel, etc.
-│   ├── models/             # User, ApiKey, Bot, Order, Subscription, TelegramAccount
-│   ├── routes/             # auth, dashboard, bots, backtest, subscriptions, legal, guides
-│   ├── services/           # encryption, binance_client, order_manager, telegram_notifier
-│   ├── algorithms/         # base (registry), ma_crossover, rsi
-│   ├── workers/            # celery_app, bot_runner
-│   ├── telegram/           # bot, handlers
-│   ├── templates/          # Jinja2 HTML templates
-│   ├── static/             # CSS, JS
-│   └── translations/       # EN + DE strings (Flask-Babel)
-├── nginx/nginx.conf
-├── docker-compose.yml
-├── Dockerfile
-├── run.py
-├── requirements.txt
-└── .env.example
-```
-
----
-
-## Quick Start (Development)
-
-### 1. Clone and set up environment
-
-```bash
-git clone <repo>
-cd BOTTEU
-cp .env.example .env
-# Edit .env with your keys
-```
-
-### 2. Generate Fernet key
-
-```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-# Paste the output into FERNET_KEY in .env
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Initialize database
-
-```bash
-flask db init
-flask db migrate -m "initial"
-flask db upgrade
-```
-
-### 5. Run development server
-
-```bash
-python run.py
-```
-
-### 6. Start Celery worker (separate terminal)
-
-```bash
-celery -A app.workers.celery_app.celery_app worker --loglevel=info
-```
-
-### 7. Start Celery Beat (separate terminal)
-
-```bash
-celery -A app.workers.celery_app.celery_app beat --loglevel=info
-```
-
----
-
-## Production Deployment (Docker)
-
-```bash
-cp .env.example .env
-# Fill in all values in .env
-
-docker compose up -d --build
-```
-
-### Set up Telegram webhook
-
-```bash
-curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://yourdomain.com/telegram/webhook"
-```
-
-### SSL (Let's Encrypt)
-
-```bash
-docker compose run --rm certbot certonly --webroot \
-  --webroot-path=/var/www/certbot \
-  -d yourdomain.com -d www.yourdomain.com \
-  --email your@email.com --agree-tos --no-eff-email
-```
-
----
-
-## Algorithms
-
-### MA Crossover (MA7 × MA25)
-- **BUY**: Fast MA crosses above Slow MA (golden cross)
-- **SELL**: Fast MA crosses below (death cross) OR optional SL/TP/Trailing TP
-- SL/TP: Optional
-
-### RSI
-- **BUY**: RSI drops below oversold threshold (30 or 20)
-- **SELL**: RSI rises above overbought threshold (70 or 80) OR Stop-Loss (required)
-- SL: **Required**; TP/Trailing TP: Optional
-
-### Adding New Algorithms
-1. Create `app/algorithms/my_algo.py` extending `BaseStrategy`
-2. Register in `app/algorithms/base.py` → `_build_registry()`
-3. Add parameter form section in `templates/bots/create.html`
-
----
-
-## Security
-
-- API keys encrypted with Fernet (AES-128-CBC). Master key stored ONLY in `.env`
-- API Secret never displayed in UI after saving
-- CSRF tokens on all forms (Flask-WTF)
-- Rate limiting on auth endpoints (Flask-Limiter)
-- HTTPS enforced via Nginx + Let's Encrypt
-- GDPR: account deletion anonymizes all personal data (Art. 17)
-- Binance API: instructions to whitelist bot IP and enable Spot only
-
----
-
-## Legal
-
-All legal documents located at:
-- `/legal/terms` — Terms of Service
-- `/legal/privacy` — Privacy Policy
-- `/legal/disclaimer` — Risk Disclaimer
-- `/legal/impressum` — Impressum (German legal requirement)
-
----
-
-## License
-
-Proprietary. All rights reserved. © 2026 BOTTEU.

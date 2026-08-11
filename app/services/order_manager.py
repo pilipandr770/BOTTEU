@@ -193,7 +193,7 @@ def place_smart_order(
         limit_price = Decimal(ticker["bidPrice"])
         if quote_amount is None:
             raise ValueError("quote_amount required for BUY.")
-        limit_qty = _round_step(quote_amount / limit_price, step_size)
+        limit_qty = _round_step(quote_amount / limit_price, step_size) if limit_price > 0 else Decimal("0")
     else:
         # Place LIMIT SELL at best ask price
         limit_price = Decimal(ticker["askPrice"])

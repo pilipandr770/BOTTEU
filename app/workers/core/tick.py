@@ -1,5 +1,6 @@
 """
-Unified bot tick logic — single source of truth for APScheduler and Celery runners.
+Unified bot tick logic — single source of truth for the in-process tick thread
+started in app/__init__.py (see _ensure_tick_thread).
 
 Fixes applied vs original per-runner implementations:
   P2: Closed-candle signals (df.iloc[:-1] before indicators)            [in algorithms]
