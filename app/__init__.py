@@ -105,9 +105,15 @@ def create_app(config_name: str | None = None) -> Flask:
     def landing():
         return render_template("landing.html")
 
-    # Health-check (used by Docker HEALTHCHECK and load-balancers)
+    # Health-check (used by Docker HEALTHCHECK and load-balancers).
+    # Exempt from RATELIMIT_DEFAULT: Docker's HEALTHCHECK polls this every 30s
+    # (120/hour) from the same source IP, which blew past "50 per hour" within
+    # ~25 minutes, got 429'd, and made Docker mark the container unhealthy —
+    # which made Traefik stop routing to it entirely (site down, but the app
+    # itself was fine the whole time).
     from flask import jsonify
     @app.route("/health")
+    @limiter.exempt
     def health():
         return jsonify({"status": "ok"}), 200
 
