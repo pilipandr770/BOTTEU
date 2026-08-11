@@ -214,7 +214,7 @@ Log panel auto-refreshes every 30 seconds via polling.
 ## Testing
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 pytest tests/ -v
 ```
 

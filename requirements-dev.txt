@@ -1,0 +1,4 @@
+# Test-only dependencies — not needed in production, so kept out of
+# requirements.txt (and out of the Docker image).
+-r requirements.txt
+pytest==9.0.3
