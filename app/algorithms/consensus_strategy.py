@@ -241,15 +241,29 @@ class ConsensusStrategy(BaseStrategy):
         state["consensus_vol_modifier"] = round(vol_modifier or 1.0, 3)
         state["consensus_detail"] = result.to_dict()
 
+        # ── Log a summary — generate_signal() previously only wrote to
+        # `state`, never to state["_log"], so tick.py's `state.pop("_log", [])`
+        # always got an empty list and nothing ever reached the bot's log
+        # panel even though the bot was actively voting and deciding every
+        # tick (reported live: "Consensus bot runs but the UI log is empty").
+        vote_summary = (
+            f"🗳️ Consensus: score={result.normalized_score:.1f} "
+            f"(buy={result.buy_votes}/sell={result.sell_votes} of {len(all_votes)} votes, "
+            f"vol×{vol_modifier:.2f}) — entry≥{entry_threshold:.0f} exit≤{exit_threshold:.0f}"
+        )
+
         # Position management: use BUY/SELL from consensus
         has_position = state.get("has_position", False)
 
         if not has_position and result.decision == "BUY":
+            state["_log"] = [("BUY", f"{vote_summary} → BUY")]
             return "BUY", state
         elif has_position and result.decision == "SELL":
             state["exit_reason"] = "CONSENSUS"
+            state["_log"] = [("SELL", f"{vote_summary} → SELL")]
             return "SELL", state
         else:
+            state["_log"] = [("INFO", f"{vote_summary} → HOLD")]
             return "HOLD", state
 
 
