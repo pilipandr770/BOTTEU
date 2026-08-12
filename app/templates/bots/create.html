@@ -956,7 +956,17 @@ document.getElementById('botForm').addEventListener('submit', function(e) {
 
   const form = this;
   function injectHidden(name, value) {
-    let inp = form.querySelector('input[name="' + name + '"]');
+    // Match by name regardless of tag. param_timeframe already exists as a
+    // <select> in the (visually hidden, but still form-submitted) Modular
+    // "Timeframe" card — searching only `input[name=...]` never found it, so
+    // this always appended a SECOND field with the same name instead of
+    // reusing it. Browsers submit same-named fields in DOM order, and the
+    // stale <select> (still its default "1h") sat earlier in the form than
+    // the appended hidden input, so Flask's request.form.get() picked the
+    // stale value — every consensus bot silently got "1h" regardless of the
+    // primary TF actually chosen. Reuse whatever element already has this
+    // name so there's only ever one value to submit.
+    let inp = form.querySelector('[name="' + name + '"]');
     if (!inp) {
       inp = document.createElement('input');
       inp.type = 'hidden';
