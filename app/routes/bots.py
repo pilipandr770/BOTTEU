@@ -294,7 +294,7 @@ def create():
                         params[param_name] = val
 
             use_ml         = request.form.get("consensus_use_ml") == "1"
-            ml_weight      = float(request.form.get("consensus_ml_weight") or 3.0)
+            ml_weight      = float(request.form.get("consensus_ml_weight") or 8.0)
 
             params["consensus"] = {
                 "timeframes": timeframes,

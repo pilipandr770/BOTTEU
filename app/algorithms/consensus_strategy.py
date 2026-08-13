@@ -132,7 +132,10 @@ class ConsensusStrategy(BaseStrategy):
             try:
                 from app.ml.trainer import get_ml_votes, streaming_update
 
-                ml_weight = float(params.get("ml_weight", 3.0))
+                # 3 votes at weight 8 ≈ 24 out of a ~210-234 total TA+ML budget
+                # (30 TA votes with tf×indicator weights summing to ~210) — a
+                # meaningful ~10% share without letting the ensemble dominate.
+                ml_weight = float(params.get("ml_weight", 8.0))
                 # symbol comes from state (injected by tick.py) or params fallback
                 symbol = state.get("symbol") or params.get("symbol", "BTCUSDT")
 
@@ -158,14 +161,14 @@ class ConsensusStrategy(BaseStrategy):
         # ── River ML votes (streaming Hoeffding Tree from collector) ──
         # River runs in the collector process and writes signals as JSON.
         # We read them here and convert to Vote objects.
-        # Weight: configurable via params["river_weight"], default 2.5
+        # Weight: configurable via params["river_weight"], default 6.0
         # Confidence: uses River model accuracy if available, else 0.5
         # Only added when use_ml_signals=True (same gate as SGD ensemble)
         if use_ml_signals:
             try:
                 from app.algorithms.consensus.data import load_collector_signals
 
-                river_weight = float(params.get("river_weight") or _c.get("river_weight", 2.5))
+                river_weight = float(params.get("river_weight") or _c.get("river_weight", 6.0))
                 symbol = state.get("symbol") or params.get("symbol", "BTCUSDT")
 
                 raw_signals = load_collector_signals()
