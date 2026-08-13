@@ -362,7 +362,16 @@ async def stream_symbol(client: AsyncClient, symbol: str):
                 logger.info("🔗 [%s] WebSocket connected", symbol)
 
                 while True:
-                    msg = await s.recv()
+                    # Binance's websocket can go silently dead (TCP connection
+                    # drops without a close frame) — plain `await s.recv()` then
+                    # hangs forever with no exception, so the reconnect/backoff
+                    # logic below never triggers. Reproduced live: connected once
+                    # and then produced zero further log lines (not even the
+                    # "Warming up" line that fires on every processed message)
+                    # for 19+ hours straight. A kline stream should push updates
+                    # every few seconds for an active pair, so treat a minute of
+                    # silence as a dead connection and force a reconnect.
+                    msg = await asyncio.wait_for(s.recv(), timeout=60)
                     if "k" not in msg:
                         continue
                     k = msg["k"]
@@ -419,10 +428,16 @@ async def stream_symbol(client: AsyncClient, symbol: str):
 
         except Exception as exc:
             reconnect_count += 1
-            logger.warning(
-                "⚠️ [%s] WebSocket error (attempt %d): %s",
-                symbol, reconnect_count, exc,
-            )
+            if isinstance(exc, asyncio.TimeoutError):
+                logger.warning(
+                    "⏱️ [%s] No message received in 60s — connection likely dead, reconnecting (attempt %d)",
+                    symbol, reconnect_count,
+                )
+            else:
+                logger.warning(
+                    "⚠️ [%s] WebSocket error (attempt %d): %s",
+                    symbol, reconnect_count, exc,
+                )
 
             if reconnect_count >= MAX_RECONNECTS:
                 # Long sleep before another cycle of attempts
