@@ -358,6 +358,14 @@ def tick_bot(bot_id: int) -> None:
                                     f"🧪 {bot.name} [DEMO]", exit_reason_str, pnl_pct)
 
                 else:
+                    # Cancel exchange SL/OCO orders BEFORE checking balance — an
+                    # open OCO holds the base asset as "locked", not "free", so
+                    # checking balance first sees near-zero free and undersizes
+                    # the sell (previously crashed the tick with "Rounded
+                    # quantity is zero" once the OCO was cancelled too late).
+                    if state_current.get("oco_order_list_id") or state_current.get("sl_order_id"):
+                        cancel_open_orders(client, bot.symbol)
+
                     # Bug 2: verify actual on-exchange balance before selling
                     base_asset = _get_base_asset(bot.symbol)
                     sell_qty   = last_buy.qty
@@ -375,10 +383,6 @@ def tick_bot(bot_id: int) -> None:
                                     )))
                     except Exception as _bal_exc:
                         logger.warning("Balance check failed for bot %d: %s", bot.id, _bal_exc)
-
-                    # Cancel exchange SL/OCO orders before placing market SELL
-                    if state_current.get("oco_order_list_id") or state_current.get("sl_order_id"):
-                        cancel_open_orders(client, bot.symbol)
 
                     use_limit = bot.params.get("order_type", "smart") != "market"
                     resp       = place_smart_order(
