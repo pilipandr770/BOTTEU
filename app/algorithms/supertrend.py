@@ -12,6 +12,11 @@ Params:
     stop_loss_pct   : float | None         — hard SL as backup
     take_profit_pct : float | None
     trailing_tp_pct : float | None
+    enter_on_start  : bool  (default: False) — if the trend already matches
+                      bullish on the bot's very first tick (i.e. the bot was
+                      created mid-trend and missed the actual flip candle),
+                      buy immediately instead of waiting for the next flip.
+                      Only ever evaluated once, on the first tick.
 """
 import logging
 
@@ -210,6 +215,24 @@ class SuperTrendStrategy(BaseStrategy):
 
         # ── Entry logic ───────────────────────────────────────────────────
         else:
+            # One-time seed: if this is the bot's first-ever tick and the
+            # trend already matches bullish, enter now instead of waiting
+            # for the next flip (which may not come for a while).
+            if not state.get("_seed_checked"):
+                state["_seed_checked"] = True
+                if params.get("enter_on_start") and dir_curr == 1:
+                    state.update({
+                        "has_position": True,
+                        "entry_price": current_price,
+                        "max_price": current_price,
+                        "exit_reason": None,
+                        "tp_trailing_active": False,
+                    })
+                    state["_log"] = [("BUY",
+                        f"🟢 Immediate entry (trend already bullish at start) — "
+                        f"ST={st_val:.6f} — buying at {current_price:.6f}")]
+                    return "BUY", state
+
             if bullish_flip:
                 state.update({
                     "has_position": True,
