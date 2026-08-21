@@ -163,14 +163,18 @@ def tick_bot(bot_id: int) -> None:
         # ── Balance check ─────────────────────────────────────────────────
         free_balance  = get_quote_free_balance(client, bot.symbol)
         position_size = float(bot.position_size_usdt)
-        simulate      = free_balance < max(REAL_TRADE_MIN, position_size)
+        use_full_balance = bool(bot.params.get("use_full_balance"))
+        # In full-balance mode there's no fixed position size to require —
+        # any balance above the exchange's practical minimum is tradeable.
+        required_balance = REAL_TRADE_MIN if use_full_balance else max(REAL_TRADE_MIN, position_size)
+        simulate      = free_balance < required_balance
         quote_asset   = next((q for q in SUPPORTED_QUOTES if bot.symbol.upper().endswith(q)), "USDT")
 
         # ── Flush logs ────────────────────────────────────────────────────
         log_entries: list[tuple[str, str]] = new_state.pop("_log", [])
         if simulate:
             log_entries.insert(0, ("INFO",
-                f"🧪 [DEMO] Balance {free_balance:.4f} {quote_asset} < required {position_size:.2f} {quote_asset} — "
+                f"🧪 [DEMO] Balance {free_balance:.4f} {quote_asset} < required {required_balance:.2f} {quote_asset} — "
                 f"demo mode (no real orders)"
             ))
         for level, msg in log_entries:
@@ -229,7 +233,13 @@ def tick_bot(bot_id: int) -> None:
 
         # ── BUY ───────────────────────────────────────────────────────────
         if signal == "BUY" and not state_current.get("has_position"):
-            quote_amount = Decimal(str(bot.position_size_usdt))
+            if use_full_balance:
+                # Trade the whole free quote balance instead of a fixed
+                # position size. Small buffer avoids "insufficient balance"
+                # from fee/precision rounding — the remainder is dust.
+                quote_amount = Decimal(str(free_balance)) * Decimal("0.999")
+            else:
+                quote_amount = Decimal(str(bot.position_size_usdt))
             if simulate:
                 exec_qty = quote_amount / current_price if current_price else Decimal("0")
                 db.session.add(Order(
@@ -325,7 +335,30 @@ def tick_bot(bot_id: int) -> None:
                     else ExitReason.SIGNAL
                 )
 
-                if simulate:
+                # SELL real/demo must be gated on the BASE asset (what we're
+                # selling), not the quote asset — selling BTC doesn't require
+                # USDC. Using the quote-balance `simulate` flag here meant a
+                # bot could hold real BTC (e.g. bought manually) yet stay
+                # stuck simulating exits forever if quote balance was low.
+                # Cancel OCO/SL FIRST — it holds the base asset "locked", not
+                # "free", so checking balance before cancelling undersizes
+                # the sell (previously crashed with "Rounded quantity is
+                # zero" once cancelled too late).
+                base_asset = _get_base_asset(bot.symbol)
+                if state_current.get("oco_order_list_id") or state_current.get("sl_order_id"):
+                    try:
+                        cancel_open_orders(client, bot.symbol)
+                    except Exception as _cancel_exc:
+                        logger.warning("Cancel OCO/SL failed for bot %d: %s", bot.id, _cancel_exc)
+
+                real_base_free = Decimal("0")
+                try:
+                    bal = client.get_asset_balance(asset=base_asset)
+                    real_base_free = Decimal(bal.get("free", "0") if bal else "0")
+                except Exception as _bal_exc:
+                    logger.warning("Balance check failed for bot %d: %s", bot.id, _bal_exc)
+
+                if real_base_free <= Decimal("0"):
                     exec_qty   = last_buy.qty
                     exec_price = current_price
                     buy_fee    = last_buy.price * exec_qty * FEE_RATE
@@ -358,31 +391,17 @@ def tick_bot(bot_id: int) -> None:
                                     f"🧪 {bot.name} [DEMO]", exit_reason_str, pnl_pct)
 
                 else:
-                    # Cancel exchange SL/OCO orders BEFORE checking balance — an
-                    # open OCO holds the base asset as "locked", not "free", so
-                    # checking balance first sees near-zero free and undersizes
-                    # the sell (previously crashed the tick with "Rounded
-                    # quantity is zero" once the OCO was cancelled too late).
-                    if state_current.get("oco_order_list_id") or state_current.get("sl_order_id"):
-                        cancel_open_orders(client, bot.symbol)
-
-                    # Bug 2: verify actual on-exchange balance before selling
-                    base_asset = _get_base_asset(bot.symbol)
-                    sell_qty   = last_buy.qty
-                    try:
-                        bal = client.get_asset_balance(asset=base_asset)
-                        actual_free = Decimal(bal.get("free", "0") if bal else "0")
-                        if actual_free > Decimal("0"):
-                            sell_qty = min(last_buy.qty, actual_free)
-                            if actual_free < last_buy.qty * Decimal("0.99"):
-                                db.session.add(BotLog(bot_id=bot.id, level="WARN",
-                                    message=(
-                                        f"⚠️ Balance mismatch: expected {float(last_buy.qty):.6f} "
-                                        f"{base_asset}, exchange shows {float(actual_free):.6f} — "
-                                        f"selling available amount"
-                                    )))
-                    except Exception as _bal_exc:
-                        logger.warning("Balance check failed for bot %d: %s", bot.id, _bal_exc)
+                    if use_full_balance:
+                        sell_qty = real_base_free
+                    else:
+                        sell_qty = min(last_buy.qty, real_base_free)
+                        if real_base_free < last_buy.qty * Decimal("0.99"):
+                            db.session.add(BotLog(bot_id=bot.id, level="WARN",
+                                message=(
+                                    f"⚠️ Balance mismatch: expected {float(last_buy.qty):.6f} "
+                                    f"{base_asset}, exchange shows {float(real_base_free):.6f} — "
+                                    f"selling available amount"
+                                )))
 
                     use_limit = bot.params.get("order_type", "smart") != "market"
                     resp       = place_smart_order(

@@ -83,6 +83,13 @@
             <label class="form-label">{{ _('Position Size (USDT)') }}</label>
             <input type="number" name="position_size_usdt" class="form-control"
                    value="50" min="10" step="1" required>
+            <div class="form-check mt-2">
+              <input type="checkbox" class="form-check-input" id="use-full-balance"
+                     name="param_use_full_balance" value="1">
+              <label class="form-check-label small" for="use-full-balance">
+                {{ _('Trade full balance instead (ignores Position Size — buys with all free quote balance, sells all free base balance; a small rounding dust is left behind)') }}
+              </label>
+            </div>
           </div>
         </div>
       </div>
