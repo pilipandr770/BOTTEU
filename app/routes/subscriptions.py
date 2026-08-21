@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 subscriptions_bp = Blueprint("subscriptions", __name__, url_prefix="/subscriptions")
 
+# Paid subscriptions are closed: this is a private, personal-use project,
+# not a public financial service offered on a recurring-subscription basis.
+# Flip back to True to reopen checkout.
+SUBSCRIPTIONS_OPEN = False
+
 # Map plan key → (Plan enum, config key, display name)
 _PLAN_MAP = {
     "basic": (Plan.BASIC, "STRIPE_PRICE_ID_BASIC", "Basic"),
@@ -25,12 +30,18 @@ _PLAN_MAP = {
 @subscriptions_bp.route("/plans")
 @login_required
 def plans():
+    if not SUBSCRIPTIONS_OPEN:
+        flash(_("Paid subscriptions are not available. This is a private project, "
+                 "not a public subscription service."), "info")
+        return redirect(url_for("dashboard.index"))
     return render_template("subscriptions/plans.html")
 
 
 @subscriptions_bp.route("/checkout/<plan_key>", methods=["POST"])
 @login_required
 def checkout(plan_key: str):
+    if not SUBSCRIPTIONS_OPEN:
+        abort(404)
     if plan_key not in _PLAN_MAP:
         abort(404)
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
@@ -59,6 +70,8 @@ def checkout(plan_key: str):
 @subscriptions_bp.route("/checkout/consultation", methods=["POST"])
 @login_required
 def checkout_consultation():
+    if not SUBSCRIPTIONS_OPEN:
+        abort(404)
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
     price_id = current_app.config.get("STRIPE_PRICE_ID_CONSULTATION", "")
     if not price_id:

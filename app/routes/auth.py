@@ -16,6 +16,11 @@ from app.models.telegram_account import TelegramAccount
 
 auth_bp = Blueprint("auth", __name__)
 
+# Public self-registration is closed: this is a private, personal-use
+# project, not a public financial service open to onboarding strangers.
+# Flip back to True to reopen signups.
+REGISTRATION_OPEN = False
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -47,6 +52,11 @@ def _send_verification_email(user: User) -> None:
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.index"))
+
+    if not REGISTRATION_OPEN:
+        flash(_("New registrations are currently closed. This is a private "
+                 "project, not a public subscription service."), "info")
+        return redirect(url_for("landing"))
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
