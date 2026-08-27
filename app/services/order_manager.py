@@ -224,6 +224,16 @@ def place_smart_order(
 
     # Partially filled or not filled - cancel the remainder
     cancel_order(client, symbol, order_id)
+    # Re-fetch: the order can finish filling in the instant between our last
+    # poll and this cancel call (cancelling an already-filled order is a
+    # safe no-op, confirmed separately by the -2011 handling in
+    # cancel_order). Using the stale pre-cancel snapshot here previously
+    # caused a real, fully-filled LIMIT sell to be treated as "partially
+    # filled", triggering a MARKET order for a remainder that no longer
+    # existed on the exchange — which then crashed the whole tick with
+    # "Rounded quantity is zero" AFTER the real trade had already gone
+    # through, leaving the bot's position state permanently out of sync.
+    status = client.get_order(symbol=symbol, orderId=order_id)
     filled_qty  = Decimal(status.get("executedQty", "0"))
     filled_quote = Decimal(status.get("cummulativeQuoteQty", "0"))
 
@@ -235,6 +245,16 @@ def place_smart_order(
     # Execute remaining via MARKET
     remaining_qty   = limit_qty - filled_qty
     remaining_quote = (quote_amount or Decimal("0")) - filled_quote
+
+    # If what's left doesn't clear the exchange's own minimums, there is
+    # nothing meaningful to execute — treat the limit fill as the final
+    # result instead of asking Binance to reject a dust-sized order.
+    if side.upper() == "SELL" and _round_step(remaining_qty, step_size) <= 0:
+        status["order_type"] = "LIMIT"
+        return status
+    if side.upper() == "BUY" and remaining_quote < filters["min_notional"]:
+        status["order_type"] = "LIMIT"
+        return status
 
     try:
         if side.upper() == "BUY" and remaining_quote > 0:
