@@ -387,6 +387,23 @@
                     {{ _('Enter immediately if trend already matches (skip waiting for the next flip)') }}
                   </label>
                 </div>
+                <div class="form-check mt-1">
+                  <input type="checkbox" class="form-check-input" id="st-adx-filter"
+                         name="param_st_adx_filter" value="1">
+                  <label class="form-check-label small" for="st-adx-filter">
+                    {{ _('Chop filter: only enter when ADX confirms a real trend (fewer, better trades — useful on shorter timeframes)') }}
+                  </label>
+                </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('ADX Period') }}</label>
+                    <input type="number" name="param_st_adx_period" class="form-control form-control-sm" value="14" min="2" max="100">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small">{{ _('ADX Threshold') }}</label>
+                    <input type="number" name="param_st_adx_threshold" class="form-control form-control-sm" value="25" min="5" max="60" step="1">
+                  </div>
+                </div>
               </div>
             </div>
           </div>

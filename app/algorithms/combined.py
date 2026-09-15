@@ -41,6 +41,7 @@ import numpy as np
 import pandas as pd
 
 from app.algorithms.base import BaseStrategy, Signal
+from app.algorithms.indicators import adx as _adx
 
 logger = logging.getLogger(__name__)
 
@@ -110,49 +111,6 @@ def _bbw_pct(series: pd.Series, length: int, num_std: float = 2.0) -> float | No
     if mid_v == 0 or pd.isna(mid_v):
         return None
     return (upper_v - lower_v) / mid_v * 100
-
-
-def _adx(df: pd.DataFrame, length: int = 14) -> float | None:
-    """
-    Average Directional Index — measures trend strength (0-100).
-    ADX > 25 = trending market (good for MA/MACD/SuperTrend).
-    ADX < 20 = ranging/choppy market (good for RSI/BB Bounce).
-    """
-    if len(df) < length * 2 + 1:
-        return None
-    high  = df["high"].astype(float)
-    low   = df["low"].astype(float)
-    close = df["close"].astype(float)
-
-    prev_high  = high.shift(1)
-    prev_low   = low.shift(1)
-    prev_close = close.shift(1)
-
-    # Directional Movement
-    up_move   = high - prev_high
-    down_move = prev_low - low
-    plus_dm   = up_move.where((up_move > down_move) & (up_move > 0), 0.0)
-    minus_dm  = down_move.where((down_move > up_move) & (down_move > 0), 0.0)
-
-    # True Range
-    tr = pd.concat([
-        high - low,
-        (high - prev_close).abs(),
-        (low  - prev_close).abs(),
-    ], axis=1).max(axis=1)
-
-    # Wilder smoothing (EWM with alpha=1/length)
-    alpha = 1.0 / length
-    atr14    = tr.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
-    plus_di  = 100 * plus_dm.ewm(alpha=alpha, min_periods=length, adjust=False).mean() / atr14
-    minus_di = 100 * minus_dm.ewm(alpha=alpha, min_periods=length, adjust=False).mean() / atr14
-
-    # DX → ADX
-    dx  = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, 1)
-    adx = dx.ewm(alpha=alpha, min_periods=length, adjust=False).mean()
-
-    val = float(adx.iloc[-1])
-    return val if not pd.isna(val) else None
 
 
 def _macd_signals(close: pd.Series, fast: int, slow: int, signal: int):

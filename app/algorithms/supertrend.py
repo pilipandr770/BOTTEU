@@ -17,11 +17,23 @@ Params:
                       created mid-trend and missed the actual flip candle),
                       buy immediately instead of waiting for the next flip.
                       Only ever evaluated once, on the first tick.
+    st_adx_filter   : bool  (default: False) — require ADX(st_adx_period) >=
+                      st_adx_threshold before entering. SuperTrend flips
+                      constantly in a flat/ranging market with no real trend
+                      behind them (whipsaws that each cost a round-trip fee);
+                      ADX measures trend strength independent of direction,
+                      so this blocks entries when the market isn't actually
+                      trending. Never blocks exits — a position already open
+                      still closes normally on the next bearish flip / SL / TP.
+    st_adx_period    : int   (default: 14)
+    st_adx_threshold : float (default: 25)
 """
 import logging
 
 import pandas as pd
 import numpy as np
+
+from app.algorithms.indicators import adx as _adx
 
 from app.algorithms.base import BaseStrategy, Signal
 
@@ -215,12 +227,37 @@ class SuperTrendStrategy(BaseStrategy):
 
         # ── Entry logic ───────────────────────────────────────────────────
         else:
+            # ADX chop filter: SuperTrend flips constantly in a flat market
+            # with no real trend behind the moves — each flip is a round-trip
+            # fee for nothing. ADX measures trend strength independent of
+            # direction, so require it to confirm an actual trend before
+            # entering. Never gates exits — an open position still closes
+            # normally regardless of this filter.
+            st_adx_filter = bool(params.get("st_adx_filter"))
+            adx_val = None
+            adx_threshold = float(params.get("st_adx_threshold", 25))
+            adx_ok = True
+            if st_adx_filter:
+                adx_period = int(params.get("st_adx_period", 14))
+                adx_val = _adx(df_closed, adx_period)
+                adx_ok = adx_val is not None and adx_val >= adx_threshold
+
+            def _adx_blocked_log() -> tuple:
+                if adx_val is None:
+                    return ("WARN", f"⏸ ADX filter: not enough data for ADX({int(params.get('st_adx_period', 14))})")
+                return ("INFO",
+                    f"⏸ Entry blocked — ADX={adx_val:.1f} < {adx_threshold:.1f} "
+                    f"(market not trending, chop filter)")
+
             # One-time seed: if this is the bot's first-ever tick and the
             # trend already matches bullish, enter now instead of waiting
             # for the next flip (which may not come for a while).
             if not state.get("_seed_checked"):
                 state["_seed_checked"] = True
                 if params.get("enter_on_start") and dir_curr == 1:
+                    if not adx_ok:
+                        state["_log"] = [_adx_blocked_log()]
+                        return "HOLD", state
                     state.update({
                         "has_position": True,
                         "entry_price": current_price,
@@ -234,6 +271,9 @@ class SuperTrendStrategy(BaseStrategy):
                     return "BUY", state
 
             if bullish_flip:
+                if not adx_ok:
+                    state["_log"] = [_adx_blocked_log()]
+                    return "HOLD", state
                 state.update({
                     "has_position": True,
                     "entry_price": current_price,
