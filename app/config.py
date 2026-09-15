@@ -47,9 +47,6 @@ class Config:
         if _db_schema else {}
     )
 
-    # Redis — SSE pub/sub (BotLog live updates) + rate-limiter storage
-    REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-
     # Security — Fernet key for API credentials
     FERNET_KEY = os.environ.get("FERNET_KEY", "")
 
@@ -98,7 +95,10 @@ class Config:
 
     # Flask-Limiter
     RATELIMIT_DEFAULT = "200 per day;50 per hour"
-    RATELIMIT_STORAGE_URI = os.environ.get("REDIS_URL", "memory://")
+    # Single-user, single-process deployment (1 gunicorn worker) — in-memory
+    # storage is correctly shared across all request threads, no external
+    # store needed.
+    RATELIMIT_STORAGE_URI = "memory://"
     RATELIMIT_STORAGE_URL = RATELIMIT_STORAGE_URI
 
     # ── Session / Cookie security ──────────────────────────────────────────

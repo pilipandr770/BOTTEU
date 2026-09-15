@@ -34,15 +34,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # IMPORTANT: --workers 1 is intentional (see gunicorn.conf.py). The bot tick
   # thread and the Binance collector thread both run inside the Flask process;
   # multiple workers would each start their own copies.
@@ -53,14 +44,11 @@ services:
     environment:
       FLASK_ENV: production
       DATABASE_URL: postgresql+psycopg://botteu_user:${POSTGRES_PASSWORD:-strongpassword}@postgres:5432/botteu_db
-      REDIS_URL: redis://redis:6379/0
       DATA_DIR: /app/collector_data
       COLLECTOR_SYMBOLS: ${COLLECTOR_SYMBOLS:-BTCUSDT}
       COLLECTOR_ROLL_WINDOW: ${COLLECTOR_ROLL_WINDOW:-7770}
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     volumes:
       - instance_data:/app/instance

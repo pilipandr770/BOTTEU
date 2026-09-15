@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from flask import Flask, request, session
 
 from app.config import config_map
-from app.extensions import db, login_manager, mail, migrate, csrf, limiter, babel, init_redis
+from app.extensions import db, login_manager, mail, migrate, csrf, limiter, babel
 
 
 class _JSONFormatter(logging.Formatter):
@@ -63,7 +63,6 @@ def create_app(config_name: str | None = None) -> Flask:
     csrf.init_app(app)
     limiter.init_app(app)
     babel.init_app(app, locale_selector=_get_locale)
-    init_redis(app.config.get("REDIS_URL", "redis://localhost:6379/0"))
 
     # Inject get_locale into every Jinja2 template
     from flask_babel import get_locale as babel_get_locale

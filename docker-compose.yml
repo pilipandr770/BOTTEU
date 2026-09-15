@@ -3,7 +3,6 @@
 #
 # Services:
 #   postgres  — PostgreSQL 16 (production DB)
-#   redis     — SSE pub/sub (live bot logs) + rate-limiter storage
 #   web       — Flask + Gunicorn (bot ticks + Binance collector run in-process
 #               as background threads — see app/__init__.py)
 #   nginx     — Reverse proxy / SSL termination
@@ -33,20 +32,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Redis ───────────────────────────────────────────────────────────────
-  # Used for SSE pub/sub (live bot log streaming) and Flask-Limiter storage.
-  # Without it, Flask-Limiter raises a hard ConnectionError on every request
-  # if REDIS_URL points anywhere unreachable (it does not fall back to
-  # in-memory storage on its own) — so this must always be reachable.
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # ── Flask / Gunicorn ────────────────────────────────────────────────────
   # IMPORTANT: --workers 1 is intentional (see gunicorn.conf.py).
   # The bot tick thread and the Binance collector thread both run inside the
@@ -64,16 +49,11 @@ services:
       # SQLAlchemy default to the psycopg2 dialect and fail with
       # ModuleNotFoundError at startup.
       DATABASE_URL: postgresql+psycopg://botteu_user:${POSTGRES_PASSWORD:-strongpassword}@postgres:5432/botteu_db
-      # Overrides any REDIS_URL in .env — "redis" only resolves inside this
-      # compose network, so the value must always point at the redis service.
-      REDIS_URL: redis://redis:6379/0
       DATA_DIR: /app/collector_data
       COLLECTOR_SYMBOLS: ${COLLECTOR_SYMBOLS:-BTCUSDT}
       COLLECTOR_ROLL_WINDOW: ${COLLECTOR_ROLL_WINDOW:-7770}
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     volumes:
       - instance_data:/app/instance
