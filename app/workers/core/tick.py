@@ -218,6 +218,26 @@ def tick_bot(bot_id: int) -> None:
                             f"(max {max_price:.6f}, -{float(trailing_pct):.2f}%)"
                         )))
 
+        # ── Sticky retry for a previously failed exit/entry ────────────────
+        # Entry/exit signals fire only on the exact flip-edge candle. If a
+        # prior tick's algorithm call decided to exit/enter but the actual
+        # exchange order then failed (network blip, exchange error, a race
+        # like the OCO-cancel bug), the flip edge is gone by the next tick —
+        # the algorithm just resumes logging "Holding" forever, silently
+        # abandoning an already-decided action. Force a retry of the SAME
+        # pending action every tick until it actually succeeds (see the
+        # except-block below for how pending_exit/pending_entry get set).
+        if state_current.get("pending_exit") and state_current.get("has_position"):
+            signal = "SELL"
+            new_state["has_position"] = False
+            new_state["exit_reason"] = state_current.get("exit_reason") or "SIGNAL"
+            db.session.add(BotLog(bot_id=bot.id, level="SELL",
+                message="🔁 Retrying previously failed exit"))
+        elif state_current.get("pending_entry") and not state_current.get("has_position"):
+            signal = "BUY"
+            db.session.add(BotLog(bot_id=bot.id, level="BUY",
+                message="🔁 Retrying previously failed entry"))
+
         # ── Risk Manager gate before BUY ──────────────────────────────────
         if signal == "BUY" and not state_current.get("has_position"):
             try:
@@ -451,6 +471,12 @@ def tick_bot(bot_id: int) -> None:
             except Exception:
                 pass
 
+        # Tick completed without raising — clear any stale retry bookkeeping
+        # from an earlier failed attempt (see the sticky-retry block above).
+        new_state.pop("pending_exit", None)
+        new_state.pop("pending_entry", None)
+        new_state.pop("retry_count", None)
+
         bot.state = new_state
         db.session.commit()
         logger.debug("Bot %d tick: signal=%s simulate=%s", bot.id, signal, simulate)
@@ -463,6 +489,45 @@ def tick_bot(bot_id: int) -> None:
             from app.models.bot_log import BotLog
             bot = db.session.get(Bot, bot_id)
             if bot:
+                # If the algorithm had already decided to exit/enter and the
+                # exchange call itself is what failed, don't strand the bot
+                # in ERROR (requiring manual intervention while the position
+                # sits unmanaged) — mark the action pending and let the
+                # sticky-retry block above retry it next tick. Escalate to
+                # ERROR only after repeated failures, since a persistent
+                # problem (bad API key, revoked permissions) still needs a
+                # human rather than retrying forever.
+                _sig = locals().get("signal")
+                _had_position = state_current.get("has_position")
+                pending_key = None
+                if _sig == "SELL" and _had_position:
+                    pending_key = "pending_exit"
+                elif _sig == "BUY" and not _had_position:
+                    pending_key = "pending_entry"
+
+                MAX_TICK_RETRIES = 6
+                if pending_key:
+                    retry_state = dict(state_current)
+                    retry_count = retry_state.get("retry_count", 0) + 1
+                    retry_state[pending_key] = True
+                    retry_state["retry_count"] = retry_count
+                    bot.state = retry_state
+                    if retry_count < MAX_TICK_RETRIES:
+                        db.session.add(BotLog(
+                            bot_id=bot_id,
+                            level="WARN",
+                            message=(
+                                f"⚠️ {pending_key.replace('pending_', '')} failed "
+                                f"(attempt {retry_count}/{MAX_TICK_RETRIES}), will retry "
+                                f"next tick: {str(exc)[:300]}"
+                            ),
+                        ))
+                        db.session.commit()
+                        return
+                    # Retries exhausted — fall through to ERROR escalation,
+                    # keeping the pending flag so the position is still
+                    # marked as needing attention once a human fixes this.
+
                 bot.status        = BotStatus.ERROR
                 bot.error_message = str(exc)[:500]
                 db.session.add(BotLog(
