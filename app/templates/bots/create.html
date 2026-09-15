@@ -391,7 +391,7 @@
                   <input type="checkbox" class="form-check-input" id="st-adx-filter"
                          name="param_st_adx_filter" value="1">
                   <label class="form-check-label small" for="st-adx-filter">
-                    {{ _('Chop filter: only enter when ADX confirms a real trend (fewer, better trades — useful on shorter timeframes)') }}
+                    {{ _('Chop filter: only enter when ADX confirms a real trend') }}
                   </label>
                 </div>
                 <div class="row g-2 mt-1">
@@ -401,7 +401,8 @@
                   </div>
                   <div class="col-6">
                     <label class="form-label small">{{ _('ADX Threshold') }}</label>
-                    <input type="number" name="param_st_adx_threshold" class="form-control form-control-sm" value="25" min="5" max="60" step="1">
+                    <input type="number" name="param_st_adx_threshold" class="form-control form-control-sm" value="20" min="5" max="60" step="1">
+                    <div class="form-text">{{ _('Backtested on BTC/1h: 20 ≈ best return; 25+ over-filters and cuts the trades that actually make money.') }}</div>
                   </div>
                 </div>
               </div>
