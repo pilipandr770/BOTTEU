@@ -357,13 +357,25 @@ class TestPlaceOcoSellOrder:
 
 class TestCancelOpenOrders:
     def test_returns_cancelled_list(self):
+        # Regression: the spot Client has no bulk cancel_open_orders() method
+        # (only futures/margin/options do) -- this must fetch open orders and
+        # cancel each individually via client.cancel_order().
         client = MagicMock()
-        client.cancel_open_orders.return_value = [{"orderId": 1}, {"orderId": 2}]
+        client.get_open_orders.return_value = [{"orderId": 1}, {"orderId": 2}]
+        client.cancel_order.side_effect = lambda symbol, orderId: {"orderId": orderId}
         result = cancel_open_orders(client, "BTCUSDT")
         assert len(result) == 2
+        assert client.cancel_order.call_count == 2
 
-    def test_swallows_exception_returns_empty_list(self):
+    def test_swallows_get_open_orders_exception_returns_empty_list(self):
         client = MagicMock()
-        client.cancel_open_orders.side_effect = RuntimeError("network error")
+        client.get_open_orders.side_effect = RuntimeError("network error")
         result = cancel_open_orders(client, "BTCUSDT")
         assert result == []
+
+    def test_one_failed_cancel_does_not_block_the_others(self):
+        client = MagicMock()
+        client.get_open_orders.return_value = [{"orderId": 1}, {"orderId": 2}]
+        client.cancel_order.side_effect = [RuntimeError("boom"), {"orderId": 2}]
+        result = cancel_open_orders(client, "BTCUSDT")
+        assert result == [{"orderId": 2}]

@@ -361,11 +361,26 @@ def place_oco_sell_order(
 
 def cancel_open_orders(client: Client, symbol: str) -> list[dict]:
     """Cancel all open orders for a symbol. Called before a market SELL to avoid
-    'would reduce position' conflicts with existing stop/OCO orders."""
+    'would reduce position' conflicts with existing stop/OCO orders.
+
+    The spot Client in this python-binance version has no bulk
+    "cancel all open orders" endpoint (only futures/margin/options do) —
+    calling client.cancel_open_orders() raised AttributeError, which was
+    silently swallowed here, leaving a placed OCO's SL/TP legs open and
+    the base asset locked. Fetch the open orders and cancel each one
+    instead; cancelling either leg of an OCO cancels the other.
+    """
     try:
-        result = client.cancel_open_orders(symbol=symbol)
-        logger.info("Cancelled open orders for %s: %d order(s)", symbol, len(result))
-        return result
+        open_orders = client.get_open_orders(symbol=symbol)
     except Exception:
-        logger.exception("Failed to cancel open orders for %s", symbol)
+        logger.exception("Failed to fetch open orders for %s", symbol)
         return []
+
+    cancelled = []
+    for order in open_orders:
+        try:
+            cancelled.append(cancel_order(client, symbol, order["orderId"]))
+        except Exception:
+            logger.exception("Failed to cancel order %s for %s", order.get("orderId"), symbol)
+    logger.info("Cancelled open orders for %s: %d order(s)", symbol, len(cancelled))
+    return cancelled
