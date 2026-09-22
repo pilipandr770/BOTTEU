@@ -388,6 +388,13 @@
                   </label>
                 </div>
                 <div class="form-check mt-1">
+                  <input type="checkbox" class="form-check-input" id="st-reenter-after-exit"
+                         name="param_reenter_after_exit" value="1">
+                  <label class="form-check-label small" for="st-reenter-after-exit">
+                    {{ _('Re-enter after Stop-Loss/Take-Profit/Trailing-Stop if still trending (those exit on price, not on a real reversal — without this the bot then waits for a fresh flip that may not come)') }}
+                  </label>
+                </div>
+                <div class="form-check mt-1">
                   <input type="checkbox" class="form-check-input" id="st-adx-filter"
                          name="param_st_adx_filter" value="1">
                   <label class="form-check-label small" for="st-adx-filter">

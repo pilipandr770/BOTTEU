@@ -27,6 +27,17 @@ Params:
                       still closes normally on the next bearish flip / SL / TP.
     st_adx_period    : int   (default: 14)
     st_adx_threshold : float (default: 25)
+    reenter_after_exit : bool (default: False) — SL/TP/trailing-stop exits
+                      trigger on price action, independent of the SuperTrend
+                      reading, so a pullback inside an ongoing uptrend can
+                      stop the bot out while the indicator never flips
+                      bearish. Without this, the bot then waits for a fresh
+                      bullish_flip that may not come for a long time. When
+                      enabled, re-checks once right after such an exit: if
+                      still bullish, buy back in immediately instead of
+                      waiting for a full new flip cycle. Does not apply to a
+                      SIGNAL exit (a real bearish flip) — that already has
+                      its own flip to wait for next, correctly.
 """
 import logging
 
@@ -184,7 +195,8 @@ class SuperTrendStrategy(BaseStrategy):
             if sl_pct and entry_price:
                 sl_price = entry_price * (1 - float(sl_pct) / 100)
                 if current_price <= sl_price:
-                    state.update({"has_position": False, "exit_reason": "STOP_LOSS"})
+                    state.update({"has_position": False, "exit_reason": "STOP_LOSS",
+                                  "_reentry_checked": False})
                     state["_log"] = [("SELL",
                         f"🛑 Stop-loss: {current_price:.6f} ≤ SL {sl_price:.6f} (−{sl_pct}%) — selling")]
                     return "SELL", state
@@ -200,7 +212,7 @@ class SuperTrendStrategy(BaseStrategy):
                                 f"💰 TP {tp_price:.6f} reached — trailing activated at {current_price:.6f}")]
                     else:
                         state.update({"has_position": False, "exit_reason": "TAKE_PROFIT",
-                                      "tp_trailing_active": False})
+                                      "tp_trailing_active": False, "_reentry_checked": False})
                         state["_log"] = [("SELL",
                             f"💰 Take-profit: {current_price:.6f} ≥ TP {tp_price:.6f} (+{tp_pct}%) — selling")]
                         return "SELL", state
@@ -209,7 +221,7 @@ class SuperTrendStrategy(BaseStrategy):
                 trail_price = max_price * (1 - float(trail_pct) / 100)
                 if current_price <= trail_price:
                     state.update({"has_position": False, "exit_reason": "TRAILING_TP",
-                                  "tp_trailing_active": False})
+                                  "tp_trailing_active": False, "_reentry_checked": False})
                     state["_log"] = [("SELL",
                         f"📉 Trailing stop: retraced from {max_price:.6f} to {current_price:.6f} — selling")]
                     return "SELL", state
@@ -267,6 +279,36 @@ class SuperTrendStrategy(BaseStrategy):
                     })
                     state["_log"] = [("BUY",
                         f"🟢 Immediate entry (trend already bullish at start) — "
+                        f"ST={st_val:.6f} — buying at {current_price:.6f}")]
+                    return "BUY", state
+
+            # Re-entry after a protective exit (SL / TP / trailing stop): those
+            # trigger on price action, independent of the SuperTrend reading —
+            # a pullback inside an ongoing uptrend can stop the bot out while
+            # the indicator never actually flips bearish. Without this, the
+            # bot then sits flat waiting for a fresh bullish_flip that may not
+            # come for a long time, since the trend never left bullish for it
+            # to flip back into. Evaluated once per exit (not every tick).
+            prev_exit_reason = state.get("exit_reason")
+            if (
+                params.get("reenter_after_exit")
+                and prev_exit_reason not in (None, "SIGNAL")
+                and not state.get("_reentry_checked")
+            ):
+                state["_reentry_checked"] = True
+                if dir_curr == 1:
+                    if not adx_ok:
+                        state["_log"] = [_adx_blocked_log()]
+                        return "HOLD", state
+                    state.update({
+                        "has_position": True,
+                        "entry_price": current_price,
+                        "max_price": current_price,
+                        "exit_reason": None,
+                        "tp_trailing_active": False,
+                    })
+                    state["_log"] = [("BUY",
+                        f"🔁 Re-entering — still bullish after {prev_exit_reason} exit — "
                         f"ST={st_val:.6f} — buying at {current_price:.6f}")]
                     return "BUY", state
 
